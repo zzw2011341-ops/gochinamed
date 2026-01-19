@@ -63,6 +63,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, []);
 
+  // Sync auth state across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth_logout' && e.newValue === 'true') {
+        // Clear user state when logout is triggered in another tab
+        setUser(null);
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const login = async (email: string, password: string) => {
     const response = await fetch("/api/auth/login", {
       method: "POST",
@@ -101,9 +115,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
+    // Notify other tabs about logout
+    localStorage.setItem('auth_logout', 'true');
+    // Clear the flag after a short delay
+    setTimeout(() => localStorage.removeItem('auth_logout'), 100);
     setUser(null);
-    // Clear any cached user state
-    setLoading(false);
+    // Refresh user to ensure all components get the updated state
+    await refreshUser();
   };
 
   return (
