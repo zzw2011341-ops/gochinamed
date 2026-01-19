@@ -10,6 +10,10 @@ export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
 export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
+export const doctorAppointmentStatusEnum = pgEnum("doctor_appointment_status", ["pending", "confirmed", "cancelled", "completed"]);
+export const serviceReservationStatusEnum = pgEnum("service_reservation_status", ["pending", "confirmed", "cancelled", "completed"]);
+export const serviceTypeEnum = pgEnum("service_type", ["flight", "train", "hotel", "car_rental", "ticket", "visa", "insurance"]);
+export const serviceFeeTypeEnum = pgEnum("service_fee_type", ["medical", "flight", "hotel", "ticket", "general"]);
 
 // Users Table
 export const users = pgTable(
@@ -294,6 +298,9 @@ export const orders = pgTable(
     diseaseId: varchar("disease_id", { length: 36 })
       .references(() => diseases.id, { onDelete: "set null" }),
     status: orderStatusEnum("status").notNull().default("pending"),
+    doctorAppointmentStatus: doctorAppointmentStatusEnum("doctor_appointment_status").notNull().default("pending"),
+    doctorAppointmentDate: timestamp("doctor_appointment_date", { withTimezone: true }),
+    serviceReservationStatus: serviceReservationStatusEnum("service_reservation_status").notNull().default("pending"),
     medicalFee: decimal("medical_fee", { precision: 10, scale: 2 }),
     hotelFee: decimal("hotel_fee", { precision: 10, scale: 2 }),
     flightFee: decimal("flight_fee", { precision: 10, scale: 2 }),
@@ -304,6 +311,8 @@ export const orders = pgTable(
     totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
     currency: varchar("currency", { length: 3 }).notNull().default("USD"),
     notes: text("notes"),
+    travelNotes: text("travel_notes"), // Travel tips and warnings
+    weatherForecast: jsonb("weather_forecast"), // Weather data for each stage
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -327,7 +336,7 @@ export const itineraries = pgTable(
     orderId: varchar("order_id", { length: 36 })
       .references(() => orders.id, { onDelete: "cascade" })
       .notNull(),
-    type: varchar("type", { length: 50 }).notNull(), // flight, hotel, train, attraction, car_rental
+    type: serviceTypeEnum("type").notNull(), // flight, train, hotel, car_rental, ticket, visa, insurance
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
     startDate: timestamp("start_date", { withTimezone: true }),
@@ -335,7 +344,8 @@ export const itineraries = pgTable(
     location: varchar("location", { length: 255 }),
     price: decimal("price", { precision: 10, scale: 2 }),
     bookingConfirmation: text("booking_confirmation"),
-    status: varchar("status", { length: 50 }).notNull().default("pending"), // pending, confirmed, cancelled
+    status: serviceReservationStatusEnum("status").notNull().default("pending"), // pending, confirmed, cancelled, completed
+    notificationSent: boolean("notification_sent").default(false).notNull(),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -347,6 +357,71 @@ export const itineraries = pgTable(
     typeIdx: index("itineraries_type_idx").on(table.type),
   })
 );
+
+// Service Fees Table (中介费率配置表)
+export const serviceFees = pgTable(
+  "service_fees",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    type: serviceFeeTypeEnum("type").notNull().unique(), // medical, flight, hotel, ticket, general
+    rate: decimal("rate", { precision: 5, scale: 4 }).notNull(), // Fee rate (e.g., 0.05 for 5%)
+    minFee: decimal("min_fee", { precision: 10, scale: 2 }), // Minimum fee amount
+    maxFee: decimal("max_fee", { precision: 10, scale: 2 }), // Maximum fee amount
+    descriptionEn: text("description_en"),
+    descriptionZh: text("description_zh"),
+    isActive: boolean("is_active").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    typeIdx: index("service_fees_type_idx").on(table.type),
+  })
+);
+
+export type ServiceFee = typeof serviceFees.$inferSelect;
+
+// Service Reservations Table (服务预订表)
+export const serviceReservations = pgTable(
+  "service_reservations",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    orderId: varchar("order_id", { length: 36 })
+      .references(() => orders.id, { onDelete: "cascade" })
+      .notNull(),
+    itineraryId: varchar("itinerary_id", { length: 36 })
+      .references(() => itineraries.id, { onDelete: "set null" }),
+    type: serviceTypeEnum("type").notNull(), // flight, train, hotel, car_rental, ticket, visa, insurance
+    providerName: varchar("provider_name", { length: 255 }), // Service provider name
+    providerReference: varchar("provider_reference", { length: 255 }), // Booking reference from provider
+    status: serviceReservationStatusEnum("status").notNull().default("pending"),
+    reservationDate: timestamp("reservation_date", { withTimezone: true }), // When the reservation was made
+    confirmationDate: timestamp("confirmation_date", { withTimezone: true }), // When the reservation was confirmed
+    cancellationDate: timestamp("cancellation_date", { withTimezone: true }),
+    price: decimal("price", { precision: 10, scale: 2 }),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    details: jsonb("details"), // Detailed reservation data
+    remarks: text("remarks"),
+    notificationSent: boolean("notification_sent").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    orderIdIdx: index("service_reservations_order_id_idx").on(table.orderId),
+    itineraryIdIdx: index("service_reservations_itinerary_id_idx").on(table.itineraryId),
+    typeIdx: index("service_reservations_type_idx").on(table.type),
+    statusIdx: index("service_reservations_status_idx").on(table.status),
+  })
+);
+
+export type ServiceReservation = typeof serviceReservations.$inferSelect;
 
 // Payments Table
 export const payments = pgTable(

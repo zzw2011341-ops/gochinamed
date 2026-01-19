@@ -17,6 +17,18 @@ interface PlanOption {
   medicalFee: number;
   hotelFee: number;
   flightFee: number;
+  serviceFeeRate?: number;
+  serviceFeeAmount?: number;
+  finalTotal?: number;
+}
+
+interface ServiceFee {
+  type: string;
+  rate: number;
+  minFee: number;
+  maxFee: number;
+  descriptionEn: string;
+  descriptionZh: string;
 }
 
 export default function PaymentPage() {
@@ -27,6 +39,15 @@ export default function PaymentPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanOption | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [serviceFees, setServiceFees] = useState<ServiceFee[]>([]);
+  const [calculatedFees, setCalculatedFees] = useState<{
+    medicalFee: number;
+    flightFee: number;
+    hotelFee: number;
+    ticketFee: number;
+    totalServiceFee: number;
+    subtotal: number;
+  } | null>(null);
 
   // 表单状态
   const [passportNumber, setPassportNumber] = useState(user?.passportNumber || '');
@@ -47,6 +68,60 @@ export default function PaymentPage() {
       router.push('/book/plans');
     }
   }, [router]);
+
+  useEffect(() => {
+    // 获取中介费率并计算费用
+    if (selectedPlan) {
+      fetchServiceFees();
+    }
+  }, [selectedPlan]);
+
+  const fetchServiceFees = async () => {
+    try {
+      const response = await fetch('/api/service-fees');
+      if (response.ok) {
+        const data = await response.json();
+        setServiceFees(data.fees);
+        calculateServiceFees(data.fees);
+      }
+    } catch (error) {
+      console.error('Failed to fetch service fees:', error);
+    }
+  };
+
+  const calculateServiceFees = (fees: ServiceFee[]) => {
+    if (!selectedPlan) return;
+
+    const medicalFeeConfig = fees.find(f => f.type === 'medical') || { rate: 0.05, minFee: 50, maxFee: 500 };
+    const flightFeeConfig = fees.find(f => f.type === 'flight') || { rate: 0.03, minFee: 30, maxFee: 300 };
+    const hotelFeeConfig = fees.find(f => f.type === 'hotel') || { rate: 0.04, minFee: 40, maxFee: 400 };
+
+    // 计算各项服务费用
+    const medicalServiceFee = Math.min(
+      Math.max(selectedPlan.medicalFee * medicalFeeConfig.rate, medicalFeeConfig.minFee),
+      medicalFeeConfig.maxFee
+    );
+    const flightServiceFee = Math.min(
+      Math.max(selectedPlan.flightFee * flightFeeConfig.rate, flightFeeConfig.minFee),
+      flightFeeConfig.maxFee
+    );
+    const hotelServiceFee = Math.min(
+      Math.max(selectedPlan.hotelFee * hotelFeeConfig.rate, hotelFeeConfig.minFee),
+      hotelFeeConfig.maxFee
+    );
+
+    const totalServiceFee = medicalServiceFee + flightServiceFee + hotelServiceFee;
+    const subtotal = selectedPlan.medicalFee + selectedPlan.hotelFee + selectedPlan.flightFee;
+
+    setCalculatedFees({
+      medicalFee: medicalServiceFee,
+      flightFee: flightServiceFee,
+      hotelFee: hotelServiceFee,
+      ticketFee: 0,
+      totalServiceFee,
+      subtotal,
+    });
+  };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\s/g, '').replace(/\D/g, '');
@@ -101,8 +176,8 @@ export default function PaymentPage() {
         // 清除sessionStorage
         sessionStorage.removeItem('bookingPlans');
         sessionStorage.removeItem('selectedPlan');
-        // 跳转到我的行程页面
-        router.push('/my-trips');
+        // 跳转到详单页面
+        router.push(data.redirectUrl || `/book/confirmation/${data.orderId}`);
       } else {
         const errorData = await response.json();
         alert(errorData.error || 'Payment failed');
@@ -280,7 +355,7 @@ export default function PaymentPage() {
                     type="submit"
                     size="lg"
                     className="w-full"
-                    disabled={submitting}
+                    disabled={submitting || !calculatedFees}
                   >
                     {submitting ? (
                       <>
@@ -290,7 +365,10 @@ export default function PaymentPage() {
                     ) : (
                       <>
                         <CreditCard className="h-4 w-4 mr-2" />
-                        {language === 'zh' ? `支付 $${selectedPlan.totalAmount.toLocaleString()}` : `Pay $${selectedPlan.totalAmount.toLocaleString()}`}
+                        {language === 'zh'
+                          ? `支付 $${calculatedFees ? (calculatedFees.subtotal + calculatedFees.totalServiceFee).toLocaleString() : selectedPlan.totalAmount.toLocaleString()}`
+                          : `Pay $${calculatedFees ? (calculatedFees.subtotal + calculatedFees.totalServiceFee).toLocaleString() : selectedPlan.totalAmount.toLocaleString()}`
+                        }
                       </>
                     )}
                   </Button>
@@ -334,13 +412,51 @@ export default function PaymentPage() {
                   </div>
                 </div>
 
+                {calculatedFees && (
+                  <>
+                    <div className="border-t pt-4 bg-blue-50 -mx-4 px-4 py-3">
+                      <div className="text-sm font-medium text-blue-900 mb-2">
+                        {language === 'zh' ? '服务费用' : 'Service Fees'}
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between text-blue-700">
+                          <span>{language === 'zh' ? '医疗服务费' : 'Medical Service Fee'}</span>
+                          <span>${calculatedFees.medicalFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-blue-700">
+                          <span>{language === 'zh' ? '航班服务费' : 'Flight Service Fee'}</span>
+                          <span>${calculatedFees.flightFee.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-blue-700">
+                          <span>{language === 'zh' ? '酒店服务费' : 'Hotel Service Fee'}</span>
+                          <span>${calculatedFees.hotelFee.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between text-sm text-gray-600">
+                        <span>{language === 'zh' ? '小计' : 'Subtotal'}</span>
+                        <span>${calculatedFees.subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-blue-600">
+                        <span>{language === 'zh' ? '中介服务费' : 'Service Fee'}</span>
+                        <span>${calculatedFees.totalServiceFee.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">
                       {language === 'zh' ? '总计' : 'Total'}
                     </span>
                     <span className="text-2xl font-bold text-blue-600">
-                      ${selectedPlan.totalAmount.toLocaleString()}
+                      ${calculatedFees
+                        ? (calculatedFees.subtotal + calculatedFees.totalServiceFee).toLocaleString()
+                        : selectedPlan.totalAmount.toLocaleString()
+                      }
                     </span>
                   </div>
                 </div>
