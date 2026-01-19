@@ -120,6 +120,44 @@ export default function BookPage() {
   };
 
   const handleNext = () => {
+    // 步骤1验证：必填字段
+    if (currentStep === 1) {
+      if (!formData.originCity) {
+        alert(language === 'zh' ? '请选择出发城市' : 'Please select departure city');
+        return;
+      }
+      if (!formData.destinationCity) {
+        alert(language === 'zh' ? '请选择目的城市' : 'Please select destination city');
+        return;
+      }
+      if (!formData.travelDate) {
+        alert(language === 'zh' ? '请选择出行日期' : 'Please select travel date');
+        return;
+      }
+      if (!formData.numberOfPeople) {
+        alert(language === 'zh' ? '请选择出行人数' : 'Please select number of travelers');
+        return;
+      }
+    }
+
+    // 步骤2验证：必选医院
+    if (currentStep === 2 && !formData.selectedHospital) {
+      alert(language === 'zh' ? '请选择医院' : 'Please select a hospital');
+      return;
+    }
+
+    // 步骤3验证：必选医生
+    if (currentStep === 3 && !formData.selectedDoctor) {
+      alert(language === 'zh' ? '请选择医生' : 'Please select a doctor');
+      return;
+    }
+
+    // 步骤4验证：必选治疗类型
+    if (currentStep === 4 && !formData.treatmentType) {
+      alert(language === 'zh' ? '请选择治疗类型' : 'Please select treatment type');
+      return;
+    }
+
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
