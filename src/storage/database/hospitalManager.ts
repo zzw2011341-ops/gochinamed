@@ -127,7 +127,7 @@ export class HospitalManager {
       );
     }
 
-    if (location) {
+    if (location && location !== 'all') {
       // 根据location参数筛选医院，location是城市的ID（如"beijing"）
       conditions.push(eq(hospitals.cityId, location));
     }

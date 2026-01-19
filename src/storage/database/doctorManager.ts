@@ -192,8 +192,8 @@ export class DoctorManager {
       conditions.push(eq(doctors.hospitalId, hospitalId));
     }
 
-    if (location) {
-      // 根据location参数筛选医生，location是城市的英文名称
+    if (location && location !== 'all') {
+      // 根据location参数筛选医生，location是城市的ID
       conditions.push(eq(doctors.cityId, location));
     }
 
