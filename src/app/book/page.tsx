@@ -346,7 +346,11 @@ export default function BookPage() {
                     type="date"
                     value={formData.travelDate}
                     onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
+                    min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'zh' ? '请至少提前7天预订' : 'Please book at least 7 days in advance'}
+                  </p>
                 </div>
 
                 <div>

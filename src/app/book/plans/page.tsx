@@ -120,15 +120,13 @@ export default function PlanSelectionPage() {
               >
                 {/* 状态指示小圈 - 只在选中时显示对钩 */}
                 <div className="absolute top-4 right-4 z-10">
-                  <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                      isSelected
-                        ? 'bg-blue-600 border-blue-600'
-                        : 'bg-white border-gray-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="h-4 w-4 text-white" />}
-                  </div>
+                  {isSelected ? (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-600 flex items-center justify-center shadow-lg">
+                      <Check className="h-5 w-5 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-300" />
+                  )}
                 </div>
 
                 {isRecommended && !isSelected && (
