@@ -12,8 +12,9 @@ interface BookingRequest {
   originCity: string;
   destinationCity: string;
   travelDate: string;
-  selectedHospital: string;
-  selectedDoctor: string;
+  numberOfPeople?: string;
+  selectedHospital?: string;
+  selectedDoctor?: string;
   treatmentType: string;
   budget: string;
 }
@@ -41,8 +42,8 @@ export async function POST(request: NextRequest) {
       originCity,
       destinationCity,
       travelDate,
-      selectedHospital,
-      selectedDoctor,
+      selectedHospital = '',
+      selectedDoctor = '',
       treatmentType,
       budget,
     } = body;
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
       .where(eq(users.id, userId));
 
     // 使用AI生成三个不同的方案
+    const hasMedicalSelection = selectedHospital || selectedDoctor;
+    const numberOfPeople = parseInt(body.numberOfPeople || '1') || 1;
+
     const prompt = `You are a medical tourism consultant. Generate 3 different travel plan options for a patient.
 
 User Details:
@@ -76,6 +80,8 @@ User Details:
 - Travel Date: ${travelDate}
 - Treatment Type: ${treatmentType || 'General Consultation'}
 - Budget: $${budget || 'Not specified'}
+- Number of Travelers: ${numberOfPeople}
+- ${hasMedicalSelection ? 'Selected Doctor/Hospital: Yes' : 'Selected Doctor/Hospital: No'}
 
 Please generate 3 distinct options with different price points and features:
 1. Budget-Friendly Option (Basic hotel, economy flight, essential services)
@@ -86,9 +92,9 @@ For each option, provide a JSON object with this structure:
 {
   "name": "Option Name (e.g., Budget-Friendly Plan)",
   "description": "Brief description of what this plan offers",
-  "medicalFee": number (500-3000),
-  "hotelFee": number (100-500 per night * 7 days),
-  "flightFee": number (500-2000),
+  "medicalFee": number (${hasMedicalSelection ? '500-3000' : '0'} - set to 0 if no doctor/hospital selected),
+  "hotelFee": number (100-500 per night * 7 days * ${numberOfPeople} travelers),
+  "flightFee": number (500-2000 * ${numberOfPeople} travelers),
   "totalAmount": number (sum of all fees),
   "highlights": ["highlight1", "highlight2", "highlight3"],
   "duration": "e.g., 7 days 6 nights",
@@ -96,6 +102,8 @@ For each option, provide a JSON object with this structure:
   "hotelStars": number (1-5),
   "flightClass": "economy/business/first"
 }
+
+${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set medicalFee to 0 for all plans.' : ''}
 
 Return ONLY the JSON array with 3 options, no additional text.`;
 
@@ -125,12 +133,12 @@ Return ONLY the JSON array with 3 options, no additional text.`;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
         // 如果解析失败，生成默认方案
-        plans = generateDefaultPlans(budget, treatmentType);
+        plans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople);
       }
 
       // 确保我们有3个方案
       if (!Array.isArray(plans) || plans.length !== 3) {
-        plans = generateDefaultPlans(budget, treatmentType);
+        plans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople);
       }
 
       return NextResponse.json({
@@ -141,6 +149,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           originCity,
           destinationCity,
           travelDate,
+          numberOfPeople: numberOfPeople.toString(),
           selectedHospital,
           selectedDoctor,
           treatmentType,
@@ -150,7 +159,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
     } catch (aiError) {
       console.error('AI generation failed, using default plans:', aiError);
       // AI生成失败时使用默认方案
-      const defaultPlans = generateDefaultPlans(budget, treatmentType);
+      const defaultPlans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople);
       return NextResponse.json({
         success: true,
         plans: defaultPlans,
@@ -159,6 +168,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           originCity,
           destinationCity,
           travelDate,
+          numberOfPeople: numberOfPeople.toString(),
           selectedHospital,
           selectedDoctor,
           treatmentType,
@@ -176,22 +186,32 @@ Return ONLY the JSON array with 3 options, no additional text.`;
 }
 
 // 生成默认方案（当AI不可用时）
-function generateDefaultPlans(budget: string, treatmentType: string): PlanOption[] {
+function generateDefaultPlans(
+  budget: string,
+  treatmentType: string,
+  selectedHospital?: string,
+  selectedDoctor?: string,
+  numberOfPeople: number = 1
+): PlanOption[] {
   const baseBudget = parseFloat(budget) || 3000;
+  const hasMedicalSelection = selectedHospital || selectedDoctor;
 
-  return [
+  // 如果没有选择医生/医院，医疗费用为0
+  const medicalFeeBase = hasMedicalSelection ? 800 : 0;
+
+  const plans = [
     {
       id: 'budget',
       name: 'Budget-Friendly Plan',
       description: 'Economical option with essential services for budget-conscious travelers',
-      medicalFee: 800,
-      hotelFee: 700,
-      flightFee: 600,
-      totalAmount: 2100,
+      medicalFee: medicalFeeBase,
+      hotelFee: 700 * numberOfPeople,
+      flightFee: 600 * numberOfPeople,
+      totalAmount: 0, // 稍后计算
       highlights: [
         'Basic 3-star hotel accommodation',
         'Economy class flights',
-        'Essential medical consultation',
+        ...hasMedicalSelection ? ['Essential medical consultation'] : [],
         'Local transportation included'
       ],
       duration: '7 days 6 nights',
@@ -203,14 +223,14 @@ function generateDefaultPlans(budget: string, treatmentType: string): PlanOption
       id: 'standard',
       name: 'Standard Plan',
       description: 'Balanced option with quality services and good comfort',
-      medicalFee: 1200,
-      hotelFee: 1050,
-      flightFee: 900,
-      totalAmount: 3150,
+      medicalFee: medicalFeeBase + 400,
+      hotelFee: 1050 * numberOfPeople,
+      flightFee: 900 * numberOfPeople,
+      totalAmount: 0, // 稍后计算
       highlights: [
         '4-star hotel near hospital',
         'Standard class flights',
-        'Comprehensive medical checkup',
+        ...hasMedicalSelection ? ['Comprehensive medical checkup'] : [],
         '24/7 translation service',
         'Airport transfers included'
       ],
@@ -223,14 +243,14 @@ function generateDefaultPlans(budget: string, treatmentType: string): PlanOption
       id: 'premium',
       name: 'Premium Plan',
       description: 'Luxury option with top-tier services and maximum comfort',
-      medicalFee: 2000,
-      hotelFee: 1750,
-      flightFee: 1500,
-      totalAmount: 5250,
+      medicalFee: medicalFeeBase + 1200,
+      hotelFee: 1750 * numberOfPeople,
+      flightFee: 1500 * numberOfPeople,
+      totalAmount: 0, // 稍后计算
       highlights: [
         '5-star luxury hotel with wellness center',
         'Business class flights',
-        'Specialist consultation & treatment',
+        ...hasMedicalSelection ? ['Specialist consultation & treatment'] : [],
         'Personal medical assistant',
         'VIP airport service',
         'Full medical insurance included'
@@ -241,4 +261,10 @@ function generateDefaultPlans(budget: string, treatmentType: string): PlanOption
       flightClass: 'business'
     }
   ];
+
+  // 计算总价
+  return plans.map(plan => ({
+    ...plan,
+    totalAmount: plan.medicalFee + plan.hotelFee + plan.flightFee
+  }));
 }

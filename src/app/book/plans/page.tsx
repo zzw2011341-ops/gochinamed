@@ -111,14 +111,16 @@ export default function PlanSelectionPage() {
             return (
               <Card
                 key={plan.id}
-                className={`relative cursor-pointer transition-all hover:shadow-lg ${
-                  isSelected ? 'ring-2 ring-blue-600 shadow-lg' : ''
-                } ${isRecommended ? 'border-blue-500' : ''}`}
+                className={`relative cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? 'ring-4 ring-blue-600 shadow-2xl scale-105 border-blue-600 bg-blue-50/30'
+                    : 'hover:shadow-lg hover:scale-102 border-gray-200'
+                } ${isRecommended && !isSelected ? 'border-blue-300 border-2' : ''}`}
                 onClick={() => handleSelectPlan(plan)}
               >
-                {isRecommended && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-blue-600 text-white px-4 py-1">
+                {isRecommended && !isSelected && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <Badge className="bg-blue-600 text-white px-4 py-1 shadow-md">
                       {language === 'zh' ? '推荐' : 'Recommended'}
                     </Badge>
                   </div>
@@ -148,13 +150,25 @@ export default function PlanSelectionPage() {
 
                   {/* Fee Breakdown */}
                   <div className="space-y-2 border-t pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <Stethoscope className="h-4 w-4" />
-                        {language === 'zh' ? '医疗费用' : 'Medical Fee'}
-                      </span>
-                      <span className="font-medium">${plan.medicalFee}</span>
-                    </div>
+                    {plan.medicalFee === 0 ? (
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span className="flex items-center gap-2">
+                          <Stethoscope className="h-4 w-4" />
+                          {language === 'zh' ? '医疗费用' : 'Medical Fee'}
+                        </span>
+                        <span className="font-medium">
+                          {language === 'zh' ? '未选择医疗服务' : 'Not selected'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <Stethoscope className="h-4 w-4" />
+                          {language === 'zh' ? '医疗费用' : 'Medical Fee'}
+                        </span>
+                        <span className="font-medium">${plan.medicalFee}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center gap-2">
                         <Hotel className="h-4 w-4" />
@@ -207,8 +221,8 @@ export default function PlanSelectionPage() {
 
                   {/* Selection Indicator */}
                   {isSelected && (
-                    <div className="absolute top-4 right-4 bg-blue-600 text-white rounded-full p-2">
-                      <Check className="h-4 w-4" />
+                    <div className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-2 shadow-lg ring-4 ring-white">
+                      <Check className="h-5 w-5" />
                     </div>
                   )}
                 </CardContent>
