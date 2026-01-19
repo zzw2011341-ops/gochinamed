@@ -28,18 +28,42 @@ interface Doctor {
   hospitalLocation?: string;
 }
 
-// 城市列表
+// 中国所有省会城市（34个）
 const cities = [
   { id: 'beijing', nameEn: 'Beijing', nameZh: '北京' },
-  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
-  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
-  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳' },
-  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州' },
-  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都' },
-  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉' },
-  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京' },
-  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安' },
   { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津' },
+  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
+  { id: 'chongqing', nameEn: 'Chongqing', nameZh: '重庆' },
+  { id: 'shijiazhuang', nameEn: 'Shijiazhuang', nameZh: '石家庄' },
+  { id: 'taiyuan', nameEn: 'Taiyuan', nameZh: '太原' },
+  { id: 'hohhot', nameEn: 'Hohhot', nameZh: '呼和浩特' },
+  { id: 'shenyang', nameEn: 'Shenyang', nameZh: '沈阳' },
+  { id: 'changchun', nameEn: 'Changchun', nameZh: '长春' },
+  { id: 'harbin', nameEn: 'Harbin', nameZh: '哈尔滨' },
+  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京' },
+  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州' },
+  { id: 'hefei', nameEn: 'Hefei', nameZh: '合肥' },
+  { id: 'fuzhou', nameEn: 'Fuzhou', nameZh: '福州' },
+  { id: 'nanchang', nameEn: 'Nanchang', nameZh: '南昌' },
+  { id: 'jinan', nameEn: 'Jinan', nameZh: '济南' },
+  { id: 'zhengzhou', nameEn: 'Zhengzhou', nameZh: '郑州' },
+  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉' },
+  { id: 'changsha', nameEn: 'Changsha', nameZh: '长沙' },
+  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
+  { id: 'nanning', nameEn: 'Nanning', nameZh: '南宁' },
+  { id: 'haikou', nameEn: 'Haikou', nameZh: '海口' },
+  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都' },
+  { id: 'guiyang', nameEn: 'Guiyang', nameZh: '贵阳' },
+  { id: 'kunming', nameEn: 'Kunming', nameZh: '昆明' },
+  { id: 'lhasa', nameEn: 'Lhasa', nameZh: '拉萨' },
+  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安' },
+  { id: 'lanzhou', nameEn: 'Lanzhou', nameZh: '兰州' },
+  { id: 'xining', nameEn: 'Xining', nameZh: '西宁' },
+  { id: 'yinchuan', nameEn: 'Yinchuan', nameZh: '银川' },
+  { id: 'urumqi', nameEn: 'Urumqi', nameZh: '乌鲁木齐' },
+  { id: 'taipei', nameEn: 'Taipei', nameZh: '台北' },
+  { id: 'hongkong', nameEn: 'Hong Kong', nameZh: '香港' },
+  { id: 'macau', nameEn: 'Macau', nameZh: '澳门' },
 ];
 
 export default function DoctorsPage() {
