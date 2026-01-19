@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, CreditCard, FileText, Upload, Check, Shield, Lock } from 'lucide-react';
+import { COUNTRIES_BY_REGION, REGION_NAMES } from '@/data/countries';
 
 interface PlanOption {
   id: string;
@@ -256,13 +258,33 @@ export default function PaymentPage() {
                   <Label htmlFor="passportCountry">
                     {language === 'zh' ? '护照签发国家' : 'Passport Country'} *
                   </Label>
-                  <Input
-                    id="passportCountry"
+                  <Select
                     value={passportCountry}
-                    onChange={(e) => setPassportCountry(e.target.value)}
-                    placeholder="United States"
-                    required
-                  />
+                    onValueChange={setPassportCountry}
+                  >
+                    <SelectTrigger id="passportCountry">
+                      <SelectValue placeholder={language === 'zh' ? '选择国家' : 'Select country'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(['asia', 'europe', 'americas', 'oceania', 'africa'] as const).map((region) => {
+                        const regionCountries = COUNTRIES_BY_REGION[region];
+                        if (regionCountries.length === 0) return null;
+
+                        return (
+                          <div key={region}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                              {language === 'zh' ? REGION_NAMES.zh[region] : REGION_NAMES.en[region]}
+                            </div>
+                            {regionCountries.map((country) => (
+                              <SelectItem key={country.id} value={country.code}>
+                                {language === 'zh' ? country.nameZh : country.nameEn} ({country.code})
+                              </SelectItem>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
               </CardContent>
             </Card>

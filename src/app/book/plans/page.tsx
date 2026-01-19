@@ -118,13 +118,19 @@ export default function PlanSelectionPage() {
                 } ${isRecommended && !isSelected ? 'border-blue-300 border-2' : ''}`}
                 onClick={() => handleSelectPlan(plan)}
               >
-                {isSelected && (
-                  <div className="absolute top-4 right-4 z-10">
-                    <Badge className="bg-blue-600 text-white px-3 py-1.5 shadow-md">
-                      {language === 'zh' ? '已选择' : 'Selected'}
-                    </Badge>
+                {/* 状态指示小圈 */}
+                <div className="absolute top-4 right-4 z-10">
+                  <div
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                      isSelected
+                        ? 'bg-blue-600 border-blue-600'
+                        : 'bg-white border-gray-300'
+                    }`}
+                  >
+                    {isSelected && <Check className="h-4 w-4 text-white" />}
                   </div>
-                )}
+                </div>
+
                 {isRecommended && !isSelected && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <Badge className="bg-blue-600 text-white px-4 py-1 shadow-md">

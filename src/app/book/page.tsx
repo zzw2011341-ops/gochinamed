@@ -64,7 +64,6 @@ export default function BookPage() {
     { id: 3, title: language === 'zh' ? '选择医生' : 'Doctor', icon: Stethoscope },
     { id: 4, title: language === 'zh' ? '医疗选项' : 'Treatment', icon: Calendar },
     { id: 5, title: language === 'zh' ? '费用预算' : 'Budget', icon: DollarSign },
-    { id: 6, title: language === 'zh' ? '护照信息' : 'Passport', icon: MapPin },
   ];
 
   useEffect(() => {
@@ -121,7 +120,7 @@ export default function BookPage() {
   };
 
   const handleNext = () => {
-    if (currentStep < 6) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
       handleSubmit();
@@ -225,7 +224,7 @@ export default function BookPage() {
                       {step.title}
                     </span>
                   </div>
-                  {step.id < 6 && (
+                  {step.id < 5 && (
                     <div
                       className={`flex-1 h-0.5 mx-2 ${
                         currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'
@@ -246,7 +245,7 @@ export default function BookPage() {
               {steps[currentStep - 1].title}
             </CardTitle>
             <CardDescription>
-              {language === 'zh' ? `步骤 ${currentStep} / 6` : `Step ${currentStep} / 6`}
+              {language === 'zh' ? `步骤 ${currentStep} / 5` : `Step ${currentStep} / 5`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -583,7 +582,7 @@ export default function BookPage() {
                     <span className="animate-spin mr-2">⏳</span>
                     {language === 'zh' ? '处理中...' : 'Processing...'}
                   </>
-                ) : currentStep === 6 ? (
+                ) : currentStep === 5 ? (
                   <>
                     {language === 'zh' ? '提交' : 'Submit'}
                     <ArrowRight className="h-4 w-4 ml-2" />
