@@ -561,6 +561,37 @@ export const settings = pgTable(
   })
 );
 
+// Payment Accounts Table (收款账户表)
+export const paymentAccounts = pgTable(
+  "payment_accounts",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    type: varchar("type", { length: 50 }).notNull(), // stripe, paypal, bank_transfer, wechat, alipay
+    accountName: varchar("account_name", { length: 255 }).notNull(), // 账户名称
+    accountNumber: varchar("account_number", { length: 255 }).notNull(), // 账号
+    bankName: varchar("bank_name", { length: 255 }), // 银行名称（如果是银行转账）
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"), // 货币
+    isActive: boolean("is_active").default(true).notNull(), // 是否启用
+    isDefault: boolean("is_default").default(false).notNull(), // 是否默认账户
+    apiKey: text("api_key"), // API密钥（如Stripe密钥）
+    apiSecret: text("api_secret"), // API密钥（加密存储）
+    webhookUrl: text("webhook_url"), // Webhook URL
+    metadata: jsonb("metadata"), // 其他配置信息
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    typeIdx: index("payment_accounts_type_idx").on(table.type),
+    isActiveIdx: index("payment_accounts_is_active_idx").on(table.isActive),
+  })
+);
+
+export type PaymentAccount = typeof paymentAccounts.$inferSelect;
+
 // Banner Ads Table
 export const banners = pgTable(
   "banners",
