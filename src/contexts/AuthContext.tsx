@@ -11,6 +11,9 @@ interface User {
   avatarUrl?: string;
   phone?: string;
   points?: number;
+  originCity?: string | null;
+  destinationCity?: string | null;
+  budget?: number | null;
 }
 
 interface AuthContextType {

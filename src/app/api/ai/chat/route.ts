@@ -1,8 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LLMClient, Config, ASRClient, TTSClient } from 'coze-coding-dev-sdk';
-import { aiConversations } from '@/storage/database';
+import { aiConversations, users } from '@/storage/database';
 import { eq } from 'drizzle-orm';
 import { getDb } from 'coze-coding-dev-sdk';
+
+// 城市名称映射 - 用于识别用户消息中的城市
+const CITY_MAPPINGS = {
+  // 美洲
+  'new york': 'New York', '纽约': 'New York',
+  'los angeles': 'Los Angeles', '洛杉矶': 'Los Angeles',
+  'san francisco': 'San Francisco', '旧金山': 'San Francisco',
+  'chicago': 'Chicago', '芝加哥': 'Chicago',
+  'miami': 'Miami', '迈阿密': 'Miami',
+  'toronto': 'Toronto', '多伦多': 'Toronto',
+  'vancouver': 'Vancouver', '温哥华': 'Vancouver',
+  'são paulo': 'São Paulo', 'sao paulo': 'São Paulo', '圣保罗': 'São Paulo',
+
+  // 欧洲
+  'london': 'London', '伦敦': 'London',
+  'paris': 'Paris', '巴黎': 'Paris',
+  'berlin': 'Berlin', '柏林': 'Berlin',
+  'munich': 'Munich', '慕尼黑': 'Munich',
+  'frankfurt': 'Frankfurt', '法兰克福': 'Frankfurt',
+  'rome': 'Rome', '罗马': 'Rome',
+  'madrid': 'Madrid', '马德里': 'Madrid',
+  'amsterdam': 'Amsterdam', '阿姆斯特丹': 'Amsterdam',
+  'vienna': 'Vienna', '维也纳': 'Vienna',
+  'zurich': 'Zurich', '苏黎世': 'Zurich',
+
+  // 中国
+  'beijing': 'Beijing', '北京': 'Beijing',
+  'shanghai': 'Shanghai', '上海': 'Shanghai',
+  'guangzhou': 'Guangzhou', '广州': 'Guangzhou',
+  'shenzhen': 'Shenzhen', '深圳': 'Shenzhen',
+  'hangzhou': 'Hangzhou', '杭州': 'Hangzhou',
+  'chengdu': 'Chengdu', '成都': 'Chengdu',
+  'wuhan': 'Wuhan', '武汉': 'Wuhan',
+  'nanjing': 'Nanjing', '南京': 'Nanjing',
+  'xi\'an': 'Xi\'an', 'xian': 'Xi\'an', '西安': 'Xi\'an',
+  'tianjin': 'Tianjin', '天津': 'Tianjin',
+  'qingdao': 'Qingdao', '青岛': 'Qingdao',
+  'dalian': 'Dalian', '大连': 'Dalian',
+  'xiamen': 'Xiamen', '厦门': 'Xiamen',
+  'suzhou': 'Suzhou', '苏州': 'Suzhou',
+  'chongqing': 'Chongqing', '重庆': 'Chongqing',
+};
 
 const config = new Config();
 const llmClient = new LLMClient(config);
@@ -124,8 +166,36 @@ export async function POST(request: NextRequest) {
                   ]),
                 });
               }
+
+              // 提取并保存城市信息
+              const lowerMessage = userMessage.toLowerCase();
+              const citiesFound: string[] = [];
+
+              // 在消息中查找城市名称
+              for (const [key, value] of Object.entries(CITY_MAPPINGS)) {
+                if (lowerMessage.includes(key)) {
+                  if (!citiesFound.includes(value)) {
+                    citiesFound.push(value);
+                  }
+                }
+              }
+
+              if (citiesFound.length > 0) {
+                // 判断哪个是出发城市，哪个是目的城市
+                // 简单逻辑：第一个提到的城市通常是出发地，第二个是目的地
+                const originCity = citiesFound[0];
+                const destinationCity = citiesFound.length > 1 ? citiesFound[1] : null;
+
+                const updateData: any = { updatedAt: new Date() };
+                if (originCity) updateData.originCity = originCity;
+                if (destinationCity) updateData.destinationCity = destinationCity;
+
+                await db.update(users)
+                  .set(updateData)
+                  .where(eq(users.id, userId));
+              }
             } catch (error) {
-              console.error('Error saving conversation:', error);
+              console.error('Error saving conversation or cities:', error);
             }
           }
         } catch (error) {

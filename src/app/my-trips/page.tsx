@@ -1,161 +1,229 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plane, Calendar, MapPin, DollarSign, Clock, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { translations } from "@/locales";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Calendar, MapPin, Plane, Building2, Stethoscope, Clock, DollarSign, Loader2 } from "lucide-react";
 
-interface Trip {
+interface Itinerary {
   id: string;
-  orderId: string;
   type: string;
   name: string;
-  description: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  location: string | null;
-  price: string | null;
+  description: string;
+  startDate: string | Date;
+  endDate: string | Date | null;
   status: string;
+  price: string;
+}
+
+interface Order {
+  id: string;
+  status: string;
+  totalAmount: string;
+  currency: string;
+  createdAt: string | Date;
+  itineraries: Itinerary[];
 }
 
 export default function MyTripsPage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const { language } = useLanguage();
-  const t = translations[language];
-  const [trips, setTrips] = useState<Trip[]>([]);
+
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTrips();
-  }, []);
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    fetchOrders();
+  }, [user, router]);
 
-  const fetchTrips = async () => {
+  const fetchOrders = async () => {
     try {
-      const response = await fetch("/api/itineraries");
+      const response = await fetch(`/api/orders?userId=${user?.id}`);
       if (response.ok) {
         const data = await response.json();
-        setTrips(data.trips || []);
+        setOrders(data.orders || []);
       }
     } catch (error) {
-      console.error("Error fetching trips:", error);
+      console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-green-100 text-green-800",
-      cancelled: "bg-red-100 text-red-800",
-      completed: "bg-blue-100 text-blue-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
+    switch (status.toLowerCase()) {
+      case 'confirmed':
+        return 'bg-green-500';
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'processing':
+        return 'bg-blue-500';
+      case 'completed':
+        return 'bg-gray-500';
+      case 'cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
   };
 
-  const getTypeIcon = (type: string) => {
-    const icons: Record<string, JSX.Element> = {
-      flight: <Plane className="h-4 w-4" />,
-      hotel: <MapPin className="h-4 w-4" />,
-      attraction: <MapPin className="h-4 w-4" />,
-    };
-    return icons[type] || <Calendar className="h-4 w-4" />;
+  const getItineraryIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'flight':
+        return <Plane className="h-5 w-5" />;
+      case 'hotel':
+        return <Building2 className="h-5 w-5" />;
+      case 'medical':
+        return <Stethoscope className="h-5 w-5" />;
+      default:
+        return <MapPin className="h-5 w-5" />;
+    }
   };
+
+  const formatDate = (date: string | Date) => {
+    const d = date instanceof Date ? date : new Date(date);
+    return d.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {t.myTrips?.title || "My Trips"}
-              </h1>
-              <p className="text-gray-600">
-                {t.myTrips?.subtitle || "Manage your medical tourism itineraries"}
-              </p>
-            </div>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.myTrips?.newTrip || "Create New Trip"}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {language === 'zh' ? '返回' : 'Back'}
+          </Button>
+          <h1 className="text-3xl font-bold">
+            {language === 'zh' ? '我的行程' : 'My Trips'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {language === 'zh' ? '查看您的医疗旅行计划和预订详情' : 'View your medical travel plans and booking details'}
+          </p>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">{t.common?.loading || "Loading..."}</p>
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           </div>
-        ) : trips.length === 0 ? (
-          <Card className="text-center py-16">
-            <Plane className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <CardTitle className="text-xl mb-2">
-              {t.myTrips?.noTrips || "No trips yet"}
-            </CardTitle>
-            <CardDescription className="mb-6">
-              {t.myTrips?.noTripsDesc || "Start planning your medical tourism journey"}
-            </CardDescription>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.myTrips?.planFirstTrip || "Plan Your First Trip"}
-            </Button>
+        ) : orders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {language === 'zh' ? '暂无行程' : 'No trips yet'}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {language === 'zh' ? '您还没有创建任何医疗旅行计划' : 'You haven\'t created any medical travel plans yet'}
+              </p>
+              <Button onClick={() => router.push('/book')}>
+                {language === 'zh' ? '立即预订' : 'Book Now'}
+              </Button>
+            </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trips.map((trip) => (
-              <Card key={trip.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg line-clamp-1">
-                        {trip.name}
+          <div className="space-y-6">
+            {orders.map((order) => (
+              <Card key={order.id} className="overflow-hidden">
+                <CardHeader className="bg-gray-50 border-b">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        {language === 'zh' ? '订单 #' : 'Order #'} {order.id.slice(-8)}
                       </CardTitle>
-                      <CardDescription className="mt-1">
-                        {trip.type}
+                      <CardDescription>
+                        {formatDate(order.createdAt)}
                       </CardDescription>
                     </div>
-                    <Badge className={getStatusColor(trip.status)}>
-                      {trip.status}
-                    </Badge>
+                    <div className="flex items-center gap-3">
+                      <Badge className={getStatusColor(order.status)}>
+                        {order.status.toUpperCase()}
+                      </Badge>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">{language === 'zh' ? '总额' : 'Total'}</p>
+                        <p className="text-xl font-bold text-blue-600">
+                          ${order.totalAmount} {order.currency}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {trip.location && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4" />
-                      {trip.location}
-                    </div>
-                  )}
-                  {trip.startDate && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="h-4 w-4" />
-                      {new Date(trip.startDate).toLocaleDateString()}
-                    </div>
-                  )}
-                  {trip.price && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4" />
-                      ${trip.price}
-                    </div>
-                  )}
-                  {trip.description && (
-                    <p className="text-sm text-gray-500 line-clamp-2">
-                      {trip.description}
-                    </p>
-                  )}
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {order.itineraries && order.itineraries.length > 0 ? (
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          {language === 'zh' ? '行程安排' : 'Itinerary'}
+                        </h4>
+                        <div className="grid gap-4 md:grid-cols-3">
+                          {order.itineraries.map((item) => (
+                            <Card key={item.id} className="border-l-4 border-l-blue-500">
+                              <CardContent className="pt-4">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 p-2 bg-blue-100 rounded-lg">
+                                    {getItineraryIcon(item.type)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h5 className="font-semibold text-gray-900 mb-1">
+                                      {item.name}
+                                    </h5>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      {item.description}
+                                    </p>
+                                    {item.startDate && (
+                                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                                        <Calendar className="h-3 w-3" />
+                                        {formatDate(item.startDate)}
+                                      </div>
+                                    )}
+                                    <div className="flex items-center justify-between mt-2">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {item.status.toUpperCase()}
+                                      </Badge>
+                                      <div className="flex items-center gap-1 text-sm font-medium text-blue-600">
+                                        <DollarSign className="h-3 w-3" />
+                                        ${item.price}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">
+                        {language === 'zh' ? '暂无行程详情' : 'No itinerary details'}
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    {t.common?.viewDetails || "View Details"}
-                  </Button>
-                </CardFooter>
               </Card>
             ))}
           </div>

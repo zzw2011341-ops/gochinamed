@@ -11,18 +11,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Check, Plane, Building2, Stethoscope, DollarSign, Calendar, MapPin } from "lucide-react";
 
-// 城市列表
+// 城市列表 - 涵盖美洲、欧洲、中国的主要城市
 const cities = [
-  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京', airport: 'PEK' },
-  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海', airport: 'SHA' },
-  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州', airport: 'CAN' },
-  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳', airport: 'SZX' },
-  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州', airport: 'HGH' },
-  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都', airport: 'CTU' },
-  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉', airport: 'WUH' },
-  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京', airport: 'NKG' },
-  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安', airport: 'XIY' },
-  { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津', airport: 'TSN' },
+  // 美洲
+  { id: 'newyork', nameEn: 'New York', nameZh: '纽约', airport: 'JFK', region: 'americas' },
+  { id: 'losangeles', nameEn: 'Los Angeles', nameZh: '洛杉矶', airport: 'LAX', region: 'americas' },
+  { id: 'sanfrancisco', nameEn: 'San Francisco', nameZh: '旧金山', airport: 'SFO', region: 'americas' },
+  { id: 'chicago', nameEn: 'Chicago', nameZh: '芝加哥', airport: 'ORD', region: 'americas' },
+  { id: 'miami', nameEn: 'Miami', nameZh: '迈阿密', airport: 'MIA', region: 'americas' },
+  { id: 'toronto', nameEn: 'Toronto', nameZh: '多伦多', airport: 'YYZ', region: 'americas' },
+  { id: 'vancouver', nameEn: 'Vancouver', nameZh: '温哥华', airport: 'YVR', region: 'americas' },
+  { id: 'saopaulo', nameEn: 'São Paulo', nameZh: '圣保罗', airport: 'GRU', region: 'americas' },
+
+  // 欧洲
+  { id: 'london', nameEn: 'London', nameZh: '伦敦', airport: 'LHR', region: 'europe' },
+  { id: 'paris', nameEn: 'Paris', nameZh: '巴黎', airport: 'CDG', region: 'europe' },
+  { id: 'berlin', nameEn: 'Berlin', nameZh: '柏林', airport: 'BER', region: 'europe' },
+  { id: 'munich', nameEn: 'Munich', nameZh: '慕尼黑', airport: 'MUC', region: 'europe' },
+  { id: 'frankfurt', nameEn: 'Frankfurt', nameZh: '法兰克福', airport: 'FRA', region: 'europe' },
+  { id: 'rome', nameEn: 'Rome', nameZh: '罗马', airport: 'FCO', region: 'europe' },
+  { id: 'madrid', nameEn: 'Madrid', nameZh: '马德里', airport: 'MAD', region: 'europe' },
+  { id: 'amsterdam', nameEn: 'Amsterdam', nameZh: '阿姆斯特丹', airport: 'AMS', region: 'europe' },
+  { id: 'vienna', nameEn: 'Vienna', nameZh: '维也纳', airport: 'VIE', region: 'europe' },
+  { id: 'zurich', nameEn: 'Zurich', nameZh: '苏黎世', airport: 'ZRH', region: 'europe' },
+
+  // 中国
+  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京', airport: 'PEK', region: 'china' },
+  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海', airport: 'PVG', region: 'china' },
+  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州', airport: 'CAN', region: 'china' },
+  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳', airport: 'SZX', region: 'china' },
+  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州', airport: 'HGH', region: 'china' },
+  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都', airport: 'CTU', region: 'china' },
+  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉', airport: 'WUH', region: 'china' },
+  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京', airport: 'NKG', region: 'china' },
+  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安', airport: 'XIY', region: 'china' },
+  { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津', airport: 'TSN', region: 'china' },
+  { id: 'qingdao', nameEn: 'Qingdao', nameZh: '青岛', airport: 'TAO', region: 'china' },
+  { id: 'dalian', nameEn: 'Dalian', nameZh: '大连', airport: 'DLC', region: 'china' },
+  { id: 'xiamen', nameEn: 'Xiamen', nameZh: '厦门', airport: 'XMN', region: 'china' },
+  { id: 'suzhou', nameEn: 'Suzhou', nameZh: '苏州', airport: 'SZV', region: 'china' },
+  { id: 'chongqing', nameEn: 'Chongqing', nameZh: '重庆', airport: 'CKG', region: 'china' },
 ];
 
 interface Hospital {
@@ -78,6 +106,21 @@ export default function BookPage() {
   useEffect(() => {
     if (!user) {
       router.push('/login');
+    } else if (user.id) {
+      // 刷新用户信息以获取最新的城市和预算偏好
+      fetch('/api/auth/me')
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setFormData(prev => ({
+              ...prev,
+              originCity: data.user.originCity || prev.originCity,
+              destinationCity: data.user.destinationCity || prev.destinationCity,
+              budget: data.user.budget?.toString() || prev.budget,
+            }));
+          }
+        })
+        .catch(error => console.error('Error fetching user info:', error));
     }
   }, [user, router]);
 
@@ -134,14 +177,21 @@ export default function BookPage() {
       const response = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          userId: user?.id,
+        }),
       });
 
       if (response.ok) {
         router.push('/my-trips');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to create booking');
       }
     } catch (error) {
       console.error('Error creating booking:', error);
+      alert(language === 'zh' ? '预订失败，请重试' : 'Failed to create booking, please try again');
     } finally {
       setLoading(false);
     }
@@ -247,10 +297,22 @@ export default function BookPage() {
                       <SelectValue placeholder={language === 'zh' ? '选择出发城市' : 'Select departure city'} />
                     </SelectTrigger>
                     <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.nameEn}>
-                          {language === 'zh' ? city.nameZh : city.nameEn} ({city.airport})
-                        </SelectItem>
+                      {['americas', 'europe', 'china'].map((region) => (
+                        <div key={region}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                            {language === 'zh' ?
+                              (region === 'americas' ? '美洲' : region === 'europe' ? '欧洲' : '中国') :
+                              (region === 'americas' ? 'Americas' : region === 'europe' ? 'Europe' : 'China')
+                            }
+                          </div>
+                          {cities
+                            .filter(city => city.region === region)
+                            .map((city) => (
+                              <SelectItem key={city.id} value={city.nameEn}>
+                                {language === 'zh' ? city.nameZh : city.nameEn} ({city.airport})
+                              </SelectItem>
+                            ))}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
@@ -268,10 +330,22 @@ export default function BookPage() {
                       <SelectValue placeholder={language === 'zh' ? '选择目的城市' : 'Select destination city'} />
                     </SelectTrigger>
                     <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.nameEn}>
-                          {language === 'zh' ? city.nameZh : city.nameEn} ({city.airport})
-                        </SelectItem>
+                      {['americas', 'europe', 'china'].map((region) => (
+                        <div key={region}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                            {language === 'zh' ?
+                              (region === 'americas' ? '美洲' : region === 'europe' ? '欧洲' : '中国') :
+                              (region === 'americas' ? 'Americas' : region === 'europe' ? 'Europe' : 'China')
+                            }
+                          </div>
+                          {cities
+                            .filter(city => city.region === region)
+                            .map((city) => (
+                              <SelectItem key={city.id} value={city.nameEn}>
+                                {language === 'zh' ? city.nameZh : city.nameEn} ({city.airport})
+                              </SelectItem>
+                            ))}
+                        </div>
                       ))}
                     </SelectContent>
                   </Select>
