@@ -8,6 +8,7 @@
 
 import { getDb } from "coze-coding-dev-sdk";
 import { users } from "./shared/schema";
+import { eq } from "drizzle-orm";
 
 const DEFAULT_ADMIN = {
   email: "admin@gochinamed.com",
@@ -29,7 +30,7 @@ async function seedAdmin() {
     const existingAdmin = await db
       .select()
       .from(users)
-      .where((users) => users.email === DEFAULT_ADMIN.email)
+      .where(eq(users.email, DEFAULT_ADMIN.email))
       .limit(1);
 
     if (existingAdmin.length > 0) {
