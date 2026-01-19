@@ -125,6 +125,80 @@ export const diseases = pgTable(
   }
 );
 
+// Flights Table
+export const flights = pgTable(
+  "flights",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    flightNumber: varchar("flight_number", { length: 20 }).notNull(),
+    airline: varchar("airline", { length: 100 }).notNull(),
+    origin: varchar("origin", { length: 10 }).notNull(), // Airport code (e.g., PEK, JFK)
+    destination: varchar("destination", { length: 10 }).notNull(), // Airport code
+    departureTime: timestamp("departure_time", { withTimezone: true }).notNull(),
+    arrivalTime: timestamp("arrival_time", { withTimezone: true }).notNull(),
+    durationMinutes: integer("duration_minutes").notNull(),
+    price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    availableSeats: integer("available_seats").notNull(),
+    classType: varchar("class_type", { length: 20 }).notNull(), // economy, business, first
+    isActive: boolean("is_active").default(true).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    originDestIdx: index("flights_origin_dest_idx").on(table.origin, table.destination),
+    airlineIdx: index("flights_airline_idx").on(table.airline),
+    departureTimeIdx: index("flights_departure_time_idx").on(table.departureTime),
+  })
+);
+
+export type Flight = typeof flights.$inferSelect;
+
+// Hotels Table
+export const hotels = pgTable(
+  "hotels",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    nameEn: varchar("name_en", { length: 255 }).notNull(),
+    nameZh: varchar("name_zh", { length: 255 }),
+    descriptionEn: text("description_en"),
+    descriptionZh: text("description_zh"),
+    location: varchar("location", { length: 255 }).notNull(),
+    latitude: decimal("latitude", { precision: 10, scale: 7 }),
+    longitude: decimal("longitude", { precision: 10, scale: 7 }),
+    city: varchar("city", { length: 100 }).notNull(),
+    starRating: integer("star_rating"), // 1-5 stars
+    roomTypes: jsonb("room_types"), // Array of {type, price, available}
+    amenities: jsonb("amenities"), // Array of amenity names
+    imageUrl: text("image_url"),
+    website: text("website"),
+    distanceToHospital: decimal("distance_to_hospital", { precision: 10, scale: 2 }), // km
+    basePricePerNight: decimal("base_price_per_night", { precision: 10, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    isFeatured: boolean("is_featured").default(false).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    cityIdx: index("hotels_city_idx").on(table.city),
+    starRatingIdx: index("hotels_star_rating_idx").on(table.starRating),
+    locationIdx: index("hotels_location_idx").on(table.location),
+  })
+);
+
+export type Hotel = typeof hotels.$inferSelect;
+
 // Medical Records Table
 export const medicalRecords = pgTable(
   "medical_records",

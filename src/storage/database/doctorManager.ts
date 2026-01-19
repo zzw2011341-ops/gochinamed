@@ -1,4 +1,4 @@
-import { eq, and, SQL, like, sql } from "drizzle-orm";
+import { eq, and, SQL, like, sql, or, desc } from "drizzle-orm";
 import { getDb } from "coze-coding-dev-sdk";
 import { doctors, hospitals, insertDoctorSchema, updateDoctorSchema } from "./shared/schema";
 import type { Doctor, InsertDoctor, UpdateDoctor } from "./shared/schema";
@@ -149,6 +149,67 @@ export class DoctorManager {
     const db = await getDb();
     const result = await db.select({ count: sql`count(*)` }).from(doctors);
     return Number(result[0]?.count ?? 0);
+  }
+
+  static async search(options: {
+    keyword?: string;
+    specialty?: string;
+    location?: string;
+    hospitalId?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ doctors: Doctor[]; total: number }> {
+    const { keyword = '', specialty = '', location = '', hospitalId, limit = 20, offset = 0 } = options;
+    const db = await getDb();
+
+    const conditions: SQL[] = [
+      eq(doctors.isActive, true),
+    ];
+
+    if (keyword) {
+      conditions.push(
+        or(
+          like(doctors.nameEn, `%${keyword}%`),
+          like(doctors.nameZh, `%${keyword}%`),
+          like(doctors.specialtiesEn, `%${keyword}%`),
+          like(doctors.specialtiesZh, `%${keyword}%`)
+        )!
+      );
+    }
+
+    if (specialty) {
+      conditions.push(
+        or(
+          like(doctors.specialtiesEn, `%${specialty}%`),
+          like(doctors.specialtiesZh, `%${specialty}%`)
+        )!
+      );
+    }
+
+    if (hospitalId) {
+      conditions.push(eq(doctors.hospitalId, hospitalId));
+    }
+
+    const whereClause = and(...conditions);
+
+    const doctorsList = await db
+      .select()
+      .from(doctors)
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(doctors.isFeatured), doctors.createdAt);
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(doctors)
+      .where(whereClause);
+
+    return {
+      doctors: doctorsList,
+      total: Number(count),
+    };
   }
 }
 

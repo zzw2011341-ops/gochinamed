@@ -20,6 +20,7 @@ export interface Translations {
   };
   nav: {
     home: string;
+    search: string;
     doctors: string;
     hospitals: string;
     attractions: string;
@@ -32,6 +33,45 @@ export interface Translations {
     register: string;
     logout: string;
     language?: string;
+  };
+  search: {
+    title: string;
+    subtitle: string;
+    keyword: string;
+    keywordPlaceholder: string;
+    location: string;
+    locationPlaceholder: string;
+    specialty: string;
+    selectSpecialty: string;
+    hospitalLevel: string;
+    selectLevel: string;
+    search: string;
+    origin: string;
+    destination: string;
+    departureDate: string;
+    returnDate: string;
+    classType: string;
+    selectClass: string;
+    city: string;
+    cityPlaceholder: string;
+    starRating: string;
+    selectRating: string;
+    minPrice: string;
+    maxPrice: string;
+    aiPlan: string;
+    aiPlanDesc: string;
+    generatePlan: string;
+  };
+  aiPlan: {
+    formTitle: string;
+    disease: string;
+    symptoms: string;
+    location: string;
+    budget: string;
+    travelDates: string;
+    specialRequirements: string;
+    generate: string;
+    placeholder: string;
   };
   auth: {
     loginTitle: string;

@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu, Loader2 } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu, Loader2, Search } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
@@ -68,6 +68,9 @@ export function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">
               {t('nav.home')}
+            </Link>
+            <Link href="/search" className="text-gray-700 hover:text-blue-600 font-medium">
+              {t('nav.search') || 'Search'}
             </Link>
             <Link href="/doctors" className="text-gray-700 hover:text-blue-600 font-medium">
               {t('nav.doctors')}

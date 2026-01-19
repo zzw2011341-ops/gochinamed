@@ -1,4 +1,4 @@
-import { eq, and, SQL, like, sql } from "drizzle-orm";
+import { eq, and, SQL, like, sql, or, desc } from "drizzle-orm";
 import { getDb } from "coze-coding-dev-sdk";
 import { hospitals, insertHospitalSchema, updateHospitalSchema } from "./shared/schema";
 import type { Hospital, InsertHospital, UpdateHospital } from "./shared/schema";
@@ -103,6 +103,58 @@ export class HospitalManager {
     const db = await getDb();
     const result = await db.select({ count: sql`count(*)` }).from(hospitals);
     return Number(result[0]?.count ?? 0);
+  }
+
+  static async search(options: {
+    keyword?: string;
+    location?: string;
+    level?: string;
+    specialty?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ hospitals: Hospital[]; total: number }> {
+    const { keyword = '', location = '', level = '', specialty = '', limit = 20, offset = 0 } = options;
+    const db = await getDb();
+
+    const conditions: SQL[] = [eq(hospitals.isActive, true)];
+
+    if (keyword) {
+      conditions.push(
+        or(
+          like(hospitals.nameEn, `%${keyword}%`),
+          like(hospitals.nameZh, `%${keyword}%`)
+        )!
+      );
+    }
+
+    if (location) {
+      conditions.push(like(hospitals.location, `%${location}%`));
+    }
+
+    if (level) {
+      conditions.push(eq(hospitals.level, level));
+    }
+
+    const whereClause = and(...conditions);
+
+    const hospitalsList = await db
+      .select()
+      .from(hospitals)
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(hospitals.isFeatured), hospitals.createdAt);
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(hospitals)
+      .where(whereClause);
+
+    return {
+      hospitals: hospitalsList,
+      total: Number(count),
+    };
   }
 }
 
