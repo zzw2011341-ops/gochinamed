@@ -124,7 +124,7 @@ export default function PlanSelectionPage() {
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
                       isSelected
                         ? 'bg-blue-600 border-blue-600'
-                        : 'bg-white border-gray-300'
+                        : 'bg-gray-100 border-gray-300'
                     }`}
                   >
                     {isSelected && <Check className="h-4 w-4 text-white" />}
