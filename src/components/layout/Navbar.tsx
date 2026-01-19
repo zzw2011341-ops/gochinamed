@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -10,12 +11,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
   const { t, language, setLanguage } = useLanguage();
+  const { user, loading, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setShowLogoutDialog(false);
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -66,37 +101,71 @@ export function Navbar() {
               </SelectContent>
             </Select>
 
-            <Link href="/my-trips">
-              <Button variant="ghost" size="sm">
-                <Plane className="h-4 w-4 mr-2" />
-                {t('nav.myTrips')}
-              </Button>
-            </Link>
+            {loading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            ) : user ? (
+              <>
+                <Link href="/my-trips">
+                  <Button variant="ghost" size="sm">
+                    <Plane className="h-4 w-4 mr-2" />
+                    {t('nav.myTrips')}
+                  </Button>
+                </Link>
 
-            <Link href="/profile">
-              <Button variant="ghost" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                {t('nav.profile')}
-              </Button>
-            </Link>
+                {/* User Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <User className="h-4 w-4 mr-2" />
+                      {user.name}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+                    <DropdownMenuLabel className="text-xs text-gray-500">
+                      {user.role === 'admin' ? 'Administrator' : 'Patient'}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">
+                        <User className="h-4 w-4 mr-2" />
+                        {t('nav.profile')}
+                      </Link>
+                    </DropdownMenuItem>
+                    {user.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          {t('nav.admin')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowLogoutDialog(true)}
+                      className="text-red-600"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      {t('nav.logout')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="outline" size="sm">
+                    {t('nav.login')}
+                  </Button>
+                </Link>
 
-            <Link href="/login">
-              <Button variant="outline" size="sm">
-                {t('nav.login')}
-              </Button>
-            </Link>
-
-            <Link href="/register">
-              <Button size="sm">
-                {t('nav.register')}
-              </Button>
-            </Link>
-
-            <Link href="/admin">
-              <Button variant="ghost" size="sm">
-                <LayoutDashboard className="h-4 w-4" />
-              </Button>
-            </Link>
+                <Link href="/register">
+                  <Button size="sm">
+                    {t('nav.register')}
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -174,6 +243,27 @@ export function Navbar() {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('nav.logout')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoggingOut}>
+              {t('common.cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {t('common.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </nav>
   );
 }

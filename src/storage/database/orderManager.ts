@@ -172,6 +172,42 @@ export class OrderManager {
       .where(eq(orders.userId, userId))
       .orderBy(desc(orders.createdAt));
   }
+
+  static async getOrderStats(): Promise<{
+    total: number;
+    pending: number;
+    completed: number;
+    revenue: number;
+  }> {
+    const db = await getDb();
+    const allOrders = await db
+      .select({
+        status: orders.status,
+        totalAmount: orders.totalAmount,
+      })
+      .from(orders);
+
+    const stats = {
+      total: allOrders.length,
+      pending: 0,
+      completed: 0,
+      revenue: 0,
+    };
+
+    for (const order of allOrders) {
+      if (order.status === "pending") {
+        stats.pending++;
+      } else if (order.status === "completed") {
+        stats.completed++;
+      }
+
+      if (order.totalAmount) {
+        stats.revenue += Number(order.totalAmount);
+      }
+    }
+
+    return stats;
+  }
 }
 
 export const orderManager = new OrderManager();

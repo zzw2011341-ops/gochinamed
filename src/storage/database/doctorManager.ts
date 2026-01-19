@@ -144,6 +144,12 @@ export class DoctorManager {
     const result = await db.select({ count: sql`count(*)` }).from(doctors);
     return Number(result[0]?.count ?? 0);
   }
+
+  static async getDoctorCount(): Promise<number> {
+    const db = await getDb();
+    const result = await db.select({ count: sql`count(*)` }).from(doctors);
+    return Number(result[0]?.count ?? 0);
+  }
 }
 
 export const doctorManager = new DoctorManager();

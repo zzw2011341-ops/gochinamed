@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
                   .update(aiConversations)
                   .set({
                     messages: JSON.stringify([
-                      ...JSON.parse(existingConversation.messages || '[]'),
+                      ...JSON.parse(JSON.stringify(existingConversation.messages || [])),
                       { role: 'user', content: userMessage },
                       { role: 'assistant', content: fullResponse },
                     ]),
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ messages: [] });
     }
 
-    const messages = JSON.parse(conversation.messages || '[]');
+    const messages = JSON.parse(JSON.stringify(conversation.messages || []));
 
     return NextResponse.json({ messages });
   } catch (error) {
