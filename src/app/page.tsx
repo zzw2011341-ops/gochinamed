@@ -32,6 +32,8 @@ interface Hospital {
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  pages?: string[];  // 分页内容
+  currentPage?: number;  // 当前页码
 }
 
 export default function HomePage() {
@@ -117,12 +119,8 @@ export default function HomePage() {
 
       if (!reader) throw new Error('No response body');
 
-      let assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: ''
-      };
-
-      setChatMessages(prev => [...prev, assistantMessage]);
+      // 收集完整响应
+      let fullContent = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -139,13 +137,7 @@ export default function HomePage() {
             try {
               const parsed = JSON.parse(data);
               if (parsed.content) {
-                setChatMessages(prev =>
-                  prev.map((msg, idx) =>
-                    idx === prev.length - 1
-                      ? { ...msg, content: msg.content + parsed.content }
-                      : msg
-                  )
-                );
+                fullContent += parsed.content;
               }
             } catch (e) {
               console.error('Error parsing SSE data:', e);
@@ -153,6 +145,18 @@ export default function HomePage() {
           }
         }
       }
+
+      // 将内容分页（按段落或固定长度）
+      const pages = splitIntoPages(fullContent);
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: fullContent,
+        pages: pages,
+        currentPage: 0
+      };
+
+      setChatMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
       setChatMessages(prev => [
@@ -165,6 +169,58 @@ export default function HomePage() {
     } finally {
       setIsChatLoading(false);
     }
+  };
+
+  // 将内容分页
+  const splitIntoPages = (content: string): string[] => {
+    // 按段落分割（双换行符）
+    const paragraphs = content.split(/\n\n+/);
+    const pages: string[] = [];
+    let currentPage = '';
+
+    for (const para of paragraphs) {
+      // 如果当前页已超过500字符，开始新的一页
+      if (currentPage.length > 500) {
+        pages.push(currentPage.trim());
+        currentPage = para;
+      } else {
+        currentPage += (currentPage ? '\n\n' : '') + para;
+      }
+    }
+
+    // 添加最后一页
+    if (currentPage.trim()) {
+      pages.push(currentPage.trim());
+    }
+
+    // 如果没有分页成功（内容太短），至少返回一页
+    if (pages.length === 0) {
+      pages.push(content);
+    }
+
+    return pages;
+  };
+
+  // 切换到下一页
+  const handleNextPage = (messageIndex: number) => {
+    setChatMessages(prev =>
+      prev.map((msg, idx) =>
+        idx === messageIndex && msg.pages
+          ? { ...msg, currentPage: Math.min((msg.currentPage || 0) + 1, msg.pages.length - 1) }
+          : msg
+      )
+    );
+  };
+
+  // 切换到上一页
+  const handlePrevPage = (messageIndex: number) => {
+    setChatMessages(prev =>
+      prev.map((msg, idx) =>
+        idx === messageIndex && msg.pages
+          ? { ...msg, currentPage: Math.max((msg.currentPage || 0) - 1, 0) }
+          : msg
+      )
+    );
   };
 
   const handleExampleQuestion = (question: string) => {
@@ -246,16 +302,49 @@ export default function HomePage() {
                                 <Bot className="h-4 w-4 text-white" />
                               )}
                             </div>
-                            <div
-                              className={`rounded-2xl px-4 py-3 ${
-                                msg.role === 'user'
-                                  ? 'bg-white text-gray-900'
-                                  : 'bg-white/10 text-white'
-                              }`}
-                            >
-                              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {msg.content}
-                              </p>
+                            <div className="flex-1">
+                              <div
+                                className={`rounded-2xl px-4 py-3 ${
+                                  msg.role === 'user'
+                                    ? 'bg-white text-gray-900'
+                                    : 'bg-white/10 text-white'
+                                }`}
+                              >
+                                {/* 用户消息直接显示，AI消息显示当前页 */}
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                                  {msg.role === 'user' || !msg.pages
+                                    ? msg.content
+                                    : msg.pages[msg.currentPage || 0]
+                                  }
+                                </p>
+
+                                {/* 分页控制 */}
+                                {msg.role === 'assistant' && msg.pages && msg.pages.length > 1 && (
+                                  <div className="mt-3 pt-3 border-t border-white/20 flex items-center justify-between">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handlePrevPage(idx)}
+                                      disabled={(msg.currentPage || 0) === 0}
+                                      className="text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      {language === 'zh' ? '上一页' : 'Previous'}
+                                    </Button>
+                                    <span className="text-sm text-white/70">
+                                      {language === 'zh' ? '第' : 'Page'} {(msg.currentPage || 0) + 1} / {msg.pages.length}
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleNextPage(idx)}
+                                      disabled={(msg.currentPage || 0) >= msg.pages.length - 1}
+                                      className="text-white hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                      {language === 'zh' ? '下一页' : 'Next'}
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -336,12 +425,6 @@ export default function HomePage() {
                 <Button variant="secondary" size="lg" className="gap-2">
                   <Building2 className="h-5 w-5" />
                   {t('nav.hospitals')}
-                </Button>
-              </Link>
-              <Link href="/ai-assistant">
-                <Button variant="secondary" size="lg" className="gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  {t('nav.aiAssistant')}
                 </Button>
               </Link>
             </div>
