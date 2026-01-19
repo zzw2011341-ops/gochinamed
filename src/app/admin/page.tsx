@@ -13,10 +13,6 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/locales";
-import { AuthManager } from "@/storage/database/authManager";
-import { DoctorManager } from "@/storage/database/doctorManager";
-import { HospitalManager } from "@/storage/database/hospitalManager";
-import { OrderManager } from "@/storage/database/orderManager";
 
 interface Stats {
   users: {
@@ -48,20 +44,12 @@ export default function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      const [userCount, doctorCount, hospitalCount, orderCount] = await Promise.all([
-        AuthManager.getUserCountByRole(),
-        DoctorManager.getDoctorCount(),
-        HospitalManager.getHospitalCount(),
-        OrderManager.getOrderStats(),
-      ]);
-
-      setStats({
-        users: userCount as any,
-        doctors: doctorCount,
-        hospitals: hospitalCount,
-        orders: orderCount,
-        posts: 0,
-      });
+      const response = await fetch("/api/admin/stats");
+      if (!response.ok) {
+        throw new Error("Failed to fetch stats");
+      }
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error("Failed to load stats:", error);
     } finally {
