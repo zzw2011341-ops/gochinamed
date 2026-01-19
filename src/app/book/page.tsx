@@ -64,6 +64,7 @@ export default function BookPage() {
     { id: 3, title: language === 'zh' ? '选择医生' : 'Doctor', icon: Stethoscope },
     { id: 4, title: language === 'zh' ? '医疗选项' : 'Treatment', icon: Calendar },
     { id: 5, title: language === 'zh' ? '费用预算' : 'Budget', icon: DollarSign },
+    { id: 6, title: language === 'zh' ? '护照信息' : 'Passport', icon: MapPin },
   ];
 
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function BookPage() {
   };
 
   const handleNext = () => {
-    if (currentStep < 5) {
+    if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     } else {
       handleSubmit();
@@ -224,7 +225,7 @@ export default function BookPage() {
                       {step.title}
                     </span>
                   </div>
-                  {step.id < 5 && (
+                  {step.id < 6 && (
                     <div
                       className={`flex-1 h-0.5 mx-2 ${
                         currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'
@@ -245,7 +246,7 @@ export default function BookPage() {
               {steps[currentStep - 1].title}
             </CardTitle>
             <CardDescription>
-              {language === 'zh' ? `步骤 ${currentStep} / 5` : `Step ${currentStep} / 5`}
+              {language === 'zh' ? `步骤 ${currentStep} / 6` : `Step ${currentStep} / 6`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -339,63 +340,6 @@ export default function BookPage() {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* 护照信息 */}
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    {language === 'zh' ? '护照信息' : 'Passport Information'}
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {language === 'zh' ? '护照签发国家' : 'Passport Country'}
-                      </label>
-                      <Select
-                        value={formData.passportCountry}
-                        onValueChange={(value) => setFormData({ ...formData, passportCountry: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={language === 'zh' ? '选择国家' : 'Select country'} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(['asia', 'europe', 'americas', 'oceania', 'africa'] as const).map((region) => {
-                            const regionCountries = COUNTRIES_BY_REGION[region];
-                            if (regionCountries.length === 0) return null;
-                            
-                            return (
-                              <div key={region}>
-                                <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
-                                  {language === 'zh' ? REGION_NAMES.zh[region] : REGION_NAMES.en[region]}
-                                </div>
-                                {regionCountries.map((country) => (
-                                  <SelectItem key={country.id} value={country.code}>
-                                    {language === 'zh' ? country.nameZh : country.nameEn} ({country.code})
-                                  </SelectItem>
-                                ))}
-                              </div>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {language === 'zh' ? '护照号码' : 'Passport Number'}
-                      </label>
-                      <Input
-                        placeholder={language === 'zh' ? '输入护照号码' : 'Enter passport number'}
-                        value={formData.passportNumber}
-                        onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
-                        className="uppercase"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        {language === 'zh' ? '请输入您的护照号码，用于预订和入境' : 'Please enter your passport number for booking and immigration'}
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -567,6 +511,59 @@ export default function BookPage() {
               </div>
             )}
 
+            {/* 步骤6: 护照信息 */}
+            {currentStep === 6 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '护照签发国家' : 'Passport Country'}
+                  </label>
+                  <Select
+                    value={formData.passportCountry}
+                    onValueChange={(value) => setFormData({ ...formData, passportCountry: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'zh' ? '选择国家' : 'Select country'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(['asia', 'europe', 'americas', 'oceania', 'africa'] as const).map((region) => {
+                        const regionCountries = COUNTRIES_BY_REGION[region];
+                        if (regionCountries.length === 0) return null;
+
+                        return (
+                          <div key={region}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                              {language === 'zh' ? REGION_NAMES.zh[region] : REGION_NAMES.en[region]}
+                            </div>
+                            {regionCountries.map((country) => (
+                              <SelectItem key={country.id} value={country.code}>
+                                {language === 'zh' ? country.nameZh : country.nameEn} ({country.code})
+                              </SelectItem>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '护照号码' : 'Passport Number'}
+                  </label>
+                  <Input
+                    placeholder={language === 'zh' ? '输入护照号码' : 'Enter passport number'}
+                    value={formData.passportNumber}
+                    onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                    className="uppercase"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'zh' ? '请输入您的护照号码，用于预订和入境' : 'Please enter your passport number for booking and immigration'}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* 导航按钮 */}
             <div className="flex justify-between pt-4 border-t">
               <Button
@@ -586,7 +583,7 @@ export default function BookPage() {
                     <span className="animate-spin mr-2">⏳</span>
                     {language === 'zh' ? '处理中...' : 'Processing...'}
                   </>
-                ) : currentStep === 5 ? (
+                ) : currentStep === 6 ? (
                   <>
                     {language === 'zh' ? '提交' : 'Submit'}
                     <ArrowRight className="h-4 w-4 ml-2" />

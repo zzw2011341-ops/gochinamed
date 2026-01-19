@@ -118,6 +118,13 @@ export default function PlanSelectionPage() {
                 } ${isRecommended && !isSelected ? 'border-blue-300 border-2' : ''}`}
                 onClick={() => handleSelectPlan(plan)}
               >
+                {isSelected && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <Badge className="bg-blue-600 text-white px-3 py-1.5 shadow-md">
+                      {language === 'zh' ? '已选择' : 'Selected'}
+                    </Badge>
+                  </div>
+                )}
                 {isRecommended && !isSelected && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                     <Badge className="bg-blue-600 text-white px-4 py-1 shadow-md">
@@ -219,12 +226,7 @@ export default function PlanSelectionPage() {
                     </ul>
                   </div>
 
-                  {/* Selection Indicator */}
-                  {isSelected && (
-                    <div className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-2 shadow-lg ring-4 ring-white">
-                      <Check className="h-5 w-5" />
-                    </div>
-                  )}
+
                 </CardContent>
               </Card>
             );
