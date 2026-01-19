@@ -153,7 +153,10 @@ export default function DoctorsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.doctors?.specialties || "Specialty"}
                 </label>
-                <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
+                <Select value={selectedSpecialty} onValueChange={(value) => {
+                  setSelectedSpecialty(value);
+                  fetchDoctors(searchKeyword, value, selectedLocation);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.doctors?.allSpecialties || "All Specialties"} />
                   </SelectTrigger>
@@ -171,7 +174,10 @@ export default function DoctorsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.search?.location || "Location"}
                 </label>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <Select value={selectedLocation} onValueChange={(value) => {
+                  setSelectedLocation(value);
+                  fetchDoctors(searchKeyword, selectedSpecialty, value);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.search?.cityPlaceholder || "Select City"} />
                   </SelectTrigger>

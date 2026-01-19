@@ -1,5 +1,5 @@
 import { getDb } from "coze-coding-dev-sdk";
-import { doctors } from "./shared/schema";
+import { doctors } from "/workspace/projects/src/storage/database/shared/schema";
 
 async function main() {
   const db = await getDb();
@@ -18,8 +18,9 @@ async function main() {
   console.log(`   Average: ${(fees.reduce((a, b) => a + b, 0) / fees.length).toFixed(2)}`);
   
   // 费用区间统计
-  const ranges: Record<string, number> = {
-    "0-200": 0,
+  const ranges = {
+    "0-100": 0,
+    "100-200": 0,
     "200-300": 0,
     "300-500": 0,
     "500-800": 0,
@@ -27,7 +28,8 @@ async function main() {
   };
   
   fees.forEach(f => {
-    if (f < 200) ranges["0-200"]++;
+    if (f < 100) ranges["0-100"]++;
+    else if (f < 200) ranges["100-200"]++;
     else if (f < 300) ranges["200-300"]++;
     else if (f < 500) ranges["300-500"]++;
     else if (f < 800) ranges["500-800"]++;
@@ -39,22 +41,16 @@ async function main() {
     console.log(`   ${range}: ${count} doctors (${(count/allDoctors.length*100).toFixed(1)}%)`);
   });
   
-  // 显示费用最高的和最低的医生
-  console.log(`\n💸 Highest Fee Doctors (Top 5):`);
-  allDoctors
-    .sort((a, b) => parseFloat(b.consultationFee || "0") - parseFloat(a.consultationFee || "0"))
-    .slice(0, 5)
-    .forEach((d, i) => {
-      console.log(`   ${i+1}. ${d.nameEn} - ¥${d.consultationFee} (${d.experienceYears} years)`);
-    });
+  // 检查城市筛选
+  console.log(`\n🏙️  City Distribution of first 50 doctors:`);
+  const cityCount: Record<string, number> = {};
+  allDoctors.slice(0, 50).forEach(d => {
+    cityCount[d.cityId || "null"] = (cityCount[d.cityId || "null"] || 0) + 1;
+  });
   
-  console.log(`\n💰 Lowest Fee Doctors (Top 5):`);
-  allDoctors
-    .sort((a, b) => parseFloat(a.consultationFee || "0") - parseFloat(b.consultationFee || "0"))
-    .slice(0, 5)
-    .forEach((d, i) => {
-      console.log(`   ${i+1}. ${d.nameEn} - ¥${d.consultationFee} (${d.experienceYears} years)`);
-    });
+  Object.entries(cityCount).forEach(([city, count]) => {
+    console.log(`   ${city}: ${count}`);
+  });
 }
 
 main().catch(console.error);

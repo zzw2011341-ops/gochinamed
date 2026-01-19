@@ -165,7 +165,10 @@ export default function HospitalsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.hospitals?.level || "Hospital Level"}
                 </label>
-                <Select value={selectedLevel} onValueChange={setSelectedLevel}>
+                <Select value={selectedLevel} onValueChange={(value) => {
+                  setSelectedLevel(value);
+                  fetchHospitals(searchKeyword, value, selectedLocation);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.hospitals?.allLevels || "All Levels"} />
                   </SelectTrigger>
@@ -183,7 +186,10 @@ export default function HospitalsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.search?.location || "Location"}
                 </label>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                <Select value={selectedLocation} onValueChange={(value) => {
+                  setSelectedLocation(value);
+                  fetchHospitals(searchKeyword, selectedLevel, value);
+                }}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.search?.cityPlaceholder || "Select City"} />
                   </SelectTrigger>

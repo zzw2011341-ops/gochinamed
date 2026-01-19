@@ -88,6 +88,30 @@ function generateAllNameCombinations(count: number) {
   return combinations.slice(0, count);
 }
 
+// 根据职称和经验计算合理的咨询费
+function calculateConsultationFee(title: string, experienceYears: number): number {
+  let baseFee = 0;
+  
+  if (title.includes("Professor")) {
+    // 教授级：500-800元
+    baseFee = 500 + Math.floor(Math.random() * 300);
+  } else if (title.includes("Chief Physician")) {
+    // 主任医师：300-500元
+    baseFee = 300 + Math.floor(Math.random() * 200);
+  } else if (title.includes("Associate Chief")) {
+    // 副主任医师：200-300元
+    baseFee = 200 + Math.floor(Math.random() * 100);
+  } else {
+    // 其他：100-200元
+    baseFee = 100 + Math.floor(Math.random() * 100);
+  }
+  
+  // 经验年限微调：每超过10年增加10-20元
+  const experienceBonus = Math.max(0, experienceYears - 20) * 2;
+  
+  return Math.floor(baseFee + experienceBonus + Math.random() * 20);
+}
+
 async function seedRealDoctors() {
   try {
     console.log("🏥 Connecting to database...");
@@ -178,8 +202,8 @@ async function seedRealDoctors() {
           experienceYears = 20 + Math.floor(Math.random() * 11);
         }
         
-        // 咨询费用：经验越多费用越高
-        const consultationFee = Math.floor(500 + experienceYears * 15 + Math.random() * 100).toString();
+        // 咨询费用：根据职称和经验合理定价
+        const consultationFee = calculateConsultationFee(title, experienceYears);
         
         const doctorId = uuidv4();
         doctorsToInsert.push({
@@ -195,7 +219,7 @@ async function seedRealDoctors() {
           descriptionEn: `${title} specializing in ${doctorSpecialties.join(" and ")} with ${experienceYears} years of clinical experience.`,
           descriptionZh: `${title}，专长${doctorSpecialties.map((s: string) => specialtyTranslations[s] || s).join("和")}，拥有${experienceYears}年临床经验。`,
           experienceYears: experienceYears,
-          consultationFee: consultationFee,
+          consultationFee: consultationFee.toString(),
           imageUrl: null,
           isFeatured: doctorsToInsert.length < 50, // 前50个设为特色医生
           isActive: true,
@@ -221,6 +245,12 @@ async function seedRealDoctors() {
     } else {
       console.log(`   ✅ All doctor names are unique!`);
     }
+
+    // 统计费用分布
+    const fees = doctorsToInsert.map(d => parseFloat(d.consultationFee || "0"));
+    fees.sort((a, b) => a - b);
+    
+    console.log(`   💰 Fee Range: ¥${fees[0]} - ¥${fees[fees.length - 1]} (Average: ¥${(fees.reduce((a, b) => a + b, 0) / fees.length).toFixed(2)})`);
 
     // 批量插入医生
     const insertedDoctors = await db
@@ -252,12 +282,13 @@ async function seedRealDoctors() {
     console.log(`\n👨‍⚕️ Sample Doctors (Top 15):`);
     insertedDoctors.slice(0, 15).forEach((d, i) => {
       const hospital = allHospitals.find(h => h.id === d.hospitalId);
-      console.log(`   ${i + 1}. ${d.nameEn} - ${hospital?.nameEn}`);
+      console.log(`   ${i + 1}. ${d.nameEn} - ${hospital?.nameEn} (¥${d.consultationFee})`);
     });
 
     console.log("\n✨ Real doctors seeded successfully!");
     console.log("\n💡 All doctors have unique names and specializations.");
     console.log("💡 Each hospital has 2-3 doctors covering their specialties.");
+    console.log("💡 Consultation fees are now reasonable (¥100-¥800).");
   } catch (error) {
     console.error("❌ Failed to seed real doctors:", error);
     process.exit(1);
