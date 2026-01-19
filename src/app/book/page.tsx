@@ -43,6 +43,7 @@ export default function BookPage() {
     originCity: user?.originCity || "",
     destinationCity: user?.destinationCity || "",
     travelDate: "",
+    numberOfPeople: "1", // 新增：人数选择，默认1人
     selectedHospital: "",
     selectedDoctor: "",
     treatmentType: "",
@@ -315,6 +316,27 @@ export default function BookPage() {
                     onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '出行人数' : 'Number of Travelers'}
+                  </label>
+                  <Select
+                    value={formData.numberOfPeople}
+                    onValueChange={(value) => setFormData({ ...formData, numberOfPeople: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'zh' ? '选择人数' : 'Select number of travelers'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {language === 'zh' ? '人' : num === 1 ? 'person' : 'people'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
 
@@ -452,20 +474,33 @@ export default function BookPage() {
                   <CardHeader>
                     <CardTitle className="text-lg">
                       {language === 'zh' ? '预估费用' : 'Estimated Cost'}
+                      {formData.numberOfPeople && formData.numberOfPeople !== "1" && (
+                        <span className="text-sm font-normal text-gray-600 ml-2">
+                          ({formData.numberOfPeople} {language === 'zh' ? '人' : 'people'})
+                        </span>
+                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}:</span>
-                      <span className="font-medium">$500 - $2,000</span>
-                    </div>
+                    {/* 仅当选择了医生或医院时显示医疗费用 */}
+                    {formData.selectedHospital || formData.selectedDoctor ? (
+                      <div className="flex justify-between">
+                        <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}:</span>
+                        <span className="font-medium">$500 - $2,000</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-gray-400">
+                        <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}:</span>
+                        <span className="font-medium">{language === 'zh' ? '未选择医疗服务' : 'Not selected'}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>{language === 'zh' ? '酒店费用' : 'Hotel Fee'}:</span>
-                      <span className="font-medium">$100 - $300/night</span>
+                      <span className="font-medium">$100 - $300/night × {formData.numberOfPeople || 1}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{language === 'zh' ? '机票费用' : 'Flight Fee'}:</span>
-                      <span className="font-medium">$800 - $1,500</span>
+                      <span className="font-medium">$800 - $1,500 × {formData.numberOfPeople || 1}</span>
                     </div>
                   </CardContent>
                 </Card>
