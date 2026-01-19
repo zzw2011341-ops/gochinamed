@@ -7,7 +7,7 @@
  */
 
 import { getDb } from "coze-coding-dev-sdk";
-import { hospitals, doctors } from "./shared/schema";
+import { hospitals, doctors, cities } from "./shared/schema";
 import { v4 as uuidv4 } from "uuid";
 
 // ==================== 城市列表 ====================
@@ -968,16 +968,47 @@ async function seedComprehensiveMedicalData() {
     console.log("📋 Checking existing data...");
     const existingHospitals = await db.select().from(hospitals).limit(1);
     if (existingHospitals.length > 0) {
-      console.log("⚠️  Hospitals already exist. Clearing and reseeding...");
+      console.log("⚠️  Data already exists. Clearing and reseeding...");
       await db.delete(doctors);
       await db.delete(hospitals);
+      await db.delete(cities);
       console.log("✅ Cleared existing data");
     }
 
+    console.log(`🏙️  Creating ${CITIES.length} cities...`);
+    const insertedCities = await db
+      .insert(cities)
+      .values(CITIES.map(city => ({
+        id: city.id,
+        nameEn: city.nameEn,
+        nameZh: city.nameZh,
+        country: "China",
+        isFeatured: true,
+        isActive: true,
+      })))
+      .returning();
+    console.log(`✅ Created ${insertedCities.length} cities`);
+
+    // 创建城市 ID 到名称的映射，方便查找
+    const cityMap = new Map(insertedCities.map(city => [city.nameEn, city.id]));
+
     console.log(`🏥 Creating ${TOP_TIER_HOSPITALS.length} hospitals...`);
+    const hospitalsWithCityId = TOP_TIER_HOSPITALS.map(hospital => {
+      const cityId = cityMap.get(hospital.location);
+      if (!cityId) {
+        console.warn(`⚠️  No city found for location: ${hospital.location}`);
+      }
+      return {
+        ...hospital,
+        cityId: cityId || null,
+      };
+    });
+
+    // 只插入有匹配城市的医院
+    const validHospitals = hospitalsWithCityId.filter((h): h is typeof h & { cityId: string } => h.cityId !== null);
     const insertedHospitals = await db
       .insert(hospitals)
-      .values(TOP_TIER_HOSPITALS)
+      .values(validHospitals)
       .returning();
     console.log(`✅ Created ${insertedHospitals.length} hospitals`);
 
@@ -985,7 +1016,12 @@ async function seedComprehensiveMedicalData() {
     const allDoctors: any[] = [];
     insertedHospitals.forEach((hospital, index) => {
       const hospitalDoctors = generateTCMDoctors(hospital.id, hospital.location, index + 1);
-      allDoctors.push(...hospitalDoctors);
+      // 为每个医生添加 cityId
+      const doctorsWithCityId = hospitalDoctors.map(doctor => ({
+        ...doctor,
+        cityId: hospital.cityId,
+      }));
+      allDoctors.push(...doctorsWithCityId);
     });
 
     const insertedDoctors = await db
@@ -993,7 +1029,6 @@ async function seedComprehensiveMedicalData() {
       .values(allDoctors)
       .returning();
     console.log(`✅ Created ${insertedDoctors.length} doctors (${insertedDoctors.length / insertedHospitals.length} doctors per hospital on average)`);
-
     // Calculate statistics
     const locationStats: Record<string, number> = {};
     insertedHospitals.forEach(h => {

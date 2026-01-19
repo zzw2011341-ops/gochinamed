@@ -7,7 +7,15 @@
  */
 
 import { getDb } from "coze-coding-dev-sdk";
-import { hospitals, doctors } from "./shared/schema";
+import { hospitals, doctors, cities } from "./shared/schema";
+
+// 城市列表
+const CITIES = [
+  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京' },
+  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
+  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
+  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳' },
+];
 
 const SAMPLE_HOSPITALS = [
   // 北京
@@ -1218,13 +1226,41 @@ async function seedMedicalData() {
       console.log("⚠️  Hospitals already exist. Clearing and reseeding...");
       await db.delete(doctors);
       await db.delete(hospitals);
+      await db.delete(cities);
       console.log("✅ Cleared existing data");
     }
 
+    console.log(`🏙️  Creating ${CITIES.length} cities...`);
+    const insertedCities = await db
+      .insert(cities)
+      .values(CITIES.map(city => ({
+        id: city.id,
+        nameEn: city.nameEn,
+        nameZh: city.nameZh,
+        country: "China",
+        isFeatured: true,
+        isActive: true,
+      })))
+      .returning();
+    console.log(`✅ Created ${insertedCities.length} cities`);
+
+    // 创建城市 ID 到名称的映射，方便查找
+    const cityMap = new Map(insertedCities.map(city => [city.nameEn, city.id]));
+
     console.log(`🏥 Creating ${SAMPLE_HOSPITALS.length} hospitals...`);
+    const hospitalsWithCityId = SAMPLE_HOSPITALS.map(hospital => {
+      const cityId = cityMap.get(hospital.location);
+      return {
+        ...hospital,
+        cityId: cityId || null,
+      };
+    });
+
+    // 只插入有匹配城市的医院
+    const validHospitals = hospitalsWithCityId.filter((h): h is typeof h & { cityId: string } => h.cityId !== null);
     const insertedHospitals = await db
       .insert(hospitals)
-      .values(SAMPLE_HOSPITALS)
+      .values(validHospitals)
       .returning();
     console.log(`✅ Created ${insertedHospitals.length} hospitals`);
 
@@ -1235,6 +1271,7 @@ async function seedMedicalData() {
       return {
         ...doctor,
         hospitalId: insertedHospitals[hospitalIndex].id,
+        cityId: insertedHospitals[hospitalIndex].cityId,
       };
     });
 

@@ -8,6 +8,13 @@
       "when": 1768824339509,
       "tag": "0000_loose_richard_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768828229246,
+      "tag": "0001_narrow_shiva",
+      "breakpoints": true
     }
   ]
 }

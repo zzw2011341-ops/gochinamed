@@ -93,6 +93,7 @@ export class DoctorManager {
       .select({
         id: doctors.id,
         hospitalId: doctors.hospitalId,
+        cityId: doctors.cityId,
         nameEn: doctors.nameEn,
         nameZh: doctors.nameZh,
         title: doctors.title,

@@ -48,6 +48,33 @@ export const users = pgTable(
   })
 );
 
+// Cities Table
+export const cities = pgTable(
+  "cities",
+  {
+    id: varchar("id", { length: 50 }).primaryKey(), // e.g., 'beijing', 'shanghai'
+    nameEn: varchar("name_en", { length: 100 }).notNull(),
+    nameZh: varchar("name_zh", { length: 100 }).notNull(),
+    country: varchar("country", { length: 50 }).notNull().default("China"),
+    descriptionEn: text("description_en"),
+    descriptionZh: text("description_zh"),
+    latitude: decimal("latitude", { precision: 10, scale: 7 }),
+    longitude: decimal("longitude", { precision: 10, scale: 7 }),
+    isFeatured: boolean("is_featured").default(false).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    nameIdx: index("cities_name_idx").on(table.nameEn, table.nameZh),
+  })
+);
+
+export type City = typeof cities.$inferSelect;
+
 // Hospitals Table
 export const hospitals = pgTable(
   "hospitals",
@@ -55,6 +82,9 @@ export const hospitals = pgTable(
     id: varchar("id", { length: 36 })
       .primaryKey()
       .default(sql`gen_random_uuid()`),
+    cityId: varchar("city_id", { length: 50 })
+      .references(() => cities.id, { onDelete: "cascade" })
+      .notNull(),
     nameEn: varchar("name_en", { length: 255 }).notNull(),
     nameZh: varchar("name_zh", { length: 255 }),
     descriptionEn: text("description_en"),
@@ -75,6 +105,7 @@ export const hospitals = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => ({
+    cityIdIdx: index("hospitals_city_id_idx").on(table.cityId),
     locationIdx: index("hospitals_location_idx").on(table.location),
     levelIdx: index("hospitals_level_idx").on(table.level),
   })
@@ -89,6 +120,9 @@ export const doctors = pgTable(
       .default(sql`gen_random_uuid()`),
     hospitalId: varchar("hospital_id", { length: 36 })
       .references(() => hospitals.id, { onDelete: "cascade" })
+      .notNull(),
+    cityId: varchar("city_id", { length: 50 })
+      .references(() => cities.id, { onDelete: "cascade" })
       .notNull(),
     nameEn: varchar("name_en", { length: 128 }).notNull(),
     nameZh: varchar("name_zh", { length: 128 }),
@@ -111,6 +145,7 @@ export const doctors = pgTable(
   },
   (table) => ({
     hospitalIdIdx: index("doctors_hospital_id_idx").on(table.hospitalId),
+    cityIdIdx: index("doctors_city_id_idx").on(table.cityId),
   })
 );
 
@@ -673,6 +708,7 @@ export const updateUserSchema = createCoercedInsertSchema(users)
 
 // Hospital schemas
 export const insertHospitalSchema = createCoercedInsertSchema(hospitals).pick({
+  cityId: true,
   nameEn: true,
   nameZh: true,
   descriptionEn: true,
@@ -709,6 +745,7 @@ export const updateHospitalSchema = createCoercedInsertSchema(hospitals)
 // Doctor schemas
 export const insertDoctorSchema = createCoercedInsertSchema(doctors).pick({
   hospitalId: true,
+  cityId: true,
   nameEn: true,
   nameZh: true,
   title: true,
