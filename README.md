@@ -1,358 +1,216 @@
-# projects
+# GoChinaMed - Medical care in China, made easy.
 
-这是一个基于 [Next.js 16](https://nextjs.org) + [shadcn/ui](https://ui.shadcn.com) 的全栈应用项目，由扣子编程 CLI 创建。
+GoChinaMed 是一个智能医疗旅游平台，帮助国际患者访问中国顶级医疗服务。平台集成了 AI 智能体、多语言支持、医生/医院信息展示和行程规划功能。
 
-## 快速开始
+## 产品信息
 
-### 启动开发服务器
+- **产品名称**: GoChinaMed
+- **Slogan**: Medical care in China, made easy.
+- **出品方**: 山东和拾方信息科技有限公司
+- **核心商业模式**: 平台撮合 + 服务代订 + 5% 智能体/平台服务费
 
-```bash
-coze dev
-```
+## 技术栈
 
-启动后，在浏览器中打开 [http://localhost:5000](http://localhost:5000) 查看应用。
+- **框架**: Next.js 16 (App Router)
+- **语言**: TypeScript 5
+- **UI 组件**: shadcn/ui (基于 Radix UI)
+- **样式**: Tailwind CSS 4
+- **数据库**: PostgreSQL (Drizzle ORM)
+- **对象存储**: S3 兼容存储
+- **AI 模型**: 豆包大模型 (Doubao)
+- **语音服务**: 豆包语音 (TTS/ASR)
 
-开发服务器支持热更新，修改代码后页面会自动刷新。
+## 核心功能
 
-### 构建生产版本
+### 1. 多语言支持
+- 支持 EN/DE/FR/ZH 四种语言
+- 自动识别系统语言
+- 一键切换语言
 
-```bash
-coze build
-```
+### 2. 首页与发现
+- 名医名院展示
+- 瀑布流布局
+- 附近景点介绍（LBS）
+- Banner 广告位
 
-### 启动生产服务器
+### 3. AI 智能体管家
+- 语音输入支持（ASR）
+- 资料上传（MRI、CT、病历）
+- 智能对话与分析
+- 医疗+旅游方案生成
+- 流式输出（SSE）
 
-```bash
-coze start
-```
+### 4. 医疗检索
+- 按病种/医生/医院筛选
+- 医生/医院详情页
+- 手术方案介绍
+- 费用透明展示
+
+### 5. 行程与预订
+- 出行方案生成
+- 医生预约、导游、酒店、机票、高铁票
+- 代预订功能
+- 景点门票集成
+
+### 6. 支付与账单
+- 国际支付：Stripe/PayPal/VISA
+- 国内支付：微信支付/支付宝
+- 费用明细弹窗（医疗费、酒店费、机票费、服务费）
+- 服务费率可配置（默认5%）
+
+### 7. 社区功能
+- 患者沟通空间
+- 经验分享
+- 积分管理
+
+## 数据库表结构
+
+### 核心表
+- `users` - 用户表
+- `doctors` - 医生表
+- `hospitals` - 医院表
+- `diseases` - 病种表
+- `orders` - 订单表
+- `itineraries` - 行程表
+- `payments` - 支付记录表
+- `community_posts` - 社区帖子表
+- `comments` - 评论表
+- `likes` - 点赞表
+- `ai_conversations` - AI 对话记录表
+- `settings` - 系统设置表
+- `banners` - Banner 广告表
+- `attractions` - 旅游景点表
+- `medical_records` - 医疗记录表
 
 ## 项目结构
 
 ```
 src/
-├── app/                      # Next.js App Router 目录
-│   ├── layout.tsx           # 根布局组件
-│   ├── page.tsx             # 首页
-│   ├── globals.css          # 全局样式（包含 shadcn 主题变量）
-│   └── [route]/             # 其他路由页面
-├── components/              # React 组件目录
-│   └── ui/                  # shadcn/ui 基础组件（优先使用）
-│       ├── button.tsx
-│       ├── card.tsx
-│       └── ...
-├── lib/                     # 工具函数库
-│   └── utils.ts            # cn() 等工具函数
-└── hooks/                   # 自定义 React Hooks（可选）
+├── app/                    # Next.js App Router
+│   ├── api/               # API 路由
+│   │   ├── ai/           # AI 相关 API
+│   │   ├── doctors/      # 医生 API
+│   │   ├── hospitals/    # 医院 API
+│   │   └── upload/       # 文件上传 API
+│   ├── ai-assistant/     # AI 助手页面
+│   └── page.tsx          # 首页
+├── components/            # React 组件
+│   ├── layout/           # 布局组件
+│   └── ui/               # shadcn/ui 组件
+├── contexts/             # React Context
+│   └── LanguageContext   # 多语言上下文
+├── storage/              # 数据存储
+│   └── database/         # 数据库管理
+│       ├── shared/       # 共享 Schema
+│       └── *Manager.ts   # 数据访问层
+├── hooks/                # 自定义 Hooks
+├── lib/                  # 工具函数
+└── locales/              # 国际化文件
+    ├── en.json           # 英文
+    └── zh.json           # 中文
 ```
 
-## 核心开发规范
+## 快速开始
 
-### 1. 组件开发
+### 环境要求
+- Node.js 24
+- pnpm 9.0.0+
 
-**优先使用 shadcn/ui 基础组件**
-
-本项目已预装完整的 shadcn/ui 组件库，位于 `src/components/ui/` 目录。开发时应优先使用这些组件作为基础：
-
-```tsx
-// ✅ 推荐：使用 shadcn 基础组件
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-
-export default function MyComponent() {
-  return (
-    <Card>
-      <CardHeader>标题</CardHeader>
-      <CardContent>
-        <Input placeholder="输入内容" />
-        <Button>提交</Button>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-**可用的 shadcn 组件清单**
-
-- 表单：`button`, `input`, `textarea`, `select`, `checkbox`, `radio-group`, `switch`, `slider`
-- 布局：`card`, `separator`, `tabs`, `accordion`, `collapsible`, `scroll-area`
-- 反馈：`alert`, `alert-dialog`, `dialog`, `toast`, `sonner`, `progress`
-- 导航：`dropdown-menu`, `menubar`, `navigation-menu`, `context-menu`
-- 数据展示：`table`, `avatar`, `badge`, `hover-card`, `tooltip`, `popover`
-- 其他：`calendar`, `command`, `carousel`, `resizable`, `sidebar`
-
-详见 `src/components/ui/` 目录下的具体组件实现。
-
-### 2. 路由开发
-
-Next.js 使用文件系统路由，在 `src/app/` 目录下创建文件夹即可添加路由：
-
+### 安装依赖
 ```bash
-# 创建新路由 /about
-src/app/about/page.tsx
-
-# 创建动态路由 /posts/[id]
-src/app/posts/[id]/page.tsx
-
-# 创建路由组（不影响 URL）
-src/app/(marketing)/about/page.tsx
-
-# 创建 API 路由
-src/app/api/users/route.ts
-```
-
-**页面组件示例**
-
-```tsx
-// src/app/about/page.tsx
-import { Button } from '@/components/ui/button';
-
-export const metadata = {
-  title: '关于我们',
-  description: '关于页面描述',
-};
-
-export default function AboutPage() {
-  return (
-    <div>
-      <h1>关于我们</h1>
-      <Button>了解更多</Button>
-    </div>
-  );
-}
-```
-
-**动态路由示例**
-
-```tsx
-// src/app/posts/[id]/page.tsx
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
-  return <div>文章 ID: {id}</div>;
-}
-```
-
-**API 路由示例**
-
-```tsx
-// src/app/api/users/route.ts
-import { NextResponse } from 'next/server';
-
-export async function GET() {
-  return NextResponse.json({ users: [] });
-}
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  return NextResponse.json({ success: true });
-}
-```
-
-### 3. 依赖管理
-
-**必须使用 pnpm 管理依赖**
-
-```bash
-# ✅ 安装依赖
 pnpm install
-
-# ✅ 添加新依赖
-pnpm add package-name
-
-# ✅ 添加开发依赖
-pnpm add -D package-name
-
-# ❌ 禁止使用 npm 或 yarn
-# npm install  # 错误！
-# yarn add     # 错误！
 ```
 
-项目已配置 `preinstall` 脚本，使用其他包管理器会报错。
+### 开发环境
+```bash
+pnpm dev
+```
+访问 http://localhost:5000
 
-### 4. 样式开发
-
-**使用 Tailwind CSS v4**
-
-本项目使用 Tailwind CSS v4 进行样式开发，并已配置 shadcn 主题变量。
-
-```tsx
-// 使用 Tailwind 类名
-<div className="flex items-center gap-4 p-4 rounded-lg bg-background">
-  <Button className="bg-primary text-primary-foreground">
-    主要按钮
-  </Button>
-</div>
-
-// 使用 cn() 工具函数合并类名
-import { cn } from '@/lib/utils';
-
-<div className={cn(
-  "base-class",
-  condition && "conditional-class",
-  className
-)}>
-  内容
-</div>
+### 构建生产版本
+```bash
+pnpm build
 ```
 
-**主题变量**
-
-主题变量定义在 `src/app/globals.css` 中，支持亮色/暗色模式：
-
-- `--background`, `--foreground`
-- `--primary`, `--primary-foreground`
-- `--secondary`, `--secondary-foreground`
-- `--muted`, `--muted-foreground`
-- `--accent`, `--accent-foreground`
-- `--destructive`, `--destructive-foreground`
-- `--border`, `--input`, `--ring`
-
-### 5. 表单开发
-
-推荐使用 `react-hook-form` + `zod` 进行表单开发：
-
-```tsx
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-
-const formSchema = z.object({
-  username: z.string().min(2, '用户名至少 2 个字符'),
-  email: z.string().email('请输入有效的邮箱'),
-});
-
-export default function MyForm() {
-  const form = useForm({
-    resolver: zodResolver(formSchema),
-    defaultValues: { username: '', email: '' },
-  });
-
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-  };
-
-  return (
-    <form onSubmit={form.handleSubmit(onSubmit)}>
-      <Input {...form.register('username')} />
-      <Input {...form.register('email')} />
-      <Button type="submit">提交</Button>
-    </form>
-  );
-}
+### 启动生产环境
+```bash
+pnpm start
 ```
 
-### 6. 数据获取
+## 数据库操作
 
-**服务端组件（推荐）**
-
-```tsx
-// src/app/posts/page.tsx
-async function getPosts() {
-  const res = await fetch('https://api.example.com/posts', {
-    cache: 'no-store', // 或 'force-cache'
-  });
-  return res.json();
-}
-
-export default async function PostsPage() {
-  const posts = await getPosts();
-
-  return (
-    <div>
-      {posts.map(post => (
-        <div key={post.id}>{post.title}</div>
-      ))}
-    </div>
-  );
-}
+### 同步模型
+```bash
+coze-coding-ai db generate-models
 ```
 
-**客户端组件**
-
-```tsx
-'use client';
-
-import { useEffect, useState } from 'react';
-
-export default function ClientComponent() {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch('/api/data')
-      .then(res => res.json())
-      .then(setData);
-  }, []);
-
-  return <div>{JSON.stringify(data)}</div>;
-}
+### 更新数据库
+```bash
+coze-coding-ai db upgrade
 ```
 
-## 常见开发场景
+## API 端点
 
-### 添加新页面
+### 医生相关
+- `GET /api/doctors/featured` - 获取推荐医生
 
-1. 在 `src/app/` 下创建文件夹和 `page.tsx`
-2. 使用 shadcn 组件构建 UI
-3. 根据需要添加 `layout.tsx` 和 `loading.tsx`
+### 医院相关
+- `GET /api/hospitals/featured` - 获取推荐医院
 
-### 创建业务组件
+### AI 助手
+- `POST /api/ai/chat` - AI 对话（流式输出）
+- `GET /api/ai/chat` - 获取对话历史
 
-1. 在 `src/components/` 下创建组件文件（非 UI 组件）
-2. 优先组合使用 `src/components/ui/` 中的基础组件
-3. 使用 TypeScript 定义 Props 类型
+### 文件上传
+- `POST /api/upload` - 上传文件（医疗记录）
 
-### 添加全局状态
+## 集成服务
 
-推荐使用 React Context 或 Zustand：
+项目已集成以下服务：
 
-```tsx
-// src/lib/store.ts
-import { create } from 'zustand';
+1. **大语言模型** - 豆包大模型（Doubao）
+   - 支持多轮对话
+   - 流式输出
+   - 思考模式
 
-interface Store {
-  count: number;
-  increment: () => void;
-}
+2. **语音服务** - 豆包语音
+   - 语音识别（ASR）
+   - 语音合成（TTS）
 
-export const useStore = create<Store>((set) => ({
-  count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-}));
+3. **对象存储** - S3 兼容存储
+   - 文件上传
+   - 签名 URL 生成
+
+4. **数据库** - PostgreSQL
+   - Drizzle ORM
+   - 类型安全
+
+## 部署
+
+项目使用 Coze CLI 进行部署：
+
+```bash
+coze build
+coze start
 ```
 
-### 集成数据库
+## 贡献指南
 
-推荐使用 Prisma 或 Drizzle ORM，在 `src/lib/db.ts` 中配置。
+1. Fork 本仓库
+2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'feat: Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
 
-## 技术栈
+## 许可证
 
-- **框架**: Next.js 16.1.1 (App Router)
-- **UI 组件**: shadcn/ui (基于 Radix UI)
-- **样式**: Tailwind CSS v4
-- **表单**: React Hook Form + Zod
-- **图标**: Lucide React
-- **字体**: Geist Sans & Geist Mono
-- **包管理器**: pnpm 9+
-- **TypeScript**: 5.x
+本项目由山东和拾方信息科技有限公司开发并保留所有权利。
 
-## 参考文档
+## 联系方式
 
-- [Next.js 官方文档](https://nextjs.org/docs)
-- [shadcn/ui 组件文档](https://ui.shadcn.com)
-- [Tailwind CSS 文档](https://tailwindcss.com/docs)
-- [React Hook Form](https://react-hook-form.com)
+- 公司：山东和拾方信息科技有限公司
+- GitHub: https://github.com/zzw2011341-ops/gochinamed
 
-## 重要提示
+---
 
-1. **必须使用 pnpm** 作为包管理器
-2. **优先使用 shadcn/ui 组件** 而不是从零开发基础组件
-3. **遵循 Next.js App Router 规范**，正确区分服务端/客户端组件
-4. **使用 TypeScript** 进行类型安全开发
-5. **使用 `@/` 路径别名** 导入模块（已配置）
+**GoChinaMed - Medical care in China, made easy.**
