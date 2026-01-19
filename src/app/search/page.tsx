@@ -37,7 +37,10 @@ export default function SearchPage() {
     Object.entries(searchData).forEach(([key, value]) => {
       if (value) params.append(key, value);
     });
-    router.push(`/search/results?${params.toString()}&type=${searchType}`);
+
+    // Map search type to API type
+    const apiType = searchType === "medical" ? "all" : searchType;
+    router.push(`/search/results?${params.toString()}&type=${apiType}`);
   };
 
   const handleGeneratePlan = () => {

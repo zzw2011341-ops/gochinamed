@@ -115,6 +115,7 @@ export interface Translations {
   };
   doctors: {
     title: string;
+    subtitle: string;
     searchPlaceholder: string;
     filterBy: string;
     allSpecialties: string;
@@ -129,6 +130,7 @@ export interface Translations {
   };
   hospitals: {
     title: string;
+    subtitle: string;
     searchPlaceholder: string;
     level: string;
     allLevels: string;

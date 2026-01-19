@@ -114,6 +114,7 @@
   },
   "doctors": {
     "title": "查找医生",
+    "subtitle": "发现专治您病情的顶级医生",
     "searchPlaceholder": "按姓名或专业搜索...",
     "filterBy": "筛选条件",
     "allSpecialties": "所有专业",
@@ -128,6 +129,7 @@
   },
   "hospitals": {
     "title": "医院列表",
+    "subtitle": "为您的医疗需求寻找最佳医院",
     "searchPlaceholder": "搜索医院...",
     "level": "医院等级",
     "allLevels": "所有等级",

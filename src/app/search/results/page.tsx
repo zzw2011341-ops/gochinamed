@@ -31,18 +31,29 @@ export default function SearchResultsPage() {
         if (key !== "type") params.append(key, value);
       });
 
-      const endpoint =
-        searchType === "medical"
-          ? "/api/search/medical"
-          : searchType === "flights"
-          ? "/api/search/flights"
-          : "/api/search/hotels";
+      let endpoint: string;
+      if (searchType === "medical") {
+        endpoint = "/api/search/medical";
+        // Add type=all if not specified
+        if (!params.has("type")) {
+          params.append("type", "all");
+        }
+      } else if (searchType === "flights") {
+        endpoint = "/api/search/flights";
+      } else {
+        endpoint = "/api/search/hotels";
+      }
 
       const response = await fetch(`${endpoint}?${params.toString()}`);
+      if (!response.ok) {
+        setResults({});
+        return;
+      }
       const data = await response.json();
       setResults(data);
     } catch (error) {
       console.error("Search error:", error);
+      setResults({});
     } finally {
       setLoading(false);
     }
@@ -222,37 +233,65 @@ export default function SearchResultsPage() {
     if (!results) return null;
 
     if (type === "medical") {
+      const hospitals = results.hospitals?.hospitals || results.hospitals || [];
+      const doctors = results.doctors?.doctors || results.doctors || [];
+      const diseases = results.diseases?.diseases || results.diseases || [];
+
       return (
         <div className="space-y-6">
-          {results.hospitals && results.hospitals.hospitals && results.hospitals.hospitals.length > 0 && (
+          {hospitals.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
-                Hospitals ({results.hospitals.total || 0})
+                Hospitals ({results.hospitals?.total || hospitals.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.hospitals.hospitals.map(renderHospitalCard)}
+                {hospitals.map(renderHospitalCard)}
               </div>
             </div>
           )}
-          {results.doctors && results.doctors.doctors && results.doctors.doctors.length > 0 && (
+          {doctors.length > 0 && (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Stethoscope className="h-5 w-5" />
-                Doctors ({results.doctors.total || 0})
+                Doctors ({results.doctors?.total || doctors.length})
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {results.doctors.doctors.map(renderDoctorCard)}
+                {doctors.map(renderDoctorCard)}
               </div>
+            </div>
+          )}
+          {diseases.length > 0 && (
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <Stethoscope className="h-5 w-5" />
+                Diseases ({results.diseases?.total || diseases.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {diseases.map((disease: any) => (
+                  <div key={disease.id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900">{disease.nameEn}</h3>
+                    {disease.descriptionEn && (
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">{disease.descriptionEn}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {hospitals.length === 0 && doctors.length === 0 && diseases.length === 0 && (
+            <div className="text-center py-12 text-gray-600">
+              No results found. Try different search criteria.
             </div>
           )}
         </div>
       );
     } else if (type === "flights") {
+      const flights = results.flights || [];
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {results.flights && results.flights.length > 0 ? (
-            results.flights.map(renderFlightCard)
+          {flights.length > 0 ? (
+            flights.map(renderFlightCard)
           ) : (
             <div className="col-span-2 text-center py-8 text-gray-600">
               No flights found. Try different search criteria.
@@ -261,10 +300,11 @@ export default function SearchResultsPage() {
         </div>
       );
     } else if (type === "hotels") {
+      const hotels = results.hotels || [];
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {results.hotels && results.hotels.length > 0 ? (
-            results.hotels.map(renderHotelCard)
+          {hotels.length > 0 ? (
+            hotels.map(renderHotelCard)
           ) : (
             <div className="col-span-2 text-center py-8 text-gray-600">
               No hotels found. Try different search criteria.

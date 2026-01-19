@@ -114,6 +114,7 @@
   },
   "doctors": {
     "title": "Trouver un médecin",
+    "subtitle": "Découvrez des médecins de premier plan spécialisés dans votre condition",
     "searchPlaceholder": "Rechercher par nom ou spécialité...",
     "filterBy": "Filtrer par",
     "allSpecialties": "Toutes les spécialités",
@@ -128,6 +129,7 @@
   },
   "hospitals": {
     "title": "Hôpitaux",
+    "subtitle": "Trouvez les meilleurs hôpitaux pour vos besoins médicaux",
     "searchPlaceholder": "Rechercher des hôpitaux...",
     "level": "Niveau de l'hôpital",
     "allLevels": "Tous les niveaux",

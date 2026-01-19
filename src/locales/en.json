@@ -114,6 +114,7 @@
   },
   "doctors": {
     "title": "Find a Doctor",
+    "subtitle": "Discover top-rated doctors specializing in your condition",
     "searchPlaceholder": "Search by name or specialty...",
     "filterBy": "Filter By",
     "allSpecialties": "All Specialties",
@@ -128,6 +129,7 @@
   },
   "hospitals": {
     "title": "Hospitals",
+    "subtitle": "Find the best hospitals for your medical needs",
     "searchPlaceholder": "Search hospitals...",
     "level": "Hospital Level",
     "allLevels": "All Levels",

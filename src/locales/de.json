@@ -114,6 +114,7 @@
   },
   "doctors": {
     "title": "Einen Arzt finden",
+    "subtitle": "Entdecken Sie erstklassige Ärzte, die auf Ihren Zustand spezialisiert sind",
     "searchPlaceholder": "Nach Name oder Fachbereich suchen...",
     "filterBy": "Filtern nach",
     "allSpecialties": "Alle Fachbereiche",
@@ -128,6 +129,7 @@
   },
   "hospitals": {
     "title": "Krankenhäuser",
+    "subtitle": "Finden Sie die besten Krankenhäuser für Ihre medizinischen Bedürfnisse",
     "searchPlaceholder": "Krankenhäuser suchen...",
     "level": "Krankenhausstufe",
     "allLevels": "Alle Stufen",
