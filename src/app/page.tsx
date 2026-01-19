@@ -171,6 +171,22 @@ export default function HomePage() {
     setChatInput(question);
   };
 
+  const getDoctorName = (doctor: Doctor) => {
+    return language === 'zh' && doctor.nameZh ? doctor.nameZh : doctor.nameEn;
+  };
+
+  const getHospitalName = (hospital: Hospital) => {
+    return language === 'zh' && hospital.nameZh ? hospital.nameZh : hospital.nameEn;
+  };
+
+  const parseSpecialties = (specialtiesEn: string) => {
+    try {
+      return JSON.parse(specialtiesEn);
+    } catch {
+      return [specialtiesEn];
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
