@@ -140,7 +140,7 @@ export async function PUT(request: NextRequest) {
     const db = await getDb();
 
     // 如果设置为默认账户，先将同类型其他账户的默认状态设为false
-    if (validatedData.isDefault) {
+    if (validatedData.isDefault && validatedData.type) {
       await db
         .update(paymentAccounts)
         .set({ isDefault: false, updatedAt: new Date() })

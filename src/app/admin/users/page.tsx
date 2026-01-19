@@ -48,7 +48,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { AuthManager } from "@/storage/database/authManager";
 import type { User } from "@/storage/database/shared/schema";
 
 export default function AdminUsersPage() {
@@ -83,8 +82,14 @@ export default function AdminUsersPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const data = await AuthManager.getAllUsers({ limit: 100 });
-      setUsers(data);
+      const response = await fetch("/api/admin/users?limit=100");
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to load users");
+      }
+
+      setUsers(result.data);
     } catch (error) {
       console.error("Failed to load users:", error);
     } finally {
@@ -146,10 +151,21 @@ export default function AdminUsersPage() {
 
     try {
       setIsProcessing(true);
-      await AuthManager.setUserStatus(
-        actionDialog.userId,
-        actionDialog.action === "block"
-      );
+      const response = await fetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: actionDialog.userId,
+          isBlocked: actionDialog.action === "block",
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to update user status");
+      }
+
       await loadUsers();
       setActionDialog({ open: false, userId: "", userName: "", action: null });
     } catch (error) {

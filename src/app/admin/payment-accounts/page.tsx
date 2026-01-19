@@ -147,7 +147,6 @@ export default function PaymentAccountsPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: account.id,
           ...account,
           isActive: !account.isActive,
         }),

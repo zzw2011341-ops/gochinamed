@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     // 构建查询条件
     const conditions = [];
     if (status) {
-      conditions.push(eq(orders.status, status));
+      conditions.push(eq(orders.status, status as any));
     }
     if (userId) {
       conditions.push(eq(orders.userId, userId));
@@ -44,46 +44,61 @@ export async function GET(request: NextRequest) {
     // 查询订单
     let ordersList;
     if (conditions.length > 0) {
-      ordersList = await db.query.orders.findMany({
-        where: conditions.length === 1 ? conditions[0] : conditions.reduce((acc, cond) => acc && cond),
-        orderBy: [desc(orders.createdAt)],
-        limit,
-        offset,
-      });
+      ordersList = await db
+        .select()
+        .from(orders)
+        .where(conditions.length === 1 ? conditions[0] : and(...conditions))
+        .orderBy(desc(orders.createdAt))
+        .limit(limit)
+        .offset(offset);
     } else {
-      ordersList = await db.query.orders.findMany({
-        orderBy: [desc(orders.createdAt)],
-        limit,
-        offset,
-      });
+      ordersList = await db
+        .select()
+        .from(orders)
+        .orderBy(desc(orders.createdAt))
+        .limit(limit)
+        .offset(offset);
     }
 
     // 获取关联数据
     const enrichedOrders = await Promise.all(
       ordersList.map(async (order: any) => {
-        const user = await db.query.users.findFirst({
-          where: eq(users.id, order.userId),
-        });
+        const userList = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, order.userId))
+          .limit(1);
+        const user = userList[0];
 
-        const doctor = order.doctorId
-          ? await db.query.doctors.findFirst({
-              where: eq(doctors.id, order.doctorId),
-            })
-          : null;
+        let doctor = null;
+        if (order.doctorId) {
+          const doctorList = await db
+            .select()
+            .from(doctors)
+            .where(eq(doctors.id, order.doctorId))
+            .limit(1);
+          doctor = doctorList[0];
+        }
 
-        const hospital = order.hospitalId
-          ? await db.query.hospitals.findFirst({
-              where: eq(hospitals.id, order.hospitalId),
-            })
-          : null;
+        let hospital = null;
+        if (order.hospitalId) {
+          const hospitalList = await db
+            .select()
+            .from(hospitals)
+            .where(eq(hospitals.id, order.hospitalId))
+            .limit(1);
+          hospital = hospitalList[0];
+        }
 
-        const itinerariesList = await db.query.itineraries.findMany({
-          where: eq(itineraries.orderId, order.id),
-        });
+        const itinerariesList = await db
+          .select()
+          .from(itineraries)
+          .where(eq(itineraries.orderId, order.id));
 
-        const paymentsList = await db.query.payments.findMany({
-          where: eq(payments.orderId, order.id),
-        });
+        const paymentsList = await db
+          .select()
+          .from(payments)
+          .where(eq(payments.orderId, order.id));
 
         return {
           id: order.id,
