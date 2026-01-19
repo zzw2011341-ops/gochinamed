@@ -13,6 +13,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isExpanded?: boolean;
 }
 
 interface UploadedFile {
@@ -168,6 +169,83 @@ export default function AIAssistantPage() {
     alert(language === 'zh' ? '语音输入功能即将推出' : 'Voice input coming soon');
   };
 
+  const toggleMessageExpand = (index: number) => {
+    setMessages((prev) =>
+      prev.map((msg, idx) =>
+        idx === index ? { ...msg, isExpanded: !msg.isExpanded } : msg
+      )
+    );
+  };
+
+  const getMessageSummary = (content: string) => {
+    const plainText = content.replace(/\n/g, ' ');
+    if (plainText.length <= 150) return plainText;
+    return plainText.substring(0, 150) + '...';
+  };
+
+  const renderMessageContent = (msg: Message, idx: number) => {
+    const isLongMessage = msg.content.length > 150;
+    const shouldShowFull = msg.isExpanded || !isLongMessage;
+
+    return (
+      <div
+        className={`max-w-[85%] rounded-xl ${
+          msg.role === 'user'
+            ? 'bg-blue-600 text-white ml-auto'
+            : 'bg-white border border-gray-200 shadow-sm'
+        }`}
+      >
+        {/* Card Header */}
+        <div className="px-4 py-3 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {msg.role === 'assistant' && (
+                <div className="bg-blue-100 rounded-full p-1.5">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                </div>
+              )}
+              <span className="text-sm font-medium">
+                {msg.role === 'user'
+                  ? (language === 'zh' ? '我' : 'You')
+                  : (language === 'zh' ? 'AI助手' : 'AI Assistant')}
+              </span>
+            </div>
+            <span className="text-xs text-gray-500">
+              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        </div>
+
+        {/* Card Content */}
+        <div className="px-4 py-3">
+          <div className={`prose prose-sm ${msg.role === 'user' ? 'text-white' : 'text-gray-700'}`}>
+            {shouldShowFull ? (
+              <div className="whitespace-pre-wrap">{msg.content}</div>
+            ) : (
+              <div className="whitespace-pre-wrap">{getMessageSummary(msg.content)}</div>
+            )}
+          </div>
+
+          {/* Expand/Collapse Button */}
+          {isLongMessage && (
+            <button
+              onClick={() => toggleMessageExpand(idx)}
+              className={`mt-2 text-sm font-medium flex items-center gap-1 ${
+                msg.role === 'user'
+                  ? 'text-blue-200 hover:text-blue-100'
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
+            >
+              {msg.isExpanded
+                ? (language === 'zh' ? '收起' : 'Show less')
+                : (language === 'zh' ? '展开查看详情' : 'Show more')}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -209,22 +287,7 @@ export default function AIAssistantPage() {
                   key={idx}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-lg p-4 ${
-                      msg.role === 'user'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-900'
-                    }`}
-                  >
-                    {msg.content.split('\n').map((paragraph, i) => (
-                      <p key={i} className={i > 0 ? 'mt-2' : ''}>
-                        {paragraph}
-                      </p>
-                    ))}
-                    <span className="text-xs opacity-70 mt-2 block">
-                      {msg.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
+                  {renderMessageContent(msg, idx)}
                 </div>
               ))}
               {isLoading && (

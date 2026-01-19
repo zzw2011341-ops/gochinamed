@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setUser(data.user);
       } else {
+        // Clear user state if not authenticated
         setUser(null);
       }
     } catch (error) {
@@ -71,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     setUser(data.user);
+    // Refresh user to ensure state is synced
+    await refreshUser();
   };
 
   const register = async (data: RegisterData) => {
@@ -87,11 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const result = await response.json();
     setUser(result.user);
+    // Refresh user to ensure state is synced
+    await refreshUser();
   };
 
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    // Clear any cached user state
+    setLoading(false);
   };
 
   return (

@@ -90,16 +90,30 @@ export default function HomePage() {
             </p>
 
             {/* Search Bar */}
-            <div className="max-w-2xl mx-auto relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder={language === 'zh' ? '搜索医生、医院或病种...' : 'Search for doctors, hospitals, or diseases...'}
-                className="pl-12 py-6 text-lg rounded-full shadow-lg"
-              />
-              <Button className="absolute right-2 top-1/2 transform -translate-y-1/2 px-6">
-                {t('common.search')}
-              </Button>
+            <div className="max-w-3xl mx-auto">
+              <div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 px-4">
+                  <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                  <Input
+                    type="text"
+                    placeholder={language === 'zh' ? '出发城市' : 'From City'}
+                    className="border-0 focus-visible:ring-0 text-base"
+                  />
+                </div>
+                <div className="text-gray-400 font-semibold px-2">→</div>
+                <div className="flex items-center gap-2 flex-1 px-4">
+                  <MapPin className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <Input
+                    type="text"
+                    placeholder={language === 'zh' ? '目的城市' : 'To City'}
+                    className="border-0 focus-visible:ring-0 text-base"
+                  />
+                </div>
+                <Button className="px-8 py-6 rounded-full">
+                  <Search className="h-5 w-5 mr-2" />
+                  {t('common.search')}
+                </Button>
+              </div>
             </div>
 
             {/* Quick Links */}

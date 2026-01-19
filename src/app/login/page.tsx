@@ -41,11 +41,11 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      // Redirect based on user role
+      // Force page reload to ensure auth state is properly initialized
       if (data.user.role === "admin") {
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
-        router.push("/");
+        window.location.href = "/";
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

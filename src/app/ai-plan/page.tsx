@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Loader2, Download, FileText, History, Copy, Check } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Download, FileText, History, Copy, Check, MapPin, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,7 @@ export default function AIPlanPage() {
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState<Array<{ timestamp: number; plan: string; criteria: any }>>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -384,40 +385,80 @@ export default function AIPlanPage() {
                 )}
 
                 {plan ? (
-                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 mb-6">
-                      <TabsTrigger value="all">Full Plan</TabsTrigger>
-                      <TabsTrigger value="medical">Medical</TabsTrigger>
-                      <TabsTrigger value="travel">Travel</TabsTrigger>
-                      <TabsTrigger value="attraction">Attractions</TabsTrigger>
-                    </TabsList>
+                  <>
+                    {/* Quick Summary Card */}
+                    {!isExpanded && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-blue-900 mb-2">
+                              {language === 'zh' ? '方案摘要' : 'Plan Summary'}
+                            </h3>
+                            <div className="text-sm text-gray-700 space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Stethoscope className="h-4 w-4 text-blue-600" />
+                                <span>{language === 'zh' ? '医疗方案已生成' : 'Medical treatment plan generated'}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                                <span>{language === 'zh' ? `包含 ${formData.disease || '您的病情'} 相关信息` : `Includes info about ${formData.disease || 'your condition'}`}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-blue-600" />
+                                <span>{formData.preferredLocation || (language === 'zh' ? '中国主要城市' : 'Major cities in China')}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsExpanded(true)}
+                            className="ml-4"
+                          >
+                            {language === 'zh' ? '查看详情' : 'View Details'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
 
-                    <TabsContent value="all" className="prose max-w-none">
-                      <div
-                        dangerouslySetInnerHTML={{ __html: formatPlan(plan) }}
-                      />
-                    </TabsContent>
+                    {/* Full Plan */}
+                    {isExpanded && (
+                      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-4 mb-6">
+                          <TabsTrigger value="all">Full Plan</TabsTrigger>
+                          <TabsTrigger value="medical">Medical</TabsTrigger>
+                          <TabsTrigger value="travel">Travel</TabsTrigger>
+                          <TabsTrigger value="attraction">Attractions</TabsTrigger>
+                        </TabsList>
 
-                    <TabsContent value="medical" className="prose max-w-none">
-                      <div
-                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('MEDICAL') || extractSection('Medical') || extractSection('medical') || extractSection('医疗') || extractSection('🏥') || plan) }}
-                      />
-                    </TabsContent>
+                        <TabsContent value="all" className="prose max-w-none">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: formatPlan(plan) }}
+                          />
+                        </TabsContent>
 
-                    <TabsContent value="travel" className="prose max-w-none">
-                      <div
-                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('TRAVEL') || extractSection('Travel') || extractSection('travel') || extractSection('出行') || extractSection('✈️') || plan) }}
-                      />
-                    </TabsContent>
+                        <TabsContent value="medical" className="prose max-w-none">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('MEDICAL') || extractSection('Medical') || extractSection('medical') || extractSection('医疗') || extractSection('🏥') || plan) }}
+                          />
+                        </TabsContent>
 
-                    <TabsContent value="attraction" className="prose max-w-none">
-                      <div
-                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('SIGHTSEEING') || extractSection('Attraction') || extractSection('attraction') || extractSection('景点') || extractSection('🏞️') || plan) }}
-                      />
-                    </TabsContent>
+                        <TabsContent value="travel" className="prose max-w-none">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('TRAVEL') || extractSection('Travel') || extractSection('travel') || extractSection('出行') || extractSection('✈️') || plan) }}
+                          />
+                        </TabsContent>
 
-                    <div ref={messagesEndRef} />
-                  </Tabs>
+                        <TabsContent value="attraction" className="prose max-w-none">
+                          <div
+                            dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('SIGHTSEEING') || extractSection('Attraction') || extractSection('attraction') || extractSection('景点') || extractSection('🏞️') || plan) }}
+                          />
+                        </TabsContent>
+
+                        <div ref={messagesEndRef} />
+                      </Tabs>
+                    )}
+                  </>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-gray-500 py-12">
                     <Sparkles className="h-16 w-16 text-gray-300 mb-4" />
