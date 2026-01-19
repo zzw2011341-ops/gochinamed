@@ -178,7 +178,7 @@ export default function DoctorsPage() {
                   <SelectContent>
                     <SelectItem value="all">{t.search?.all || "All Cities"}</SelectItem>
                     {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.nameEn}>
+                      <SelectItem key={city.id} value={city.id}>
                         {language === 'zh' ? city.nameZh : city.nameEn}
                       </SelectItem>
                     ))}

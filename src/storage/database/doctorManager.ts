@@ -192,6 +192,11 @@ export class DoctorManager {
       conditions.push(eq(doctors.hospitalId, hospitalId));
     }
 
+    if (location) {
+      // 根据location参数筛选医生，location是城市的英文名称
+      conditions.push(eq(doctors.cityId, location));
+    }
+
     const whereClause = and(...conditions);
 
     const doctorsList = await db
