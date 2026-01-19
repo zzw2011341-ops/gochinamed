@@ -21,6 +21,7 @@ export interface Translations {
     contact: string;
     about: string;
     location: string;
+    saving: string;
   };
   nav: {
     home: string;
@@ -50,6 +51,7 @@ export interface Translations {
     hospitalLevel: string;
     selectLevel: string;
     search: string;
+    all: string;
     origin: string;
     destination: string;
     departureDate: string;
@@ -182,6 +184,7 @@ export interface Translations {
   };
   community: {
     title: string;
+    subtitle: string;
     shareExperience: string;
     newPost: string;
     postTitle: string;
@@ -191,6 +194,58 @@ export interface Translations {
     likes: string;
     comments: string;
     writeComment: string;
+    searchPlaceholder: string;
     noPosts: string;
+    noPostsDesc: string;
+    createFirstPost: string;
+  };
+  attractions: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    filterBy: string;
+    allCategories: string;
+    allCities: string;
+    viewDetails: string;
+    location: string;
+    category: string;
+    rating: string;
+    city: string;
+    price: string;
+    ticketPrice: string;
+    duration: string;
+    openingHours: string;
+    website: string;
+    distanceToHospital: string;
+    recommendedForPatients: string;
+    tips: string;
+    noTips: string;
+    visitorInfo: string;
+    accessibility: string;
+    accessibilityDesc: string;
+    noAccessibilityInfo: string;
+    addToItinerary: string;
+    noAttractionsFound: string;
+  };
+  profile: {
+    title: string;
+    subtitle: string;
+    points: string;
+    memberSince: string;
+    personalInfo: string;
+    personalInfoDesc: string;
+    name: string;
+    email: string;
+    phone: string;
+    passportNumber: string;
+    passportCountry: string;
+    preferredLanguage: string;
+    originCity: string;
+    destinationCity: string;
+    budget: string;
+    accountSettings: string;
+    changePassword: string;
+    notifications: string;
+    logout: string;
   };
 }

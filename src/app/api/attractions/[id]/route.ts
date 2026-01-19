@@ -15,8 +15,7 @@ export async function GET(
       );
     }
 
-    const manager = new AttractionManager();
-    const attraction = await manager.getAttractionById(attractionId);
+    const attraction = await AttractionManager.findById(attractionId);
 
     if (!attraction) {
       return NextResponse.json(

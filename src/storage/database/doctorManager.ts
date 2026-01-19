@@ -96,6 +96,7 @@ export class DoctorManager {
         nameEn: doctors.nameEn,
         nameZh: doctors.nameZh,
         title: doctors.title,
+        gender: doctors.gender,
         specialtiesEn: doctors.specialtiesEn,
         specialtiesZh: doctors.specialtiesZh,
         descriptionEn: doctors.descriptionEn,

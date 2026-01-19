@@ -221,7 +221,7 @@ export const attractions = pgTable(
     descriptionZh: text("description_zh"),
     category: varchar("category", { length: 100 }), // e.g., Cultural, Historical, Natural, Entertainment
     location: varchar("location", { length: 255 }).notNull(),
-    // city: varchar("city", { length: 100 }).notNull(), // Temporarily disabled - not in current DB schema
+    city: varchar("city", { length: 100 }).notNull(),
     latitude: decimal("latitude", { precision: 10, scale: 7 }),
     longitude: decimal("longitude", { precision: 10, scale: 7 }),
     imageUrl: text("image_url"),
@@ -245,7 +245,7 @@ export const attractions = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (table) => ({
-    // cityIdx: index("attractions_city_idx").on(table.city), // Temporarily disabled
+    cityIdx: index("attractions_city_idx").on(table.city),
     categoryIdx: index("attractions_category_idx").on(table.category),
     locationIdx: index("attractions_location_idx").on(table.location),
   })

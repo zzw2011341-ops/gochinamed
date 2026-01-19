@@ -55,15 +55,25 @@ export async function POST(request: NextRequest) {
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     // 获取中介费率
-    const medicalFeeConfig = await db.query.serviceFees.findFirst({
-      where: eq(serviceFees.type, 'medical'),
-    });
-    const flightFeeConfig = await db.query.serviceFees.findFirst({
-      where: eq(serviceFees.type, 'flight'),
-    });
-    const hotelFeeConfig = await db.query.serviceFees.findFirst({
-      where: eq(serviceFees.type, 'hotel'),
-    });
+    const medicalFeeConfigList = await db
+      .select()
+      .from(serviceFees)
+      .where(eq(serviceFees.type, 'medical'))
+      .limit(1);
+    const flightFeeConfigList = await db
+      .select()
+      .from(serviceFees)
+      .where(eq(serviceFees.type, 'flight'))
+      .limit(1);
+    const hotelFeeConfigList = await db
+      .select()
+      .from(serviceFees)
+      .where(eq(serviceFees.type, 'hotel'))
+      .limit(1);
+
+    const medicalFeeConfig = medicalFeeConfigList[0];
+    const flightFeeConfig = flightFeeConfigList[0];
+    const hotelFeeConfig = hotelFeeConfigList[0];
 
     const medicalRate = Number(medicalFeeConfig?.rate || 0.05);
     const flightRate = Number(flightFeeConfig?.rate || 0.03);

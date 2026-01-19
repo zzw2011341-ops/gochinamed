@@ -20,10 +20,13 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
 
     // 查询订单信息
-    const order = await db.query.orders.findFirst({
-      where: eq(orders.id, validatedData.orderId),
-    });
+    const orderList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, validatedData.orderId))
+      .limit(1);
 
+    const order = orderList[0];
     if (!order) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
@@ -32,10 +35,13 @@ export async function POST(request: NextRequest) {
     }
 
     // 查询医生信息
-    const doctor = await db.query.doctors.findFirst({
-      where: eq(doctors.id, validatedData.doctorId),
-    });
+    const doctorList = await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.id, validatedData.doctorId))
+      .limit(1);
 
+    const doctor = doctorList[0];
     if (!doctor) {
       return NextResponse.json(
         { success: false, error: 'Doctor not found' },

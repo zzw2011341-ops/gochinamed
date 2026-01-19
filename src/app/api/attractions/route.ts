@@ -9,20 +9,19 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get("featured");
     const limit = parseInt(searchParams.get("limit") || "20");
 
-    const manager = new AttractionManager();
-
     if (featured === "true") {
-      const attractions = await manager.getFeaturedAttractions(limit);
+      const attractions = await AttractionManager.getFeatured(limit);
       return NextResponse.json({ attractions });
     }
 
-    const attractions = await manager.search({
+    const result = await AttractionManager.search({
       city: city || undefined,
       category: category || undefined,
       limit,
+      offset: 0,
     });
 
-    return NextResponse.json({ attractions: attractions.attractions, total: attractions.total });
+    return NextResponse.json({ attractions: result.attractions, total: result.total });
   } catch (error) {
     console.error("Error fetching attractions:", error);
     return NextResponse.json(

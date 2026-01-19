@@ -69,6 +69,9 @@ export class OrderManager {
         hospitalId: orders.hospitalId,
         diseaseId: orders.diseaseId,
         status: orders.status,
+        doctorAppointmentStatus: orders.doctorAppointmentStatus,
+        doctorAppointmentDate: orders.doctorAppointmentDate,
+        serviceReservationStatus: orders.serviceReservationStatus,
         medicalFee: orders.medicalFee,
         hotelFee: orders.hotelFee,
         flightFee: orders.flightFee,
@@ -79,6 +82,8 @@ export class OrderManager {
         totalAmount: orders.totalAmount,
         currency: orders.currency,
         notes: orders.notes,
+        travelNotes: orders.travelNotes,
+        weatherForecast: orders.weatherForecast,
         createdAt: orders.createdAt,
         updatedAt: orders.updatedAt,
         user: {

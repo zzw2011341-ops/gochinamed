@@ -20,7 +20,8 @@
     "overview": "Übersicht",
     "contact": "Kontakt",
     "about": "Über",
-    "location": "Standort"
+    "location": "Standort",
+    "saving": "Speichern..."
   },
   "nav": {
     "home": "Startseite",
@@ -49,6 +50,7 @@
     "hospitalLevel": "Krankenhausstufe",
     "selectLevel": "Stufe auswählen",
     "search": "Suchen",
+    "all": "Alle",
     "origin": "Abflugort",
     "destination": "Zielort",
     "departureDate": "Abreisedatum",
@@ -76,6 +78,22 @@
     "generate": "Plan erstellen",
     "placeholder": "Füllen Sie das Formular aus und klicken Sie auf 'Plan erstellen', um Ihren personalisierten medizinischen Reiseplan zu erstellen"
   },
+  "home": {
+    "welcome": "Willkommen bei GoChinaMed",
+    "subtitle": "Ihr vertrauenswürdiger Partner für den Medizintourismus in China",
+    "featuredDoctors": "Ausgewählte Ärzte",
+    "featuredHospitals": "Ausgewählte Krankenhäuser",
+    "nearbyAttractions": "Sehenswürdigkeiten in der Nähe",
+    "whyChooseUs": "Warum uns wählen",
+    "professionalMedical": "Professionelle medizinische Versorgung",
+    "professionalMedicalDesc": "Zugriff auf die besten Krankenhäuser und erfahrenen Ärzte Chinas",
+    "affordablePrices": "Erschwingliche Preise",
+    "affordablePricesDesc": "Hochwertige medizinische Versorgung zu wettbewerbsfähigen Preisen",
+    "tourismExperience": "Tourismuserlebnis",
+    "tourismExperienceDesc": "Kombinieren Sie medizinische Behandlung mit Kulturtourismus",
+    "personalizedService": "Personalisierter Service",
+    "personalizedServiceDesc": "KI-gestützte personalisierte medizinische und Reiseplanung"
+  },
   "auth": {
     "loginTitle": "Anmelden",
     "registerTitle": "Konto erstellen",
@@ -99,22 +117,6 @@
     "invalidPassport": "Bitte geben Sie eine gültige Passnummer ein",
     "passwordMismatch": "Passwörter stimmen nicht überein",
     "termsRequired": "Sie müssen den Bedingungen zustimmen"
-  },
-  "home": {
-    "welcome": "Willkommen bei GoChinaMed",
-    "subtitle": "Ihr vertrauenswürdiger Partner für den Medizintourismus in China",
-    "featuredDoctors": "Ausgewählte Ärzte",
-    "featuredHospitals": "Ausgewählte Krankenhäuser",
-    "nearbyAttractions": "Sehenswürdigkeiten in der Nähe",
-    "whyChooseUs": "Warum uns wählen",
-    "professionalMedical": "Professionelle medizinische Versorgung",
-    "professionalMedicalDesc": "Zugriff auf die besten Krankenhäuser und erfahrenen Ärzte Chinas",
-    "affordablePrices": "Erschwingliche Preise",
-    "affordablePricesDesc": "Hochwertige medizinische Versorgung zu wettbewerbsfähigen Preisen",
-    "tourismExperience": "Tourismuserlebnis",
-    "tourismExperienceDesc": "Kombinieren Sie medizinische Behandlung mit Kulturtourismus",
-    "personalizedService": "Personalisierter Service",
-    "personalizedServiceDesc": "KI-gestützte personalisierte medizinische und Reiseplanung"
   },
   "doctors": {
     "title": "Einen Arzt finden",
@@ -181,6 +183,7 @@
   },
   "community": {
     "title": "Gemeinschaft",
+    "subtitle": "Verbinden Sie sich mit anderen Patienten und teilen Sie Ihre Medizintourismus-Erfahrungen",
     "shareExperience": "Teilen Sie Ihre Erfahrung",
     "newPost": "Neuer Beitrag",
     "postTitle": "Beitragstitel",
@@ -190,6 +193,58 @@
     "likes": "Gefällt mir",
     "comments": "Kommentare",
     "writeComment": "Schreiben Sie einen Kommentar...",
-    "noPosts": "Noch keine Beiträge. Seien Sie der Erste, der teilt!"
+    "searchPlaceholder": "Beiträge suchen...",
+    "noPosts": "Noch keine Beiträge",
+    "noPostsDesc": "Seien Sie der Erste, der seine Medizintourismus-Erfahrung teilt",
+    "createFirstPost": "Erstellen Sie Ihren ersten Beitrag"
+  },
+  "attractions": {
+    "title": "Sehenswürdigkeiten",
+    "subtitle": "Entdecken Sie Attraktionen und kulturelle Erlebnisse während Ihrer medizinischen Reise",
+    "searchPlaceholder": "Sehenswürdigkeiten suchen...",
+    "filterBy": "Filtern nach",
+    "allCategories": "Alle Kategorien",
+    "allCities": "Alle Städte",
+    "viewDetails": "Details anzeigen",
+    "location": "Standort",
+    "category": "Kategorie",
+    "rating": "Bewertung",
+    "city": "Stadt",
+    "price": "Preis",
+    "ticketPrice": "Ticketpreis",
+    "duration": "Dauer",
+    "openingHours": "Öffnungszeiten",
+    "website": "Website",
+    "distanceToHospital": "Entfernung zum Krankenhaus",
+    "recommendedForPatients": "Für Patienten empfohlen",
+    "tips": "Tipps für Besucher",
+    "noTips": "Keine Tipps verfügbar",
+    "visitorInfo": "Besucherinformationen",
+    "accessibility": "Barrierefreiheit",
+    "accessibilityDesc": "Verfügbare Funktionen für Besucher mit Behinderungen",
+    "noAccessibilityInfo": "Keine Barrierefreiheitsinformationen verfügbar",
+    "addToItinerary": "Zum Reiseplan hinzufügen",
+    "noAttractionsFound": "Keine Sehenswürdigkeiten gefunden"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "subtitle": "Verwalten Sie Ihr Konto und Ihre persönlichen Informationen",
+    "points": "Punkte",
+    "memberSince": "Mitglied seit",
+    "personalInfo": "Persönliche Informationen",
+    "personalInfoDesc": "Aktualisieren Sie Ihre persönlichen Daten unten",
+    "name": "Vollständiger Name",
+    "email": "E-Mail-Adresse",
+    "phone": "Telefonnummer",
+    "passportNumber": "Passnummer",
+    "passportCountry": "Passland",
+    "preferredLanguage": "Bevorzugte Sprache",
+    "originCity": "Abfahrtsstadt",
+    "destinationCity": "Zielstadt",
+    "budget": "Budget ($)",
+    "accountSettings": "Kontoeinstellungen",
+    "changePassword": "Passwort ändern",
+    "notifications": "Benachrichtigungen",
+    "logout": "Abmelden"
   }
 }

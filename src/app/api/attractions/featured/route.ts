@@ -6,8 +6,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    const manager = new AttractionManager();
-    const attractions = await manager.getFeaturedAttractions(limit);
+    const attractions = await AttractionManager.getFeatured(limit);
 
     return NextResponse.json({ attractions });
   } catch (error) {

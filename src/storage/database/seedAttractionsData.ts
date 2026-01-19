@@ -414,9 +414,14 @@ async function seedAttractions() {
     }
 
     console.log(`🎡 Creating ${SAMPLE_ATTRACTIONS.length} attractions...`);
+    // Add city field to each attraction (using location as city)
+    const attractionsWithCity = SAMPLE_ATTRACTIONS.map(a => ({
+      ...a,
+      city: a.location
+    }));
     const insertedAttractions = await db
       .insert(attractions)
-      .values(SAMPLE_ATTRACTIONS)
+      .values(attractionsWithCity)
       .returning();
     console.log(`✅ Created ${insertedAttractions.length} attractions`);
 

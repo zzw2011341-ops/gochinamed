@@ -20,9 +20,13 @@ export async function verifyAdmin(request: NextRequest) {
 
     const db = await getDb();
 
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-    });
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const user = result[0] || null;
 
     if (!user || (user.role !== 'admin' && user.role !== 'staff')) {
       return null;

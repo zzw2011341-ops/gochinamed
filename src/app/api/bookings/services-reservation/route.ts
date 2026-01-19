@@ -26,10 +26,13 @@ export async function POST(request: NextRequest) {
     const db = await getDb();
 
     // 查询订单信息
-    const order = await db.query.orders.findFirst({
-      where: eq(orders.id, validatedData.orderId),
-    });
+    const orderList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, validatedData.orderId))
+      .limit(1);
 
+    const order = orderList[0];
     if (!order) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
@@ -38,11 +41,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建服务预订记录
-    const reservationId = uuidv4();
     const now = new Date();
 
     const reservation = await db.insert(serviceReservations).values({
-      id: reservationId,
       orderId: validatedData.orderId,
       itineraryId: validatedData.itineraryId,
       type: validatedData.type,
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
       status: 'confirmed',
       reservationDate: now,
       confirmationDate: now,
-      price: validatedData.price,
+      price: validatedData.price.toString(),
       currency: validatedData.currency,
       details: validatedData.details,
       remarks: validatedData.remarks,
@@ -110,9 +111,10 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     // 查询订单的所有服务预订
-    const reservations = await db.query.serviceReservations.findMany({
-      where: eq(serviceReservations.orderId, orderId),
-    });
+    const reservations = await db
+      .select()
+      .from(serviceReservations)
+      .where(eq(serviceReservations.orderId, orderId));
 
     return NextResponse.json({
       success: true,

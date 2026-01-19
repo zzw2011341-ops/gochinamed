@@ -18,10 +18,13 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     // 查询订单详细信息
-    const order = await db.query.orders.findFirst({
-      where: eq(orders.id, orderId),
-    });
+    const orderList = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1);
 
+    const order = orderList[0];
     if (!order) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
@@ -30,35 +33,47 @@ export async function GET(request: NextRequest) {
     }
 
     // 查询用户信息
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, order.userId),
-    });
+    const userList = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, order.userId))
+      .limit(1);
+
+    const user = userList[0];
 
     // 查询医生信息
     let doctor = null;
     if (order.doctorId) {
-      doctor = await db.query.doctors.findFirst({
-        where: eq(doctors.id, order.doctorId),
-      });
+      const doctorList = await db
+        .select()
+        .from(doctors)
+        .where(eq(doctors.id, order.doctorId))
+        .limit(1);
+      doctor = doctorList[0];
     }
 
     // 查询医院信息
     let hospital = null;
     if (order.hospitalId) {
-      hospital = await db.query.hospitals.findFirst({
-        where: eq(hospitals.id, order.hospitalId),
-      });
+      const hospitalList = await db
+        .select()
+        .from(hospitals)
+        .where(eq(hospitals.id, order.hospitalId))
+        .limit(1);
+      hospital = hospitalList[0];
     }
 
     // 查询行程安排
-    const itineraryItems = await db.query.itineraries.findMany({
-      where: eq(itineraries.orderId, orderId),
-    });
+    const itineraryItems = await db
+      .select()
+      .from(itineraries)
+      .where(eq(itineraries.orderId, orderId));
 
     // 查询服务预订信息
-    const serviceReservationsData = await db.query.serviceReservations.findMany({
-      where: eq(serviceReservations.orderId, orderId),
-    });
+    const serviceReservationsData = await db
+      .select()
+      .from(serviceReservations)
+      .where(eq(serviceReservations.orderId, orderId));
 
     // 如果订单已预订且未获取过天气信息，则获取天气信息
     let weatherForecast = order.weatherForecast;
