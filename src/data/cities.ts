@@ -45,6 +45,18 @@ export const CHINA_CITIES: City[] = [
   { id: 'taipei', nameEn: 'Taipei', nameZh: '台北', region: 'china', airport: 'TPE' },
   { id: 'hongkong', nameEn: 'Hong Kong', nameZh: '香港', region: 'china', airport: 'HKG' },
   { id: 'macau', nameEn: 'Macau', nameZh: '澳门', region: 'china', airport: 'MFM' },
+
+  // 重要非省会城市
+  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳', region: 'china', airport: 'SZX' },
+  { id: 'qingdao', nameEn: 'Qingdao', nameZh: '青岛', region: 'china', airport: 'TAO' },
+  { id: 'dalian', nameEn: 'Dalian', nameZh: '大连', region: 'china', airport: 'DLC' },
+  { id: 'xiamen', nameEn: 'Xiamen', nameZh: '厦门', region: 'china', airport: 'XMN' },
+  { id: 'ningbo', nameEn: 'Ningbo', nameZh: '宁波', region: 'china', airport: 'NGB' },
+  { id: 'suzhou', nameEn: 'Suzhou', nameZh: '苏州', region: 'china', airport: 'SZV' },
+  { id: 'dongguan', nameEn: 'Dongguan', nameZh: '东莞', region: 'china', airport: 'SZX' },
+  { id: 'wuxi', nameEn: 'Wuxi', nameZh: '无锡', region: 'china', airport: 'WUX' },
+  { id: 'foshan', nameEn: 'Foshan', nameZh: '佛山', region: 'china', airport: 'FUO' },
+  { id: 'zhuhai', nameEn: 'Zhuhai', nameZh: '珠海', region: 'china', airport: 'ZUH' },
 ];
 
 // 国际城市 - 用于预订页面的出发城市选择
