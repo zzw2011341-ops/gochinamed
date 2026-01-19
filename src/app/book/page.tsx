@@ -120,7 +120,7 @@ export default function BookPage() {
   };
 
   const handleNext = () => {
-    // 步骤1验证：必填字段
+    // 步骤1验证：必填字段（出发城市、到达城市、日期、人数）
     if (currentStep === 1) {
       if (!formData.originCity) {
         alert(language === 'zh' ? '请选择出发城市' : 'Please select departure city');
@@ -140,24 +140,15 @@ export default function BookPage() {
       }
     }
 
-    // 步骤2验证：必选医院
-    if (currentStep === 2 && !formData.selectedHospital) {
-      alert(language === 'zh' ? '请选择医院' : 'Please select a hospital');
-      return;
+    // 步骤4验证：如果选择了医院或医生，则必须选择治疗类型
+    if (currentStep === 4) {
+      if ((formData.selectedHospital || formData.selectedDoctor) && !formData.treatmentType) {
+        alert(language === 'zh' ? '已选择医疗服务，请选择治疗类型' : 'Please select treatment type for medical services');
+        return;
+      }
     }
 
-    // 步骤3验证：必选医生
-    if (currentStep === 3 && !formData.selectedDoctor) {
-      alert(language === 'zh' ? '请选择医生' : 'Please select a doctor');
-      return;
-    }
-
-    // 步骤4验证：必选治疗类型
-    if (currentStep === 4 && !formData.treatmentType) {
-      alert(language === 'zh' ? '请选择治疗类型' : 'Please select treatment type');
-      return;
-    }
-
+    // 医院和医生是可选的，用于纯旅游场景
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     } else {
