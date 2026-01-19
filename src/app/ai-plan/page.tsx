@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Loader2, Send } from "lucide-react";
+import { ArrowLeft, Sparkles, Loader2, Download, FileText, History, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/locales";
 
@@ -27,6 +27,11 @@ export default function AIPlanPage() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState("");
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("medical");
+  const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState<Array<{ timestamp: number; plan: string; criteria: any }>>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -36,6 +41,80 @@ export default function AIPlanPage() {
   useEffect(() => {
     scrollToBottom();
   }, [plan]);
+
+  // Load history from localStorage
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('gochinamed_plan_history');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to parse history:', e);
+      }
+    }
+  }, []);
+
+  const saveToHistory = (planText: string, criteria: any) => {
+    const newHistoryItem = {
+      timestamp: Date.now(),
+      plan: planText,
+      criteria: { ...criteria },
+    };
+    const updatedHistory = [newHistoryItem, ...history].slice(0, 10); // Keep last 10 plans
+    setHistory(updatedHistory);
+    localStorage.setItem('gochinamed_plan_history', JSON.stringify(updatedHistory));
+  };
+
+  const loadFromHistory = (historyItem: any) => {
+    setPlan(historyItem.plan);
+    setFormData(historyItem.criteria);
+    setShowHistory(false);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(plan);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    const blob = new Blob([plan], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `medical-travel-plan-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const extractSection = (sectionTitle: string) => {
+    const lines = plan.split('\n');
+    const section: string[] = [];
+    let inSection = false;
+    let level = 0;
+
+    for (const line of lines) {
+      if (line.match(new RegExp(`^#+\\s*${sectionTitle}`, 'i'))) {
+        inSection = true;
+        const match = line.match(/^(#+)/);
+        level = match ? match[1].length : 2;
+        section.push(line);
+        continue;
+      }
+
+      if (inSection) {
+        const match = line.match(/^(#+)/);
+        if (match && match[1].length <= level) {
+          break;
+        }
+        section.push(line);
+      }
+    }
+
+    return section.join('\n');
+  };
 
   const handleGenerate = async () => {
     if (!formData.disease && !formData.symptoms) {
@@ -95,17 +174,34 @@ export default function AIPlanPage() {
     }
   };
 
+  // Save plan when generation completes
+  useEffect(() => {
+    if (plan && !loading && !error) {
+      saveToHistory(plan, formData);
+    }
+  }, [plan, loading]);
+
   const formatPlan = (text: string) => {
+    if (!text) return '';
+
     // Convert markdown-style headings to HTML
     let html = text
-      .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-6 mb-3 text-gray-900">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-gray-900">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-8 mb-4 text-gray-900">$1</h1>')
+      .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-6 mb-3 text-gray-900 border-b border-gray-200 pb-2">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-8 mb-4 text-gray-900 border-b border-gray-200 pb-2">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold mt-8 mb-4 text-gray-900 border-b border-gray-200 pb-2">$1</h1>')
       .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold text-gray-900">$1</strong>')
-      .replace(/\* (.*$)/gim, '<li class="ml-4 mb-2 text-gray-700">$1</li>')
-      .replace(/- (.*$)/gim, '<li class="ml-4 mb-2 text-gray-700">$1</li>')
+      .replace(/^- (.*$)/gim, '<li class="ml-6 mb-2 text-gray-700 list-disc">$1</li>')
+      .replace(/^\* (.*$)/gim, '<li class="ml-6 mb-2 text-gray-700 list-disc">$1</li>')
+      .replace(/^\d+\. (.*$)/gim, '<li class="ml-6 mb-2 text-gray-700 list-decimal">$1</li>')
+      .replace(/`([^`]+)`/gim, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+      .replace(/---/gim, '<hr class="my-6 border-gray-300">')
       .replace(/\n\n/gim, '</p><p class="mb-4 text-gray-700">')
       .replace(/\n/gim, '<br />');
+
+    // Wrap in paragraph if not starting with tag
+    if (!html.trim().startsWith('<')) {
+      html = `<p class="mb-4 text-gray-700">${html}</p>`;
+    }
 
     return html;
   };
@@ -123,9 +219,49 @@ export default function AIPlanPage() {
             <Sparkles className="h-5 w-5 text-purple-600" />
             AI Medical Travel Planner
           </h1>
-          <div className="w-20"></div>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setShowHistory(!showHistory)}>
+              <History className="h-4 w-4 mr-2" />
+              {showHistory ? 'Hide' : 'History'}
+            </Button>
+            <div className="w-4"></div>
+          </div>
         </div>
       </div>
+
+      {/* History Panel */}
+      {showHistory && (
+        <div className="max-w-6xl mx-auto px-4 mb-4">
+          <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+            <h3 className="font-semibold text-gray-900 mb-3">Previous Plans</h3>
+            {history.length === 0 ? (
+              <p className="text-gray-500 text-sm">No plan history yet</p>
+            ) : (
+              <div className="space-y-2">
+                {history.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                    onClick={() => loadFromHistory(item)}
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900 text-sm">
+                        {item.criteria.disease || 'General Consultation'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(item.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -222,28 +358,78 @@ export default function AIPlanPage() {
 
           {/* Plan Display Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 min-h-[600px]">
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
-                  {error}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[600px]">
+              {/* Plan Header with Actions */}
+              {plan && (
+                <div className="border-b border-gray-200 p-4 flex items-center justify-between">
+                  <h2 className="font-semibold text-gray-900">Your Medical Travel Plan</h2>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleCopy}>
+                      {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+                      {copied ? 'Copied!' : 'Copy'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleDownload}>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
                 </div>
               )}
 
-              {plan ? (
-                <div className="prose max-w-none">
-                  <div
-                    dangerouslySetInnerHTML={{ __html: formatPlan(plan) }}
-                  />
-                  <div ref={messagesEndRef} />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500 py-12">
-                  <Sparkles className="h-16 w-16 text-gray-300 mb-4" />
-                  <p className="text-lg">
-                    {t.aiPlan?.placeholder || "Fill out the form and click 'Generate Plan' to create your personalized medical travel plan"}
-                  </p>
-                </div>
-              )}
+              <div className="p-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                    {error}
+                  </div>
+                )}
+
+                {plan ? (
+                  <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 mb-6">
+                      <TabsTrigger value="all">Full Plan</TabsTrigger>
+                      <TabsTrigger value="medical">Medical</TabsTrigger>
+                      <TabsTrigger value="travel">Travel</TabsTrigger>
+                      <TabsTrigger value="attraction">Attractions</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="all" className="prose max-w-none">
+                      <div
+                        dangerouslySetInnerHTML={{ __html: formatPlan(plan) }}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="medical" className="prose max-w-none">
+                      <div
+                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('MEDICAL') || extractSection('Medical') || extractSection('medical') || extractSection('医疗') || extractSection('🏥') || plan) }}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="travel" className="prose max-w-none">
+                      <div
+                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('TRAVEL') || extractSection('Travel') || extractSection('travel') || extractSection('出行') || extractSection('✈️') || plan) }}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="attraction" className="prose max-w-none">
+                      <div
+                        dangerouslySetInnerHTML={{ __html: formatPlan(extractSection('SIGHTSEEING') || extractSection('Attraction') || extractSection('attraction') || extractSection('景点') || extractSection('🏞️') || plan) }}
+                      />
+                    </TabsContent>
+
+                    <div ref={messagesEndRef} />
+                  </Tabs>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-gray-500 py-12">
+                    <Sparkles className="h-16 w-16 text-gray-300 mb-4" />
+                    <p className="text-lg text-center">
+                      {t.aiPlan?.placeholder || "Fill out the form and click 'Generate Plan' to create your personalized medical travel plan"}
+                    </p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Your plan will include medical treatment options, travel arrangements, and local attractions
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

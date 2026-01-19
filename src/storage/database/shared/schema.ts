@@ -199,6 +199,51 @@ export const hotels = pgTable(
 
 export type Hotel = typeof hotels.$inferSelect;
 
+// Attractions Table
+export const attractions = pgTable(
+  "attractions",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    nameEn: varchar("name_en", { length: 255 }).notNull(),
+    nameZh: varchar("name_zh", { length: 255 }),
+    descriptionEn: text("description_en"),
+    descriptionZh: text("description_zh"),
+    category: varchar("category", { length: 100 }), // e.g., Cultural, Historical, Natural, Entertainment
+    location: varchar("location", { length: 255 }).notNull(),
+    city: varchar("city", { length: 100 }).notNull(),
+    latitude: decimal("latitude", { precision: 10, scale: 7 }),
+    longitude: decimal("longitude", { precision: 10, scale: 7 }),
+    imageUrl: text("image_url"),
+    website: text("website"),
+    openingHours: text("opening_hours"), // JSON string or text description
+    averageDuration: varchar("average_duration", { length: 50 }), // e.g., "2-3 hours"
+    ticketPrice: decimal("ticket_price", { precision: 10, scale: 2 }),
+    currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+    rating: decimal("rating", { precision: 3, scale: 2 }), // 1.0-5.0
+    isRecommendedForPatients: boolean("is_recommended_for_patients").default(false),
+    distanceToHospital: decimal("distance_to_hospital", { precision: 10, scale: 2 }), // km
+    tipsEn: text("tips_en"), // Tips for visitors
+    tipsZh: text("tips_zh"),
+    accessibilityFeatures: jsonb("accessibility_features"), // Array of features for disabled patients
+    isFeatured: boolean("is_featured").default(false).notNull(),
+    isActive: boolean("is_active").default(true).notNull(),
+    metadata: jsonb("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    cityIdx: index("attractions_city_idx").on(table.city),
+    categoryIdx: index("attractions_category_idx").on(table.category),
+    locationIdx: index("attractions_location_idx").on(table.location),
+  })
+);
+
+export type Attraction = typeof attractions.$inferSelect;
+
 // Medical Records Table
 export const medicalRecords = pgTable(
   "medical_records",
@@ -458,38 +503,6 @@ export const banners = pgTable(
   }
 );
 
-// Tourism Attractions Table
-export const attractions = pgTable(
-  "attractions",
-  {
-    id: varchar("id", { length: 36 })
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    nameEn: varchar("name_en", { length: 255 }).notNull(),
-    nameZh: varchar("name_zh", { length: 255 }),
-    descriptionEn: text("description_en"),
-    descriptionZh: text("description_zh"),
-    location: varchar("location", { length: 255 }).notNull(),
-    latitude: decimal("latitude", { precision: 10, scale: 7 }),
-    longitude: decimal("longitude", { precision: 10, scale: 7 }),
-    imageUrl: text("image_url"),
-    category: varchar("category", { length: 100 }), // scenic, cultural, entertainment
-    ticketPrice: decimal("ticket_price", { precision: 10, scale: 2 }),
-    openingHours: text("opening_hours"),
-    isRecommended: boolean("is_recommended").default(false).notNull(),
-    isActive: boolean("is_active").default(true).notNull(),
-    metadata: jsonb("metadata"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }),
-  },
-  (table) => ({
-    locationIdx: index("attractions_location_idx").on(table.location),
-    categoryIdx: index("attractions_category_idx").on(table.category),
-  })
-);
-
 // AI Conversation History Table
 export const aiConversations = pgTable(
   "ai_conversations",
@@ -706,7 +719,6 @@ export type Comment = typeof comments.$inferSelect;
 export type Like = typeof likes.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type Banner = typeof banners.$inferSelect;
-export type Attraction = typeof attractions.$inferSelect;
 export type AIConversation = typeof aiConversations.$inferSelect;
 
 
