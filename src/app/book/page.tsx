@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Check, Plane, Building2, Stethoscope, DollarSign, Calendar, MapPin } from "lucide-react";
 import { DEPARTURE_CITIES, DESTINATION_CITIES } from "@/data/cities";
+import { COUNTRIES, COUNTRIES_BY_REGION, REGION_NAMES } from "@/data/countries";
 
 interface Hospital {
   id: string;
@@ -43,7 +44,9 @@ export default function BookPage() {
     originCity: user?.originCity || "",
     destinationCity: user?.destinationCity || "",
     travelDate: "",
-    numberOfPeople: "1", // 新增：人数选择，默认1人
+    numberOfPeople: "1",
+    passportNumber: "",
+    passportCountry: "",
     selectedHospital: "",
     selectedDoctor: "",
     treatmentType: "",
@@ -336,6 +339,63 @@ export default function BookPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* 护照信息 */}
+                <div className="pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    {language === 'zh' ? '护照信息' : 'Passport Information'}
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {language === 'zh' ? '护照签发国家' : 'Passport Country'}
+                      </label>
+                      <Select
+                        value={formData.passportCountry}
+                        onValueChange={(value) => setFormData({ ...formData, passportCountry: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={language === 'zh' ? '选择国家' : 'Select country'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(['asia', 'europe', 'americas', 'oceania', 'africa'] as const).map((region) => {
+                            const regionCountries = COUNTRIES_BY_REGION[region];
+                            if (regionCountries.length === 0) return null;
+                            
+                            return (
+                              <div key={region}>
+                                <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                                  {language === 'zh' ? REGION_NAMES.zh[region] : REGION_NAMES.en[region]}
+                                </div>
+                                {regionCountries.map((country) => (
+                                  <SelectItem key={country.id} value={country.code}>
+                                    {language === 'zh' ? country.nameZh : country.nameEn} ({country.code})
+                                  </SelectItem>
+                                ))}
+                              </div>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {language === 'zh' ? '护照号码' : 'Passport Number'}
+                      </label>
+                      <Input
+                        placeholder={language === 'zh' ? '输入护照号码' : 'Enter passport number'}
+                        value={formData.passportNumber}
+                        onChange={(e) => setFormData({ ...formData, passportNumber: e.target.value })}
+                        className="uppercase"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {language === 'zh' ? '请输入您的护照号码，用于预订和入境' : 'Please enter your passport number for booking and immigration'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

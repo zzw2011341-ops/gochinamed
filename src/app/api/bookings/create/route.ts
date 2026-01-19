@@ -13,6 +13,8 @@ interface BookingRequest {
   destinationCity: string;
   travelDate: string;
   numberOfPeople?: string;
+  passportNumber?: string;
+  passportCountry?: string;
   selectedHospital?: string;
   selectedDoctor?: string;
   treatmentType: string;
@@ -44,6 +46,8 @@ export async function POST(request: NextRequest) {
       travelDate,
       selectedHospital = '',
       selectedDoctor = '',
+      passportNumber = '',
+      passportCountry = '',
       treatmentType,
       budget,
     } = body;
@@ -150,6 +154,8 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           destinationCity,
           travelDate,
           numberOfPeople: numberOfPeople.toString(),
+          passportNumber,
+          passportCountry,
           selectedHospital,
           selectedDoctor,
           treatmentType,
@@ -169,6 +175,8 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           destinationCity,
           travelDate,
           numberOfPeople: numberOfPeople.toString(),
+          passportNumber,
+          passportCountry,
           selectedHospital,
           selectedDoctor,
           treatmentType,
