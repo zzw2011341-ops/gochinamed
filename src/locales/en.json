@@ -16,7 +16,11 @@
     "all": "All",
     "filter": "Filter",
     "sort": "Sort",
-    "viewMore": "View More"
+    "viewMore": "View More",
+    "overview": "Overview",
+    "contact": "Contact",
+    "about": "About",
+    "location": "Location"
   },
   "nav": {
     "home": "Home",
@@ -124,7 +128,9 @@
     "bookAppointment": "Book Appointment",
     "viewProfile": "View Profile",
     "specialties": "Specialties",
+    "specialtiesDesc": "Areas of medical expertise",
     "about": "About",
+    "featuredDoctor": "Featured Doctor",
     "noDoctorsFound": "No doctors found"
   },
   "hospitals": {
@@ -136,7 +142,13 @@
     "viewDoctors": "View Doctors",
     "viewDetails": "View Details",
     "location": "Location",
-    "noHospitalsFound": "No hospitals found"
+    "bookAppointment": "Book Appointment",
+    "specialties": "Specialties",
+    "specialtiesDesc": "Medical departments and specialties available",
+    "featuredHospital": "Featured Hospital",
+    "hospitalLevel": "Hospital Level",
+    "noHospitalsFound": "No hospitals found",
+    "noDoctors": "No doctors available at this hospital"
   },
   "ai": {
     "title": "AI Medical Assistant",

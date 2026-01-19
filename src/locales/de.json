@@ -16,7 +16,11 @@
     "all": "Alle",
     "filter": "Filter",
     "sort": "Sortieren",
-    "viewMore": "Mehr anzeigen"
+    "viewMore": "Mehr anzeigen",
+    "overview": "Übersicht",
+    "contact": "Kontakt",
+    "about": "Über",
+    "location": "Standort"
   },
   "nav": {
     "home": "Startseite",
@@ -124,7 +128,9 @@
     "bookAppointment": "Termin vereinbaren",
     "viewProfile": "Profil anzeigen",
     "specialties": "Fachbereiche",
+    "specialtiesDesc": "Fachliche Expertise",
     "about": "Über",
+    "featuredDoctor": "Ausgewählter Arzt",
     "noDoctorsFound": "Keine Ärzte gefunden"
   },
   "hospitals": {
@@ -136,7 +142,13 @@
     "viewDoctors": "Ärzte anzeigen",
     "viewDetails": "Details anzeigen",
     "location": "Standort",
-    "noHospitalsFound": "Keine Krankenhäuser gefunden"
+    "bookAppointment": "Termin vereinbaren",
+    "specialties": "Fachbereiche",
+    "specialtiesDesc": "Medizinische Abteilungen und Fachbereiche",
+    "featuredHospital": "Ausgewähltes Krankenhaus",
+    "hospitalLevel": "Krankenhausstufe",
+    "noHospitalsFound": "Keine Krankenhäuser gefunden",
+    "noDoctors": "Keine Ärzte in diesem Krankenhaus verfügbar"
   },
   "ai": {
     "title": "KI-Medizinischer Assistent",

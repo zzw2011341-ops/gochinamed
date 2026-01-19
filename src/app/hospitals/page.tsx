@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Search, MapPin, Building2, Star, Award, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ interface Hospital {
 }
 
 export default function HospitalsPage() {
+  const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -176,7 +178,11 @@ export default function HospitalsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {hospitals.map((hospital) => (
-              <Card key={hospital.id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={hospital.id}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => router.push(`/hospitals/${hospital.id}`)}
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

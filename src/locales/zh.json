@@ -16,7 +16,11 @@
     "all": "全部",
     "filter": "筛选",
     "sort": "排序",
-    "viewMore": "查看更多"
+    "viewMore": "查看更多",
+    "overview": "概览",
+    "contact": "联系方式",
+    "about": "关于",
+    "location": "位置"
   },
   "nav": {
     "home": "首页",
@@ -124,7 +128,9 @@
     "bookAppointment": "预约挂号",
     "viewProfile": "查看详情",
     "specialties": "专业领域",
+    "specialtiesDesc": "医疗专长领域",
     "about": "关于医生",
+    "featuredDoctor": "精选医生",
     "noDoctorsFound": "未找到医生"
   },
   "hospitals": {
@@ -136,7 +142,13 @@
     "viewDoctors": "查看医生",
     "viewDetails": "查看详情",
     "location": "地址",
-    "noHospitalsFound": "未找到医院"
+    "bookAppointment": "预约挂号",
+    "specialties": "专业领域",
+    "specialtiesDesc": "医疗科室和专业",
+    "featuredHospital": "精选医院",
+    "hospitalLevel": "医院等级",
+    "noHospitalsFound": "未找到医院",
+    "noDoctors": "该医院暂无医生"
   },
   "ai": {
     "title": "AI 医疗助手",

@@ -68,7 +68,11 @@ export default function SearchResultsPage() {
   }
 
   const renderHospitalCard = (hospital: any) => (
-    <div key={hospital.id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div
+      key={hospital.id}
+      className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => router.push(`/hospitals/${hospital.id}`)}
+    >
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -98,7 +102,7 @@ export default function SearchResultsPage() {
         </div>
       )}
       <div className="flex justify-between items-center">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/hospitals/${hospital.id}`); }}>
           View Details
         </Button>
         <Button size="sm">Book Now</Button>
@@ -107,7 +111,11 @@ export default function SearchResultsPage() {
   );
 
   const renderDoctorCard = (doctor: any) => (
-    <div key={doctor.id} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div
+      key={doctor.id}
+      className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => router.push(`/doctors/${doctor.id}`)}
+    >
       <div className="flex items-start gap-4 mb-3">
         {doctor.imageUrl ? (
           <img src={doctor.imageUrl} alt={doctor.nameEn} className="w-16 h-16 rounded-full object-cover" />
@@ -141,7 +149,7 @@ export default function SearchResultsPage() {
         </p>
       )}
       <div className="flex justify-between items-center">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/doctors/${doctor.id}`); }}>
           View Details
         </Button>
         <Button size="sm">Book Now</Button>

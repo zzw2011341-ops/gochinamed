@@ -17,6 +17,10 @@ export interface Translations {
     filter: string;
     sort: string;
     viewMore: string;
+    overview: string;
+    contact: string;
+    about: string;
+    location: string;
   };
   nav: {
     home: string;
@@ -125,7 +129,9 @@ export interface Translations {
     bookAppointment: string;
     viewProfile: string;
     specialties: string;
+    specialtiesDesc: string;
     about: string;
+    featuredDoctor: string;
     noDoctorsFound: string;
   };
   hospitals: {
@@ -137,7 +143,13 @@ export interface Translations {
     viewDoctors: string;
     viewDetails: string;
     location: string;
+    bookAppointment: string;
+    specialties: string;
+    specialtiesDesc: string;
+    featuredHospital: string;
+    hospitalLevel: string;
     noHospitalsFound: string;
+    noDoctors: string;
   };
   ai: {
     title: string;

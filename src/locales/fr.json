@@ -16,7 +16,11 @@
     "all": "Tous",
     "filter": "Filtrer",
     "sort": "Trier",
-    "viewMore": "Voir plus"
+    "viewMore": "Voir plus",
+    "overview": "Aperçu",
+    "contact": "Contact",
+    "about": "À propos",
+    "location": "Emplacement"
   },
   "nav": {
     "home": "Accueil",
@@ -124,7 +128,9 @@
     "bookAppointment": "Prendre rendez-vous",
     "viewProfile": "Voir le profil",
     "specialties": "Spécialités",
+    "specialtiesDesc": "Domaines d'expertise médicale",
     "about": "À propos",
+    "featuredDoctor": "Médecin en vedette",
     "noDoctorsFound": "Aucun médecin trouvé"
   },
   "hospitals": {
@@ -136,7 +142,13 @@
     "viewDoctors": "Voir les médecins",
     "viewDetails": "Voir les détails",
     "location": "Emplacement",
-    "noHospitalsFound": "Aucun hôpital trouvé"
+    "bookAppointment": "Prendre rendez-vous",
+    "specialties": "Spécialités",
+    "specialtiesDesc": "Départements médicaux et spécialités disponibles",
+    "featuredHospital": "Hôpital en vedette",
+    "hospitalLevel": "Niveau de l'hôpital",
+    "noHospitalsFound": "Aucun hôpital trouvé",
+    "noDoctors": "Aucun médecin disponible dans cet hôpital"
   },
   "ai": {
     "title": "Assistant médical IA",
