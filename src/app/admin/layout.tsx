@@ -8,11 +8,9 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
-  Stethoscope,
-  Building2,
   ShoppingBag,
-  FileText,
-  Settings,
+  CreditCard,
+  Percent,
   LogOut,
   Menu,
   X,
@@ -54,11 +52,9 @@ export default function AdminLayout({
   const navigation = [
     { name: t.nav.admin || "Dashboard", href: "/admin", icon: LayoutDashboard },
     { name: "Users", href: "/admin/users", icon: Users },
-    { name: "Doctors", href: "/admin/doctors", icon: Stethoscope },
-    { name: "Hospitals", href: "/admin/hospitals", icon: Building2 },
     { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
-    { name: "Posts", href: "/admin/posts", icon: FileText },
-    { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Payment Accounts", href: "/admin/payment-accounts", icon: CreditCard },
+    { name: "Service Fees", href: "/admin/service-fees", icon: Percent },
   ];
 
   const handleLogout = async () => {

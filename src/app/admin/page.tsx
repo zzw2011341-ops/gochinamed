@@ -9,6 +9,8 @@ import {
   Building2,
   ShoppingBag,
   FileText,
+  CreditCard,
+  Percent,
   TrendingUp,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -154,25 +156,25 @@ export default function AdminDashboard() {
             <span className="text-sm font-medium text-gray-900">Manage Users</span>
           </Link>
           <Link
-            href="/admin/doctors"
-            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Stethoscope className="h-8 w-8 text-green-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Manage Doctors</span>
-          </Link>
-          <Link
-            href="/admin/hospitals"
-            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            <Building2 className="h-8 w-8 text-purple-600 mb-2" />
-            <span className="text-sm font-medium text-gray-900">Manage Hospitals</span>
-          </Link>
-          <Link
             href="/admin/orders"
             className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <ShoppingBag className="h-8 w-8 text-orange-600 mb-2" />
             <span className="text-sm font-medium text-gray-900">View Orders</span>
+          </Link>
+          <Link
+            href="/admin/payment-accounts"
+            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <CreditCard className="h-8 w-8 text-green-600 mb-2" />
+            <span className="text-sm font-medium text-gray-900">Payment Accounts</span>
+          </Link>
+          <Link
+            href="/admin/service-fees"
+            className="flex flex-col items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Percent className="h-8 w-8 text-purple-600 mb-2" />
+            <span className="text-sm font-medium text-gray-900">Service Fees</span>
           </Link>
         </div>
       </div>
