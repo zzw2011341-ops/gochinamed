@@ -173,7 +173,7 @@ export default function BookPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // 保存预订信息并跳转到我的行程页面
+      // 保存预订信息并获取可选方案
       const response = await fetch('/api/bookings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,14 +184,18 @@ export default function BookPage() {
       });
 
       if (response.ok) {
-        router.push('/my-trips');
+        const data = await response.json();
+        // 保存方案数据到sessionStorage
+        sessionStorage.setItem('bookingPlans', JSON.stringify(data));
+        // 跳转到方案选择页面
+        router.push('/book/plans');
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to create booking');
+        alert(errorData.error || 'Failed to generate plans');
       }
     } catch (error) {
-      console.error('Error creating booking:', error);
-      alert(language === 'zh' ? '预订失败，请重试' : 'Failed to create booking, please try again');
+      console.error('Error generating plans:', error);
+      alert(language === 'zh' ? '生成方案失败，请重试' : 'Failed to generate plans, please try again');
     } finally {
       setLoading(false);
     }
@@ -215,10 +219,10 @@ export default function BookPage() {
             {language === 'zh' ? '返回' : 'Back'}
           </Button>
           <h1 className="text-3xl font-bold">
-            {language === 'zh' ? '医疗旅游预订' : 'Medical Tourism Booking'}
+            {language === 'zh' ? '我要预订、预约' : 'Book Appointment'}
           </h1>
           <p className="text-gray-600 mt-2">
-            {language === 'zh' ? '按照以下步骤完成您的医疗旅游预订' : 'Complete your medical tourism booking'}
+            {language === 'zh' ? '按照以下步骤完成您的医疗旅游预订，选择最适合您的方案' : 'Complete your medical tourism booking and choose the best plan'}
           </p>
         </div>
       </div>
@@ -539,7 +543,7 @@ export default function BookPage() {
                   </>
                 ) : currentStep === 5 ? (
                   <>
-                    {language === 'zh' ? '提交预订' : 'Submit Booking'}
+                    {language === 'zh' ? '提交' : 'Submit'}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : (

@@ -14,6 +14,8 @@ interface User {
   originCity?: string | null;
   destinationCity?: string | null;
   budget?: number | null;
+  passportNumber?: string | null;
+  passportCountry?: string | null;
 }
 
 interface AuthContextType {
