@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot, Mic, MicOff, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 
 interface Doctor {
@@ -36,17 +36,41 @@ interface ChatMessage {
   currentPage?: number;  // 当前页码
 }
 
+// 城市列表
+const cities = [
+  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京' },
+  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
+  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
+  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳' },
+  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州' },
+  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都' },
+  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉' },
+  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京' },
+  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安' },
+  { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津' },
+];
+
 export default function HomePage() {
   const { t, language } = useLanguage();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Location State
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+
   // AI Chat State
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Voice Input State
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   // Example questions
   const exampleQuestions = language === 'zh' ? [
@@ -87,6 +111,15 @@ export default function HomePage() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Cleanup media recorder on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    };
+  }, [mediaRecorder]);
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -227,6 +260,73 @@ export default function HomePage() {
     setChatInput(question);
   };
 
+  // Voice Recording Functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const chunks: Blob[] = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        await transcribeAudio(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setAudioChunks(chunks);
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      alert(language === 'zh' ? '无法访问麦克风，请检查权限设置。' : 'Cannot access microphone. Please check permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const transcribeAudio = async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'voice-input.webm');
+
+      const response = await fetch('/api/voice/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Failed to transcribe audio');
+
+      const data = await response.json();
+      if (data.text) {
+        setChatInput(prev => prev + (prev ? ' ' : '') + data.text);
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+      alert(language === 'zh' ? '语音识别失败，请重试。' : 'Voice recognition failed. Please try again.');
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const getCityName = (cityId: string) => {
+    const city = cities.find(c => c.id === cityId);
+    if (!city) return '';
+    return language === 'zh' ? city.nameZh : city.nameEn;
+  };
+
   const getDoctorName = (doctor: Doctor) => {
     return language === 'zh' && doctor.nameZh ? doctor.nameZh : doctor.nameEn;
   };
@@ -257,6 +357,45 @@ export default function HomePage() {
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
               {t('home.subtitle')}
             </p>
+
+            {/* Location Selector */}
+            <div className="max-w-md mx-auto mb-8">
+              <div className="relative">
+                <button
+                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                  className="w-full flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3 text-left hover:bg-white/20 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-blue-200" />
+                    <span className="text-white">
+                      {selectedCity
+                        ? getCityName(selectedCity)
+                        : (language === 'zh' ? '选择城市' : 'Select City')}
+                    </span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-blue-200 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isCityDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      {cities.map((city) => (
+                        <button
+                          key={city.id}
+                          onClick={() => {
+                            setSelectedCity(city.id);
+                            setIsCityDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-3 text-gray-900 hover:bg-blue-50 rounded-md transition-colors"
+                        >
+                          {language === 'zh' ? city.nameZh : city.nameEn}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* AI Chat Assistant */}
             <div className="max-w-4xl mx-auto">
@@ -392,22 +531,58 @@ export default function HomePage() {
                   {/* Chat Input */}
                   <form onSubmit={handleChatSubmit}>
                     <div className="flex gap-2">
-                      <Input
-                        type="text"
-                        placeholder={language === 'zh' ? '输入您的问题...' : 'Type your question...'}
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        disabled={isChatLoading}
-                        className="bg-white/10 border-white/20 text-white placeholder:text-blue-100 focus-visible:ring-white"
-                      />
+                      <div className="relative flex-1">
+                        <Input
+                          type="text"
+                          placeholder={language === 'zh' ? '输入您的问题...' : 'Type your question...'}
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          disabled={isChatLoading || isRecording || isTranscribing}
+                          className="bg-white/10 border-white/20 text-white placeholder:text-blue-100 focus-visible:ring-white pr-24"
+                        />
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                          {/* Voice Input Button */}
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            onClick={isRecording ? stopRecording : startRecording}
+                            disabled={isChatLoading || isTranscribing}
+                            className={`h-8 w-8 ${
+                              isRecording
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : 'text-white/70 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            {isRecording ? (
+                              <MicOff className="h-4 w-4" />
+                            ) : (
+                              <Mic className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                       <Button
                         type="submit"
-                        disabled={!chatInput.trim() || isChatLoading}
+                        disabled={!chatInput.trim() || isChatLoading || isRecording || isTranscribing}
                         className="bg-white text-blue-600 hover:bg-blue-50 px-6"
                       >
-                        <Send className="h-4 w-4" />
+                        {isTranscribing ? (
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs">{language === 'zh' ? '识别中...' : 'Transcribing...'}</span>
+                          </div>
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                       </Button>
                     </div>
+                    {isRecording && (
+                      <div className="mt-2 flex items-center justify-center gap-2 text-sm text-white/80">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                        <span>{language === 'zh' ? '正在录音...' : 'Recording...'}</span>
+                      </div>
+                    )}
                   </form>
                 </CardContent>
               </Card>
