@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 interface Doctor {
@@ -29,11 +29,35 @@ interface Hospital {
   imageUrl?: string;
 }
 
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function HomePage() {
   const { t, language } = useLanguage();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // AI Chat State
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Example questions
+  const exampleQuestions = language === 'zh' ? [
+    '我想了解心脏手术的医生推荐',
+    '北京有哪些顶级医院？',
+    '癌症治疗需要多少预算？',
+    '医疗旅游签证怎么办理？'
+  ] : [
+    'I need recommendations for heart surgeons',
+    'What are the top hospitals in Beijing?',
+    'What is the budget for cancer treatment?',
+    'How do I apply for medical tourism visa?'
+  ];
 
   useEffect(() => {
     async function fetchData() {
@@ -58,20 +82,93 @@ export default function HomePage() {
     fetchData();
   }, []);
 
-  const getDoctorName = (doctor: Doctor) => {
-    return language === 'zh' && doctor.nameZh ? doctor.nameZh : doctor.nameEn;
-  };
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
 
-  const getHospitalName = (hospital: Hospital) => {
-    return language === 'zh' && hospital.nameZh ? hospital.nameZh : hospital.nameEn;
-  };
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
 
-  const parseSpecialties = (specialtiesEn: string) => {
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: chatInput.trim()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsChatLoading(true);
+
     try {
-      return JSON.parse(specialtiesEn);
-    } catch {
-      return [specialtiesEn];
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage.content,
+          userId: 'guest',
+          language
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get response');
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) throw new Error('No response body');
+
+      let assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: ''
+      };
+
+      setChatMessages(prev => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') break;
+
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.content) {
+                setChatMessages(prev =>
+                  prev.map((msg, idx) =>
+                    idx === prev.length - 1
+                      ? { ...msg, content: msg.content + parsed.content }
+                      : msg
+                  )
+                );
+              }
+            } catch (e) {
+              console.error('Error parsing SSE data:', e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: language === 'zh' ? '抱歉，我遇到了一些问题。请稍后再试。' : 'Sorry, I encountered an issue. Please try again later.'
+        }
+      ]);
+    } finally {
+      setIsChatLoading(false);
     }
+  };
+
+  const handleExampleQuestion = (question: string) => {
+    setChatInput(question);
   };
 
   return (
@@ -89,31 +186,126 @@ export default function HomePage() {
               {t('home.subtitle')}
             </p>
 
-            {/* Search Bar */}
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-white rounded-full shadow-lg p-2 flex items-center gap-2">
-                <div className="flex items-center gap-2 flex-1 px-4">
-                  <MapPin className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                  <Input
-                    type="text"
-                    placeholder={language === 'zh' ? '出发城市' : 'From City'}
-                    className="border-0 focus-visible:ring-0 text-base"
-                  />
-                </div>
-                <div className="text-gray-400 font-semibold px-2">→</div>
-                <div className="flex items-center gap-2 flex-1 px-4">
-                  <MapPin className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                  <Input
-                    type="text"
-                    placeholder={language === 'zh' ? '目的城市' : 'To City'}
-                    className="border-0 focus-visible:ring-0 text-base"
-                  />
-                </div>
-                <Button className="px-8 py-6 rounded-full">
-                  <Search className="h-5 w-5 mr-2" />
-                  {t('common.search')}
-                </Button>
-              </div>
+            {/* AI Chat Assistant */}
+            <div className="max-w-4xl mx-auto">
+              <Card className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardHeader className="border-b border-white/20 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/20 rounded-full p-2">
+                      <Sparkles className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <CardTitle className="text-white text-lg">
+                        {language === 'zh' ? 'AI 医疗助手' : 'AI Medical Assistant'}
+                      </CardTitle>
+                      <CardDescription className="text-blue-100 text-sm">
+                        {language === 'zh' ? '随时为您解答医疗和旅行问题' : 'Here to help with medical and travel questions'}
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-4">
+                  {/* Chat Messages */}
+                  {chatMessages.length > 0 && (
+                    <div className="space-y-4 mb-4 max-h-80 overflow-y-auto pr-2">
+                      {chatMessages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`flex items-start gap-2 max-w-[80%] ${
+                              msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                            }`}
+                          >
+                            <div className={`flex-shrink-0 rounded-full p-1.5 ${
+                              msg.role === 'user'
+                                ? 'bg-blue-500'
+                                : 'bg-white/20'
+                            }`}>
+                              {msg.role === 'user' ? (
+                                <User className="h-4 w-4 text-white" />
+                              ) : (
+                                <Bot className="h-4 w-4 text-white" />
+                              )}
+                            </div>
+                            <div
+                              className={`rounded-2xl px-4 py-3 ${
+                                msg.role === 'user'
+                                  ? 'bg-white text-gray-900'
+                                  : 'bg-white/10 text-white'
+                              }`}
+                            >
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                                {msg.content}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {isChatLoading && (
+                        <div className="flex justify-start">
+                          <div className="flex items-start gap-2">
+                            <div className="flex-shrink-0 bg-white/20 rounded-full p-1.5">
+                              <Bot className="h-4 w-4 text-white" />
+                            </div>
+                            <div className="bg-white/10 rounded-2xl px-4 py-3">
+                              <div className="flex space-x-2">
+                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" />
+                                <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-100" />
+                                <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-200" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+
+                  {/* Example Questions (show only when no messages) */}
+                  {chatMessages.length === 0 && (
+                    <div className="mb-4">
+                      <p className="text-blue-100 text-sm mb-3 text-center">
+                        {language === 'zh' ? '试试这些问题：' : 'Try these questions:'}
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {exampleQuestions.map((question, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleExampleQuestion(question)}
+                            className="text-left text-sm px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white"
+                          >
+                            {question}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Chat Input */}
+                  <form onSubmit={handleChatSubmit}>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder={language === 'zh' ? '输入您的问题...' : 'Type your question...'}
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        disabled={isChatLoading}
+                        className="bg-white/10 border-white/20 text-white placeholder:text-blue-100 focus-visible:ring-white"
+                      />
+                      <Button
+                        type="submit"
+                        disabled={!chatInput.trim() || isChatLoading}
+                        className="bg-white text-blue-600 hover:bg-blue-50 px-6"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Quick Links */}
