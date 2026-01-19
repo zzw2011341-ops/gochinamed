@@ -16,6 +16,7 @@ interface Doctor {
   nameEn: string;
   nameZh: string | null;
   title: string | null;
+  gender: string | null;
   specialtiesEn: string;
   specialtiesZh: string | null;
   descriptionEn: string | null;
@@ -203,9 +204,18 @@ export default function DoctorsPage() {
                       <CardDescription className="mt-1">
                         {doctor.title || "Physician"}
                       </CardDescription>
-                      {doctor.hospitalName && (
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-1">{doctor.hospitalName}</p>
-                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        {doctor.gender && (
+                          <Badge variant="outline" className="text-xs">
+                            {doctor.gender === 'male' ? (language === 'zh' ? '男' : 'Male') :
+                             doctor.gender === 'female' ? (language === 'zh' ? '女' : 'Female') :
+                             (language === 'zh' ? '其他' : 'Other')}
+                          </Badge>
+                        )}
+                        {doctor.hospitalName && (
+                          <p className="text-sm text-gray-600 line-clamp-1">{doctor.hospitalName}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardHeader>

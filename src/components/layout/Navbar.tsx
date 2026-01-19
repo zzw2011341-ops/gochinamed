@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu, Loader2, Search } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, MessageSquare, Plane, User, LayoutDashboard, LogOut, Menu, Loader2, Search, CalendarPlus } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
@@ -108,6 +108,13 @@ export function Navbar() {
               <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
             ) : user ? (
               <>
+                <Link href="/book">
+                  <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <CalendarPlus className="h-4 w-4 mr-2" />
+                    {language === 'zh' ? '我要预订' : 'Book Now'}
+                  </Button>
+                </Link>
+
                 <Link href="/my-trips">
                   <Button variant="ghost" size="sm">
                     <Plane className="h-4 w-4 mr-2" />

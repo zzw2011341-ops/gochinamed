@@ -9,6 +9,7 @@ export const languageEnum = pgEnum("language", ["en", "de", "fr", "zh"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "confirmed", "processing", "completed", "cancelled"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "paid", "failed", "refunded"]);
 export const postStatusEnum = pgEnum("post_status", ["draft", "published", "archived"]);
+export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 
 // Users Table
 export const users = pgTable(
@@ -28,6 +29,9 @@ export const users = pgTable(
     avatarUrl: text("avatar_url"),
     isBlocked: boolean("is_blocked").default(false).notNull(),
     points: integer("points").default(0).notNull(),
+    originCity: varchar("origin_city", { length: 100 }), // User's departure city mentioned in conversation
+    destinationCity: varchar("destination_city", { length: 100 }), // User's destination city mentioned in conversation
+    budget: decimal("budget", { precision: 10, scale: 2 }), // User's budget for medical travel
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -85,6 +89,7 @@ export const doctors = pgTable(
     nameEn: varchar("name_en", { length: 128 }).notNull(),
     nameZh: varchar("name_zh", { length: 128 }),
     title: varchar("title", { length: 100 }), // Professor, Associate Professor, etc.
+    gender: genderEnum("gender"), // male, female, other
     specialtiesEn: text("specialties_en").notNull(), // JSON array of specialties
     specialtiesZh: text("specialties_zh"),
     descriptionEn: text("description_en"),

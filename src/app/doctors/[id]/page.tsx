@@ -88,7 +88,16 @@ export default function DoctorDetailPage() {
                 {doctor.nameEn}
                 {doctor.nameZh && <span className="ml-2 text-2xl font-normal">({doctor.nameZh})</span>}
               </h1>
-              <p className="text-lg opacity-90 mb-3">{doctor.title || "Physician"}</p>
+              <p className="text-lg opacity-90 mb-2">{doctor.title || "Physician"}</p>
+              <div className="flex items-center gap-3 mb-2">
+                {doctor.gender && (
+                  <Badge variant="secondary" className="bg-white/20 hover:bg-white/30 border-white/30">
+                    {doctor.gender === 'male' ? (language === 'zh' ? '男医生' : 'Male Doctor') :
+                     doctor.gender === 'female' ? (language === 'zh' ? '女医生' : 'Female Doctor') :
+                     (language === 'zh' ? '医生' : 'Doctor')}
+                  </Badge>
+                )}
+              </div>
               {doctor.hospital && (
                 <div className="flex items-center gap-2 text-sm opacity-80">
                   <MapPin className="h-4 w-4" />
@@ -134,8 +143,8 @@ export default function DoctorDetailPage() {
                 {doctor.descriptionEn && (
                   <p className="text-gray-700 leading-relaxed">{doctor.descriptionEn}</p>
                 )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {doctor.experienceYears && (
                     <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg">
                       <Clock className="h-6 w-6 text-blue-600" />
@@ -147,7 +156,23 @@ export default function DoctorDetailPage() {
                       </div>
                     </div>
                   )}
-                  
+
+                  {doctor.gender && (
+                    <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                      <User className="h-6 w-6 text-green-600" />
+                      <div>
+                        <p className="text-xl font-bold text-green-700">
+                          {doctor.gender === 'male' ? (language === 'zh' ? '男' : 'Male') :
+                           doctor.gender === 'female' ? (language === 'zh' ? '女' : 'Female') :
+                           (language === 'zh' ? '其他' : 'Other')}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {language === "zh" ? "性别" : "Gender"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {doctor.hospital && (
                     <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg">
                       <Stethoscope className="h-6 w-6 text-purple-600" />
