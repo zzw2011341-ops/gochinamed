@@ -25,6 +25,20 @@ interface Hospital {
   doctorCount?: number;
 }
 
+// 城市列表
+const cities = [
+  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京' },
+  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
+  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
+  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳' },
+  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州' },
+  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都' },
+  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉' },
+  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京' },
+  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安' },
+  { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津' },
+];
+
 export default function HospitalsPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -34,7 +48,7 @@ export default function HospitalsPage() {
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("all");
 
   useEffect(() => {
     fetchHospitals();
@@ -47,7 +61,7 @@ export default function HospitalsPage() {
       params.append("type", "hospital");
       if (keyword) params.append("keyword", keyword);
       if (level && level !== "all") params.append("level", level);
-      if (location) params.append("location", location);
+      if (location && location !== "all") params.append("location", location);
       params.append("limit", "50");
 
       const response = await fetch(`/api/search/medical?${params.toString()}`);
@@ -145,12 +159,19 @@ export default function HospitalsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.search?.location || "Location"}
                 </label>
-                <Input
-                  placeholder="City..."
-                  value={selectedLocation}
-                  onChange={(e) => setSelectedLocation(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                />
+                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.search?.cityPlaceholder || "Select City"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.search?.all || "All Cities"}</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.nameEn}>
+                        {language === 'zh' ? city.nameZh : city.nameEn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex items-end">
                 <Button onClick={handleSearch} className="w-full" size="default">

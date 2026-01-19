@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot, Mic, MicOff, ChevronDown } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot, Mic, MicOff } from 'lucide-react';
 import Link from 'next/link';
 
 interface Doctor {
@@ -36,29 +36,11 @@ interface ChatMessage {
   currentPage?: number;  // 当前页码
 }
 
-// 城市列表
-const cities = [
-  { id: 'beijing', nameEn: 'Beijing', nameZh: '北京' },
-  { id: 'shanghai', nameEn: 'Shanghai', nameZh: '上海' },
-  { id: 'guangzhou', nameEn: 'Guangzhou', nameZh: '广州' },
-  { id: 'shenzhen', nameEn: 'Shenzhen', nameZh: '深圳' },
-  { id: 'hangzhou', nameEn: 'Hangzhou', nameZh: '杭州' },
-  { id: 'chengdu', nameEn: 'Chengdu', nameZh: '成都' },
-  { id: 'wuhan', nameEn: 'Wuhan', nameZh: '武汉' },
-  { id: 'nanjing', nameEn: 'Nanjing', nameZh: '南京' },
-  { id: 'xian', nameEn: 'Xi\'an', nameZh: '西安' },
-  { id: 'tianjin', nameEn: 'Tianjin', nameZh: '天津' },
-];
-
 export default function HomePage() {
   const { t, language } = useLanguage();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Location State
-  const [selectedCity, setSelectedCity] = useState<string>('');
-  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
 
   // AI Chat State
   const [chatInput, setChatInput] = useState('');
@@ -321,12 +303,6 @@ export default function HomePage() {
     }
   };
 
-  const getCityName = (cityId: string) => {
-    const city = cities.find(c => c.id === cityId);
-    if (!city) return '';
-    return language === 'zh' ? city.nameZh : city.nameEn;
-  };
-
   const getDoctorName = (doctor: Doctor) => {
     return language === 'zh' && doctor.nameZh ? doctor.nameZh : doctor.nameEn;
   };
@@ -357,45 +333,6 @@ export default function HomePage() {
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto">
               {t('home.subtitle')}
             </p>
-
-            {/* Location Selector */}
-            <div className="max-w-md mx-auto mb-8">
-              <div className="relative">
-                <button
-                  onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                  className="w-full flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg px-4 py-3 text-left hover:bg-white/20 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-blue-200" />
-                    <span className="text-white">
-                      {selectedCity
-                        ? getCityName(selectedCity)
-                        : (language === 'zh' ? '选择城市' : 'Select City')}
-                    </span>
-                  </div>
-                  <ChevronDown className={`h-5 w-5 text-blue-200 transition-transform ${isCityDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isCityDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
-                    <div className="p-2">
-                      {cities.map((city) => (
-                        <button
-                          key={city.id}
-                          onClick={() => {
-                            setSelectedCity(city.id);
-                            setIsCityDropdownOpen(false);
-                          }}
-                          className="w-full text-left px-4 py-3 text-gray-900 hover:bg-blue-50 rounded-md transition-colors"
-                        >
-                          {language === 'zh' ? city.nameZh : city.nameEn}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* AI Chat Assistant */}
             <div className="max-w-4xl mx-auto">
