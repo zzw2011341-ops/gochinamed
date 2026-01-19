@@ -33,7 +33,7 @@ export default function DoctorsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("");
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function DoctorsPage() {
       const params = new URLSearchParams();
       params.append("type", "doctor");
       if (keyword) params.append("keyword", keyword);
-      if (specialty) params.append("specialty", specialty);
+      if (specialty && specialty !== "all") params.append("specialty", specialty);
       if (location) params.append("location", location);
       params.append("limit", "50");
 
@@ -117,7 +117,7 @@ export default function DoctorsPage() {
                     <SelectValue placeholder={t.doctors?.allSpecialties || "All Specialties"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{t.doctors?.allSpecialties || "All Specialties"}</SelectItem>
+                    <SelectItem value="all">{t.doctors?.allSpecialties || "All Specialties"}</SelectItem>
                     {specialties.map((s) => (
                       <SelectItem key={s} value={s}>
                         {s.charAt(0).toUpperCase() + s.slice(1)}

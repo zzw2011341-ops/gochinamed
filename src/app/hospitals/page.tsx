@@ -31,7 +31,7 @@ export default function HospitalsPage() {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("");
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export default function HospitalsPage() {
       const params = new URLSearchParams();
       params.append("type", "hospital");
       if (keyword) params.append("keyword", keyword);
-      if (level) params.append("level", level);
+      if (level && level !== "all") params.append("level", level);
       if (location) params.append("location", location);
       params.append("limit", "50");
 
@@ -130,7 +130,7 @@ export default function HospitalsPage() {
                     <SelectValue placeholder={t.hospitals?.allLevels || "All Levels"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">{t.hospitals?.allLevels || "All Levels"}</SelectItem>
+                    <SelectItem value="all">{t.hospitals?.allLevels || "All Levels"}</SelectItem>
                     {hospitalLevels.map((level) => (
                       <SelectItem key={level.value} value={level.value}>
                         {level.label}
