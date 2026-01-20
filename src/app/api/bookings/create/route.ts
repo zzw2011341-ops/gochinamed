@@ -289,14 +289,13 @@ function generateDefaultPlans(
   const medicalFeeBase = medicalSurgeryFeeBase + medicineFeeBase + nursingFeeBase + nutritionFeeBase;
 
   // 同城旅行使用交通费用，不同城市使用机票费用
-  const transportationFee = isSameCity;
-  const budgetFlightFee = transportationFee ? 0 : 600 * numberOfPeople;
-  const standardFlightFee = transportationFee ? 0 : 900 * numberOfPeople;
-  const premiumFlightFee = transportationFee ? 0 : 1500 * numberOfPeople;
+  const budgetFlightFee = isSameCity ? 0 : 600 * numberOfPeople;
+  const standardFlightFee = isSameCity ? 0 : 900 * numberOfPeople;
+  const premiumFlightFee = isSameCity ? 0 : 1500 * numberOfPeople;
 
-  const budgetCarFee = transportationFee ? 80 * numberOfPeople : 50 * numberOfPeople;
-  const standardCarFee = transportationFee ? 120 * numberOfPeople : 80 * numberOfPeople;
-  const premiumCarFee = transportationFee ? 180 * numberOfPeople : 100 * numberOfPeople;
+  const budgetCarFee = isSameCity ? 80 * numberOfPeople : 50 * numberOfPeople;
+  const standardCarFee = isSameCity ? 120 * numberOfPeople : 80 * numberOfPeople;
+  const premiumCarFee = isSameCity ? 180 * numberOfPeople : 100 * numberOfPeople;
 
   const plans = [
     {
@@ -316,7 +315,7 @@ function generateDefaultPlans(
       totalAmount: 0, // 稍后计算
       highlights: [
         'Basic 3-star hotel accommodation',
-        transportationFee ? 'Local taxi transportation' : 'Economy class flights',
+        isSameCity ? 'Local taxi transportation' : 'Economy class flights',
         ...hasMedicalSelection ? ['Essential medical consultation'] : [],
         'Basic tourist attractions included',
         'Standard appointment booking'
@@ -324,7 +323,7 @@ function generateDefaultPlans(
       duration: '7 days 6 nights',
       hotelName: 'City Comfort Hotel',
       hotelStars: 3,
-      flightClass: transportationFee ? 'local-transportation' : 'economy'
+      flightClass: isSameCity ? 'local-transportation' : 'economy'
     },
     {
       id: 'standard',
@@ -343,7 +342,7 @@ function generateDefaultPlans(
       totalAmount: 0, // 稍后计算
       highlights: [
         '4-star hotel near hospital',
-        transportationFee ? 'Premium car service' : 'Standard class flights',
+        isSameCity ? 'Premium car service' : 'Standard class flights',
         ...hasMedicalSelection ? ['Comprehensive medical checkup'] : [],
         'Premium tourist attractions',
         '24/7 translation service',
@@ -352,7 +351,7 @@ function generateDefaultPlans(
       duration: '7 days 6 nights',
       hotelName: 'Grand Medical Hotel',
       hotelStars: 4,
-      flightClass: transportationFee ? 'premium-transport' : 'standard'
+      flightClass: isSameCity ? 'premium-transport' : 'standard'
     },
     {
       id: 'premium',
@@ -371,18 +370,18 @@ function generateDefaultPlans(
       totalAmount: 0, // 稍后计算
       highlights: [
         '5-star luxury hotel with wellness center',
-        transportationFee ? 'VIP private car service' : 'Business class flights',
+        isSameCity ? 'VIP private car service' : 'Business class flights',
         ...hasMedicalSelection ? ['Specialist consultation & treatment'] : [],
         'Exclusive tourist experiences',
         'Personal medical assistant',
-        transportationFee ? 'Chauffeur service available' : 'VIP airport service',
+        isSameCity ? 'Chauffeur service available' : 'VIP airport service',
         'Full medical insurance included',
         'VIP appointment booking'
       ],
       duration: '7 days 6 nights',
       hotelName: 'Royal Wellness Resort',
       hotelStars: 5,
-      flightClass: transportationFee ? 'vip-transport' : 'business'
+      flightClass: isSameCity ? 'vip-transport' : 'business'
     }
   ];
 
