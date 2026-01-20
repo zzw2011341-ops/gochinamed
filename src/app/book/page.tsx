@@ -118,7 +118,13 @@ export default function BookPage() {
 
   const fetchHospitals = async () => {
     try {
-      const response = await fetch(`/api/search/medical?type=hospital&location=${formData.destinationCity}&limit=20`);
+      // 根据城市名称查找城市ID
+      const cityInfo = [...DEPARTURE_CITIES, ...DESTINATION_CITIES].find(
+        city => city.nameEn === formData.destinationCity || city.nameZh === formData.destinationCity
+      );
+      const cityId = cityInfo?.id || formData.destinationCity;
+
+      const response = await fetch(`/api/search/medical?type=hospital&location=${cityId}&limit=20`);
       const data = await response.json();
       setHospitals(data.hospitals?.hospitals || data.hospitals || []);
     } catch (error) {
