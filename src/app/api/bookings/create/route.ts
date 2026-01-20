@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const isSameCity = originCity === destinationCity;
 
     // 判断是否有医疗服务需求（选择了医院、医生或治疗类型）
-    const hasMedicalSelection = selectedHospital || selectedDoctor || treatmentType;
+    const hasMedicalSelection = !!(selectedHospital || selectedDoctor || treatmentType);
     const numberOfPeople = parseInt(body.numberOfPeople || '1') || 1;
 
     // 获取天气和汇率数据（如果API已配置）
@@ -211,6 +211,9 @@ Return ONLY the JSON array with 3 options, no additional text.`;
         plans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
       }
 
+      // 清理和验证数据，确保所有必需字段都存在
+      plans = plans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople));
+
       return NextResponse.json({
         success: true,
         plans: plans,
@@ -236,7 +239,9 @@ Return ONLY the JSON array with 3 options, no additional text.`;
     } catch (aiError) {
       console.error('AI generation failed, using default plans:', aiError);
       // AI生成失败时使用默认方案
-      const defaultPlans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
+      let defaultPlans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
+      // 确保数据归一化
+      defaultPlans = defaultPlans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople));
       return NextResponse.json({
         success: true,
         plans: defaultPlans,
@@ -390,4 +395,84 @@ function generateDefaultPlans(
     ...plan,
     totalAmount: plan.hotelFee + plan.flightFee + plan.carFee + plan.ticketFee + plan.reservationFee + plan.medicalFee
   }));
+}
+
+// 归一化方案数据，确保所有必需字段都存在
+function normalizePlan(
+  plan: any,
+  isSameCity: boolean,
+  hasMedicalSelection: boolean,
+  numberOfPeople: number
+): PlanOption {
+  const defaultPlan = {
+    name: 'Standard Plan',
+    description: 'A comprehensive travel plan',
+    hotelFee: 1000 * numberOfPeople,
+    flightFee: isSameCity ? 0 : 800 * numberOfPeople,
+    carFee: isSameCity ? 100 * numberOfPeople : 60 * numberOfPeople,
+    ticketFee: 50 * numberOfPeople,
+    reservationFee: 100,
+    medicalSurgeryFee: hasMedicalSelection ? 3000 : 0,
+    medicineFee: hasMedicalSelection ? 200 : 0,
+    nursingFee: hasMedicalSelection ? 400 : 0,
+    nutritionFee: hasMedicalSelection ? 100 : 0,
+    medicalFee: hasMedicalSelection ? 3700 : 0,
+    totalAmount: 0,
+    highlights: ['Travel planning', 'Medical support', 'Translation service'],
+    duration: '7 days 6 nights',
+    hotelName: 'Comfort Hotel',
+    hotelStars: 4,
+    flightClass: isSameCity ? 'local-transportation' : 'economy'
+  };
+
+  const normalized: any = { ...defaultPlan };
+
+  // 保留 AI 生成的值，但确保所有字段都存在
+  if (plan.name) normalized.name = plan.name;
+  if (plan.description) normalized.description = plan.description;
+  if (plan.hotelFee !== undefined) normalized.hotelFee = Number(plan.hotelFee) || defaultPlan.hotelFee;
+  if (plan.flightFee !== undefined) normalized.flightFee = Number(plan.flightFee) || defaultPlan.flightFee;
+  if (plan.carFee !== undefined) normalized.carFee = Number(plan.carFee) || defaultPlan.carFee;
+  if (plan.ticketFee !== undefined) normalized.ticketFee = Number(plan.ticketFee) || defaultPlan.ticketFee;
+  if (plan.reservationFee !== undefined) normalized.reservationFee = Number(plan.reservationFee) || defaultPlan.reservationFee;
+  if (plan.medicalSurgeryFee !== undefined) normalized.medicalSurgeryFee = Number(plan.medicalSurgeryFee) || defaultPlan.medicalSurgeryFee;
+  if (plan.medicineFee !== undefined) normalized.medicineFee = Number(plan.medicineFee) || defaultPlan.medicineFee;
+  if (plan.nursingFee !== undefined) normalized.nursingFee = Number(plan.nursingFee) || defaultPlan.nursingFee;
+  if (plan.nutritionFee !== undefined) normalized.nutritionFee = Number(plan.nutritionFee) || defaultPlan.nutritionFee;
+  if (plan.medicalFee !== undefined) normalized.medicalFee = Number(plan.medicalFee) || defaultPlan.medicalFee;
+  if (plan.highlights && Array.isArray(plan.highlights)) normalized.highlights = plan.highlights;
+  if (plan.duration) normalized.duration = plan.duration;
+  if (plan.hotelName) normalized.hotelName = plan.hotelName;
+  if (plan.hotelStars !== undefined) normalized.hotelStars = Math.min(5, Math.max(1, Number(plan.hotelStars) || 4));
+  if (plan.flightClass) normalized.flightClass = plan.flightClass;
+
+  // 重新计算医疗费用（如果没有医疗服务，则所有医疗费用为0）
+  if (!hasMedicalSelection) {
+    normalized.medicalSurgeryFee = 0;
+    normalized.medicineFee = 0;
+    normalized.nursingFee = 0;
+    normalized.nutritionFee = 0;
+    normalized.medicalFee = 0;
+  }
+
+  // 重新计算医疗费用总和
+  normalized.medicalFee =
+    normalized.medicalSurgeryFee +
+    normalized.medicineFee +
+    normalized.nursingFee +
+    normalized.nutritionFee;
+
+  // 计算总价
+  normalized.totalAmount =
+    normalized.hotelFee +
+    normalized.flightFee +
+    normalized.carFee +
+    normalized.ticketFee +
+    normalized.reservationFee +
+    normalized.medicalFee;
+
+  // 确保 id 字段存在
+  normalized.id = plan.id || `plan-${Math.random().toString(36).substr(2, 9)}`;
+
+  return normalized as PlanOption;
 }

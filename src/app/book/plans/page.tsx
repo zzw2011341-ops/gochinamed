@@ -162,7 +162,7 @@ export default function PlanSelectionPage() {
                       {language === 'zh' ? '总价' : 'Total Price'}
                     </div>
                     <div className="text-3xl font-bold text-blue-600">
-                      ${plan.totalAmount.toLocaleString()}
+                      ${(plan.totalAmount || 0).toLocaleString()}
                     </div>
                   </div>
 
@@ -182,24 +182,24 @@ export default function PlanSelectionPage() {
                             <Stethoscope className="h-4 w-4" />
                             {language === 'zh' ? '医疗费用（总计）' : 'Medical Fee (Total)'}
                           </span>
-                          <span>${plan.medicalFee.toLocaleString()}</span>
+                          <span>${(plan.medicalFee || 0).toLocaleString()}</span>
                         </div>
                         <div className="pl-6 space-y-1 text-xs text-gray-600">
                           <div className="flex justify-between">
                             <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
-                            <span>${plan.medicalSurgeryFee}</span>
+                            <span>${(plan.medicalSurgeryFee || 0).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
-                            <span>${plan.medicineFee}</span>
+                            <span>${(plan.medicineFee || 0).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
-                            <span>${plan.nursingFee}</span>
+                            <span>${(plan.nursingFee || 0).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
-                            <span>${plan.nutritionFee}</span>
+                            <span>${(plan.nutritionFee || 0).toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
@@ -221,7 +221,7 @@ export default function PlanSelectionPage() {
                         <Hotel className="h-4 w-4" />
                         {language === 'zh' ? '酒店费用' : 'Hotel Fee'}
                       </span>
-                      <span className="font-medium">${plan.hotelFee.toLocaleString()}</span>
+                      <span className="font-medium">${(plan.hotelFee || 0).toLocaleString()}</span>
                     </div>
 
                     {/* 机票或车费 */}
@@ -231,7 +231,7 @@ export default function PlanSelectionPage() {
                           <DollarSign className="h-4 w-4" />
                           {language === 'zh' ? '车费' : 'Car Fee'}
                         </span>
-                        <span className="font-medium">${plan.carFee.toLocaleString()}</span>
+                        <span className="font-medium">${(plan.carFee || 0).toLocaleString()}</span>
                       </div>
                     ) : (
                       <div className="flex justify-between text-sm">
@@ -239,7 +239,7 @@ export default function PlanSelectionPage() {
                           <Plane className="h-4 w-4" />
                           {language === 'zh' ? '机票费用' : 'Flight Fee'}
                         </span>
-                        <span className="font-medium">${plan.flightFee.toLocaleString()}</span>
+                        <span className="font-medium">${(plan.flightFee || 0).toLocaleString()}</span>
                       </div>
                     )}
 
@@ -249,7 +249,7 @@ export default function PlanSelectionPage() {
                         <MapPin className="h-4 w-4" />
                         {language === 'zh' ? '门票' : 'Tickets'}
                       </span>
-                      <span className="font-medium">${plan.ticketFee.toLocaleString()}</span>
+                      <span className="font-medium">${(plan.ticketFee || 0).toLocaleString()}</span>
                     </div>
 
                     <div className="flex justify-between text-sm">
@@ -257,7 +257,7 @@ export default function PlanSelectionPage() {
                         <Calendar className="h-4 w-4" />
                         {language === 'zh' ? '预约费用' : 'Reservation Fee'}
                       </span>
-                      <span className="font-medium">${plan.reservationFee.toLocaleString()}</span>
+                      <span className="font-medium">${(plan.reservationFee || 0).toLocaleString()}</span>
                     </div>
                   </div>
 
