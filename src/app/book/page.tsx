@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, Check, Plane, Building2, Stethoscope, DollarSign, Calendar, MapPin } from "lucide-react";
-import { DEPARTURE_CITIES, DESTINATION_CITIES } from "@/data/cities";
+import { DEPARTURE_CITIES, DESTINATION_CITIES, City } from "@/data/cities";
 import { COUNTRIES, COUNTRIES_BY_REGION, REGION_NAMES } from "@/data/countries";
 
 interface Hospital {
@@ -59,6 +59,20 @@ export default function BookPage() {
 
   // 判断是否同城旅行
   const isSameCity = formData.originCity === formData.destinationCity;
+
+  // 获取城市信息并判断是否跨国旅行
+  const getCityByRegionName = (cityName: string): City | undefined => {
+    return [...DEPARTURE_CITIES, ...DESTINATION_CITIES].find(city =>
+      city.nameEn === cityName || city.nameZh === cityName
+    );
+  };
+
+  const originCityInfo = getCityByRegionName(formData.originCity);
+  const destinationCityInfo = getCityByRegionName(formData.destinationCity);
+  const isInternationalTravel = originCityInfo?.region !== destinationCityInfo?.region;
+
+  // 根据是否跨国设置日期限制（跨国15天，同国7天）
+  const minDaysAdvance = isInternationalTravel ? 15 : 7;
 
   // 步骤标题
   const steps = [
@@ -284,6 +298,29 @@ export default function BookPage() {
             {/* 步骤1: 选择行程 */}
             {currentStep === 1 && (
               <div className="space-y-4">
+                {/* 跨国旅行提醒 */}
+                {isInternationalTravel && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="h-5 w-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-amber-800">
+                          {language === 'zh' ? '跨国旅行提醒' : 'International Travel Notice'}
+                        </h4>
+                        <p className="text-sm text-amber-700 mt-1">
+                          {language === 'zh'
+                            ? '您选择了跨国旅行，请务必提前办妥护照、签证等身份手续，确保出行顺利。'
+                            : 'You are planning international travel. Please ensure your passport, visa, and other travel documents are valid and ready.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {language === 'zh' ? '出发城市' : 'Departure City'}
@@ -349,10 +386,16 @@ export default function BookPage() {
                     type="date"
                     value={formData.travelDate}
                     onChange={(e) => setFormData({ ...formData, travelDate: e.target.value })}
-                    min={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                    min={new Date(Date.now() + minDaysAdvance * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    {language === 'zh' ? '请至少提前7天预订' : 'Please book at least 7 days in advance'}
+                    {language === 'zh'
+                      ? isInternationalTravel
+                        ? '跨国旅行请至少提前15天预订'
+                        : '请至少提前7天预订'
+                      : isInternationalTravel
+                      ? 'Please book at least 15 days in advance for international travel'
+                      : 'Please book at least 7 days in advance'}
                   </p>
                 </div>
 
@@ -521,34 +564,68 @@ export default function BookPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {/* 仅当选择了医生或医院时显示医疗费用 */}
+                    {/* 医疗费用 - 详细分类 */}
                     {formData.selectedHospital || formData.selectedDoctor ? (
-                      <div className="flex justify-between">
-                        <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}:</span>
-                        <span className="font-medium">$500 - $2,000</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm font-medium text-blue-700">
+                          <span>{language === 'zh' ? '医疗费用（总计）' : 'Medical Fee (Total)'}</span>
+                          <span>$2,350 - $4,500</span>
+                        </div>
+                        <div className="pl-4 space-y-1 text-xs text-gray-600">
+                          <div className="flex justify-between">
+                            <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
+                            <span>$2,000 - $5,000</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
+                            <span>$100 - $300</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
+                            <span>$200 - $500</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
+                            <span>$50 - $200</span>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className="flex justify-between text-gray-400">
-                        <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}:</span>
+                        <span>{language === 'zh' ? '医疗费用' : 'Medical Fee'}</span>
                         <span className="font-medium">{language === 'zh' ? '未选择医疗服务' : 'Not selected'}</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span>{language === 'zh' ? '酒店费用' : 'Hotel Fee'}:</span>
+
+                    {/* 基础费用 */}
+                    <div className="flex justify-between text-sm">
+                      <span>{language === 'zh' ? '酒店费用' : 'Hotel Fee'}</span>
                       <span className="font-medium">$100 - $300/night × {formData.numberOfPeople || 1}</span>
                     </div>
-                    {/* 根据是否同城显示不同的交通费用 */}
+
+                    {/* 交通费用 */}
                     {isSameCity ? (
-                      <div className="flex justify-between">
-                        <span>{language === 'zh' ? '车费' : 'Car Fee'}:</span>
+                      <div className="flex justify-between text-sm">
+                        <span>{language === 'zh' ? '车费' : 'Car Fee'}</span>
                         <span className="font-medium">$50 - $200 × {formData.numberOfPeople || 1}</span>
                       </div>
                     ) : (
-                      <div className="flex justify-between">
-                        <span>{language === 'zh' ? '机票费用' : 'Flight Fee'}:</span>
+                      <div className="flex justify-between text-sm">
+                        <span>{language === 'zh' ? '机票费用' : 'Flight Fee'}</span>
                         <span className="font-medium">$800 - $1,500 × {formData.numberOfPeople || 1}</span>
                       </div>
                     )}
+
+                    {/* 其他费用 */}
+                    <div className="flex justify-between text-sm">
+                      <span>{language === 'zh' ? '门票' : 'Tickets'}</span>
+                      <span className="font-medium">$30 - $100 × {formData.numberOfPeople || 1}</span>
+                    </div>
+
+                    <div className="flex justify-between text-sm">
+                      <span>{language === 'zh' ? '预约费用' : 'Reservation Fee'}</span>
+                      <span className="font-medium">$50 - $200</span>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

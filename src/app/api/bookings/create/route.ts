@@ -25,9 +25,19 @@ interface PlanOption {
   id: string;
   name: string;
   description: string;
-  medicalFee: number;
+  // 基础费用
   hotelFee: number;
   flightFee: number;
+  carFee: number;
+  ticketFee: number;
+  reservationFee: number;
+  // 医疗费用详细分类
+  medicalSurgeryFee: number;
+  medicineFee: number;
+  nursingFee: number;
+  nutritionFee: number;
+  // 汇总字段（保持兼容性）
+  medicalFee: number;
   totalAmount: number;
   highlights: string[];
   duration: string;
@@ -75,8 +85,8 @@ export async function POST(request: NextRequest) {
     // 判断是否是同城旅行（出发城市和到达城市相同）
     const isSameCity = originCity === destinationCity;
 
-    // 使用AI生成三个不同的方案
-    const hasMedicalSelection = selectedHospital || selectedDoctor;
+    // 判断是否有医疗服务需求（选择了医院、医生或治疗类型）
+    const hasMedicalSelection = selectedHospital || selectedDoctor || treatmentType;
     const numberOfPeople = parseInt(body.numberOfPeople || '1') || 1;
 
     const prompt = `You are a medical tourism consultant. Generate 3 different travel plan options for a patient.
@@ -100,10 +110,17 @@ For each option, provide a JSON object with this structure:
 {
   "name": "Option Name (e.g., Budget-Friendly Plan)",
   "description": "Brief description of what this plan offers",
-  "medicalFee": number (${hasMedicalSelection ? '500-3000' : '0'} - set to 0 if no doctor/hospital selected),
   "hotelFee": number (100-500 per night * 7 days * ${numberOfPeople} travelers),
-  "flightFee": number (${isSameCity ? 'Use "transportationFee" instead - 50-200 for local taxi/car' : '500-2000 * ${numberOfPeople} travelers'}),
-  "totalAmount": number (sum of all fees),
+  "flightFee": number (${isSameCity ? '0 for same-city travel' : '500-2000 * ${numberOfPeople} travelers'}),
+  "carFee": number (${isSameCity ? '50-200 for local transportation' : '30-100 for local airport-hotel transfers'}),
+  "ticketFee": number (20-100 for tourist attractions),
+  "reservationFee": number (50-200 for appointment booking),
+  "medicalSurgeryFee": number (${hasMedicalSelection ? '2000-10000' : '0'}),
+  "medicineFee": number (${hasMedicalSelection ? '100-500' : '0'}),
+  "nursingFee": number (${hasMedicalSelection ? '200-800' : '0'}),
+  "nutritionFee": number (${hasMedicalSelection ? '50-300' : '0'}),
+  "medicalFee": number (sum of medicalSurgeryFee + medicineFee + nursingFee + nutritionFee, set to 0 if no doctor/hospital selected),
+  "totalAmount": number (sum of hotelFee + flightFee + carFee + ticketFee + reservationFee + medicalFee),
   "highlights": ["highlight1", "highlight2", "highlight3"],
   "duration": "e.g., 7 days 6 nights",
   "hotelName": "Hotel name",
@@ -111,8 +128,8 @@ For each option, provide a JSON object with this structure:
   "flightClass": "${isSameCity ? 'local-transportation' : 'economy/business/first'}"
 }
 
-${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set medicalFee to 0 for all plans.' : ''}
-${isSameCity ? 'CRITICAL: Since origin and destination are the same city, do NOT include flight fees. Use transportation fees for local travel (taxi/car rental) instead.' : ''}
+${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set all medical fees (medicalSurgeryFee, medicineFee, nursingFee, nutritionFee, medicalFee) to 0 for all plans.' : ''}
+${isSameCity ? 'CRITICAL: Since origin and destination are the same city, set flightFee to 0. Use carFee for local transportation (taxi/car rental).' : ''}
 
 Return ONLY the JSON array with 3 options, no additional text.`;
 
@@ -210,30 +227,45 @@ function generateDefaultPlans(
   const baseBudget = parseFloat(budget) || 3000;
   const hasMedicalSelection = selectedHospital || selectedDoctor;
 
-  // 如果没有选择医生/医院，医疗费用为0
-  const medicalFeeBase = hasMedicalSelection ? 800 : 0;
+  // 医疗费用详细分类
+  const medicalSurgeryFeeBase = hasMedicalSelection ? 2000 : 0;
+  const medicineFeeBase = hasMedicalSelection ? 150 : 0;
+  const nursingFeeBase = hasMedicalSelection ? 300 : 0;
+  const nutritionFeeBase = hasMedicalSelection ? 80 : 0;
+  const medicalFeeBase = medicalSurgeryFeeBase + medicineFeeBase + nursingFeeBase + nutritionFeeBase;
 
   // 同城旅行使用交通费用，不同城市使用机票费用
   const transportationFee = isSameCity;
-  const budgetFlightFee = transportationFee ? 80 * numberOfPeople : 600 * numberOfPeople;
-  const standardFlightFee = transportationFee ? 120 * numberOfPeople : 900 * numberOfPeople;
-  const premiumFlightFee = transportationFee ? 180 * numberOfPeople : 1500 * numberOfPeople;
-  const transportClass = transportationFee ? 'local-transportation' : 'economy';
+  const budgetFlightFee = transportationFee ? 0 : 600 * numberOfPeople;
+  const standardFlightFee = transportationFee ? 0 : 900 * numberOfPeople;
+  const premiumFlightFee = transportationFee ? 0 : 1500 * numberOfPeople;
+
+  const budgetCarFee = transportationFee ? 80 * numberOfPeople : 50 * numberOfPeople;
+  const standardCarFee = transportationFee ? 120 * numberOfPeople : 80 * numberOfPeople;
+  const premiumCarFee = transportationFee ? 180 * numberOfPeople : 100 * numberOfPeople;
 
   const plans = [
     {
       id: 'budget',
       name: 'Budget-Friendly Plan',
       description: 'Economical option with essential services for budget-conscious travelers',
-      medicalFee: medicalFeeBase,
       hotelFee: 700 * numberOfPeople,
       flightFee: budgetFlightFee,
+      carFee: budgetCarFee,
+      ticketFee: 30 * numberOfPeople,
+      reservationFee: 50,
+      medicalSurgeryFee: medicalSurgeryFeeBase,
+      medicineFee: medicineFeeBase,
+      nursingFee: nursingFeeBase,
+      nutritionFee: nutritionFeeBase,
+      medicalFee: medicalFeeBase,
       totalAmount: 0, // 稍后计算
       highlights: [
         'Basic 3-star hotel accommodation',
         transportationFee ? 'Local taxi transportation' : 'Economy class flights',
         ...hasMedicalSelection ? ['Essential medical consultation'] : [],
-        transportationFee ? 'Daily local transportation' : 'Airport transfers included'
+        'Basic tourist attractions included',
+        'Standard appointment booking'
       ],
       duration: '7 days 6 nights',
       hotelName: 'City Comfort Hotel',
@@ -244,16 +276,24 @@ function generateDefaultPlans(
       id: 'standard',
       name: 'Standard Plan',
       description: 'Balanced option with quality services and good comfort',
-      medicalFee: medicalFeeBase + 400,
       hotelFee: 1050 * numberOfPeople,
       flightFee: standardFlightFee,
+      carFee: standardCarFee,
+      ticketFee: 60 * numberOfPeople,
+      reservationFee: 100,
+      medicalSurgeryFee: medicalSurgeryFeeBase + 1000,
+      medicineFee: medicineFeeBase + 50,
+      nursingFee: nursingFeeBase + 100,
+      nutritionFee: nutritionFeeBase + 30,
+      medicalFee: medicalFeeBase + 1180,
       totalAmount: 0, // 稍后计算
       highlights: [
         '4-star hotel near hospital',
         transportationFee ? 'Premium car service' : 'Standard class flights',
         ...hasMedicalSelection ? ['Comprehensive medical checkup'] : [],
+        'Premium tourist attractions',
         '24/7 translation service',
-        transportationFee ? 'Daily private transportation' : 'Airport transfers included'
+        'Priority appointment booking'
       ],
       duration: '7 days 6 nights',
       hotelName: 'Grand Medical Hotel',
@@ -264,17 +304,26 @@ function generateDefaultPlans(
       id: 'premium',
       name: 'Premium Plan',
       description: 'Luxury option with top-tier services and maximum comfort',
-      medicalFee: medicalFeeBase + 1200,
       hotelFee: 1750 * numberOfPeople,
       flightFee: premiumFlightFee,
+      carFee: premiumCarFee,
+      ticketFee: 100 * numberOfPeople,
+      reservationFee: 200,
+      medicalSurgeryFee: medicalSurgeryFeeBase + 3000,
+      medicineFee: medicineFeeBase + 150,
+      nursingFee: nursingFeeBase + 200,
+      nutritionFee: nutritionFeeBase + 100,
+      medicalFee: medicalFeeBase + 3450,
       totalAmount: 0, // 稍后计算
       highlights: [
         '5-star luxury hotel with wellness center',
         transportationFee ? 'VIP private car service' : 'Business class flights',
         ...hasMedicalSelection ? ['Specialist consultation & treatment'] : [],
+        'Exclusive tourist experiences',
         'Personal medical assistant',
         transportationFee ? 'Chauffeur service available' : 'VIP airport service',
-        'Full medical insurance included'
+        'Full medical insurance included',
+        'VIP appointment booking'
       ],
       duration: '7 days 6 nights',
       hotelName: 'Royal Wellness Resort',
@@ -286,6 +335,6 @@ function generateDefaultPlans(
   // 计算总价
   return plans.map(plan => ({
     ...plan,
-    totalAmount: plan.medicalFee + plan.hotelFee + plan.flightFee
+    totalAmount: plan.hotelFee + plan.flightFee + plan.carFee + plan.ticketFee + plan.reservationFee + plan.medicalFee
   }));
 }
