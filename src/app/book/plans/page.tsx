@@ -118,15 +118,17 @@ export default function PlanSelectionPage() {
                 } ${isRecommended && !isSelected ? 'border-blue-300 border-2' : ''}`}
                 onClick={() => handleSelectPlan(plan)}
               >
-                {/* 状态指示小圈 - 只在选中时显示对钩 */}
+                {/* 状态指示器 - 只在选中时显示对钩 */}
                 <div className="absolute top-4 right-4 z-10">
-                  {isSelected ? (
-                    <div className="w-8 h-8 rounded-full bg-blue-600 border-2 border-blue-600 flex items-center justify-center shadow-lg">
-                      <Check className="h-5 w-5 text-white" />
-                    </div>
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-white border-2 border-gray-300" />
-                  )}
+                  <div
+                    className={`w-10 h-10 rounded-full border-3 flex items-center justify-center transition-all duration-200 shadow-sm ${
+                      isSelected
+                        ? 'bg-blue-600 border-blue-600 shadow-lg'
+                        : 'bg-white border-gray-300'
+                    }`}
+                  >
+                    {isSelected && <Check className="h-6 w-6 text-white" strokeWidth={3} />}
+                  </div>
                 </div>
 
                 {isRecommended && !isSelected && (
