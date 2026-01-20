@@ -6,19 +6,19 @@ import { apiManager } from '@/lib/api';
 
 /**
  * 测试API连接
- * POST /api/admin/api-configs/[provider]/test
+ * POST /api/admin/api-configs/test/[id]
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ provider: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   let db: Awaited<ReturnType<typeof getDb>> | undefined;
-  let provider: string | undefined;
+  let configId: string | undefined;
 
   try {
     // TODO: 添加权限验证
     const resolvedParams = await params;
-    provider = resolvedParams.provider;
+    configId = resolvedParams.id;
 
     db = await getDb();
 
@@ -26,7 +26,7 @@ export async function POST(
     const [config] = await db
       .select()
       .from(apiConfigs)
-      .where(eq(apiConfigs.provider, provider as any));
+      .where(eq(apiConfigs.id, configId));
 
     if (!config) {
       return NextResponse.json(
@@ -51,7 +51,7 @@ export async function POST(
     });
 
     // 测试连接
-    const result = await apiManager.testConnection(provider);
+    const result = await apiManager.testConnection(config.provider);
 
     // 更新测试状态
     await db
@@ -62,14 +62,14 @@ export async function POST(
         lastTestMessage: result.error?.message || result.error?.code,
         updatedAt: new Date(),
       })
-      .where(eq(apiConfigs.provider, provider as any));
+      .where(eq(apiConfigs.id, configId));
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Failed to test API connection:', error);
 
     // 记录失败状态（如果db已初始化）
-    if (db && provider) {
+    if (db && configId) {
       await db
         .update(apiConfigs)
         .set({
@@ -78,7 +78,7 @@ export async function POST(
           lastTestMessage: error instanceof Error ? error.message : 'Unknown error',
           updatedAt: new Date(),
         })
-        .where(eq(apiConfigs.provider, provider as any));
+        .where(eq(apiConfigs.id, configId));
     }
 
     return NextResponse.json(

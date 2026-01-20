@@ -171,10 +171,10 @@ export default function ApiConfigsPage() {
     }
   };
 
-  const handleTest = async (provider: string) => {
-    setTestingConfig(provider);
+  const handleTest = async (id: string) => {
+    setTestingConfig(id);
     try {
-      const response = await fetch(`/api/admin/api-configs/${provider}/test`, {
+      const response = await fetch(`/api/admin/api-configs/test/${id}`, {
         method: 'POST',
       });
 
@@ -260,8 +260,8 @@ export default function ApiConfigsPage() {
                 config={config}
                 onEdit={() => setEditingConfig({ ...provider, ...(config || {}) } as ApiConfig)}
                 onDelete={config ? () => handleDelete(config.id) : undefined}
-                onTest={config ? () => handleTest(provider.id) : undefined}
-                isTesting={testingConfig === provider.id}
+                onTest={config ? () => handleTest(config.id) : undefined}
+                isTesting={testingConfig === (config?.id)}
               />
             );
           })}
@@ -283,8 +283,8 @@ export default function ApiConfigsPage() {
                 config={config}
                 onEdit={() => setEditingConfig({ ...provider, ...(config || {}) } as ApiConfig)}
                 onDelete={config ? () => handleDelete(config.id) : undefined}
-                onTest={config ? () => handleTest(provider.id) : undefined}
-                isTesting={testingConfig === provider.id}
+                onTest={config ? () => handleTest(config.id) : undefined}
+                isTesting={testingConfig === (config?.id)}
               />
             );
           })}
