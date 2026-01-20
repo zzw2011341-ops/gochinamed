@@ -89,6 +89,48 @@ export async function POST(request: NextRequest) {
     const hasMedicalSelection = selectedHospital || selectedDoctor || treatmentType;
     const numberOfPeople = parseInt(body.numberOfPeople || '1') || 1;
 
+    // 获取天气和汇率数据（如果API已配置）
+    let weatherData: any = null;
+    let exchangeRates: any = null;
+
+    try {
+      // 获取目的地天气
+      const weatherResponse = await fetch(
+        `${request.nextUrl.origin}/api/weather?city=${encodeURIComponent(destinationCity)}&type=forecast&days=3`,
+        { cache: 'no-store' }
+      );
+      if (weatherResponse.ok) {
+        const weatherResult = await weatherResponse.json();
+        if (weatherResult.success) {
+          weatherData = weatherResult.data;
+        }
+      }
+
+      // 获取汇率数据
+      const exchangeResponse = await fetch(
+        `${request.nextUrl.origin}/api/exchange?base=USD`,
+        { cache: 'no-store' }
+      );
+      if (exchangeResponse.ok) {
+        const exchangeResult = await exchangeResponse.json();
+        if (exchangeResult.success) {
+          exchangeRates = exchangeResult.data?.rates;
+        }
+      }
+    } catch (apiError) {
+      console.error('Failed to fetch weather/exchange data:', apiError);
+      // API调用失败不影响主要流程，继续使用估算数据
+    }
+
+    // 构建天气提示
+    let weatherPrompt = '';
+    if (weatherData && Array.isArray(weatherData) && weatherData.length > 0) {
+      const forecast = weatherData.slice(0, 3).map((w: any) =>
+        `${new Date(w.timestamp).toLocaleDateString()}: ${w.condition}, ${Math.round(w.temperature)}°C`
+      ).join(', ');
+      weatherPrompt = `\nWeather Forecast for ${destinationCity}: ${forecast}\n`;
+    }
+
     const prompt = `You are a medical tourism consultant. Generate 3 different travel plan options for a patient.
 
 User Details:
@@ -98,8 +140,10 @@ User Details:
 - Treatment Type: ${treatmentType || 'General Consultation'}
 - Budget: $${budget || 'Not specified'}
 - Number of Travelers: ${numberOfPeople}
+${weatherPrompt}
 - ${hasMedicalSelection ? 'Selected Doctor/Hospital: Yes' : 'Selected Doctor/Hospital: No'}
 - ${isSameCity ? '⚠️ IMPORTANT: Same-city travel (origin and destination are the same)' : 'Different-city travel'}
+${exchangeRates ? `Currency rates (USD-based): CNY=${exchangeRates.CNY}, EUR=${exchangeRates.EUR}, GBP=${exchangeRates.GBP}\n` : ''}
 
 Please generate 3 distinct options with different price points and features:
 1. Budget-Friendly Option (Basic hotel, economy flight, essential services)
@@ -182,6 +226,11 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           selectedDoctor,
           treatmentType,
         },
+        metadata: {
+          weatherForecast: weatherData || null,
+          exchangeRates: exchangeRates || null,
+          dataSource: weatherData ? 'API' : 'estimated',
+        },
       });
 
     } catch (aiError) {
@@ -202,6 +251,11 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           selectedHospital,
           selectedDoctor,
           treatmentType,
+        },
+        metadata: {
+          weatherForecast: weatherData || null,
+          exchangeRates: exchangeRates || null,
+          dataSource: weatherData ? 'API' : 'estimated',
         },
       });
     }

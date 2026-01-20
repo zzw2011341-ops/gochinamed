@@ -14,6 +14,17 @@ export const doctorAppointmentStatusEnum = pgEnum("doctor_appointment_status", [
 export const serviceReservationStatusEnum = pgEnum("service_reservation_status", ["pending", "confirmed", "cancelled", "completed"]);
 export const serviceTypeEnum = pgEnum("service_type", ["flight", "train", "hotel", "car_rental", "ticket", "visa", "insurance"]);
 export const serviceFeeTypeEnum = pgEnum("service_fee_type", ["medical", "flight", "hotel", "ticket", "general"]);
+export const apiProviderEnum = pgEnum("api_provider", [
+  "openweather",
+  "exchangerate",
+  "aviationstack",
+  "amadeus",
+  "booking",
+  "ctrip",
+  "12306",
+  "hospital_booking",
+  "custom"
+]);
 
 // Users Table
 export const users = pgTable(
@@ -648,6 +659,43 @@ export const banners = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }),
   }
 );
+
+// API Configurations Table (第三方API配置表)
+export const apiConfigs = pgTable(
+  "api_configs",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    provider: apiProviderEnum("provider").notNull().unique(), // API提供商类型
+    name: varchar("name", { length: 255 }).notNull(), // API名称（如"OpenWeatherMap Weather API"）
+    description: text("description"), // API描述
+    baseUrl: varchar("base_url", { length: 500 }).notNull(), // API基础URL
+    apiKey: text("api_key"), // API密钥（加密存储）
+    apiSecret: text("api_secret"), // API密钥（加密存储）
+    webhookUrl: text("webhook_url"), // Webhook回调地址
+    isActive: boolean("is_active").default(false).notNull(), // 是否启用
+    isDefault: boolean("is_default").default(false).notNull(), // 是否默认使用
+    rateLimit: integer("rate_limit"), // 请求速率限制（每分钟请求数）
+    timeout: integer("timeout").default(30000).notNull(), // 超时时间（毫秒）
+    retryCount: integer("retry_count").default(3).notNull(), // 重试次数
+    config: jsonb("config"), // 其他配置信息（JSON格式）
+    metadata: jsonb("metadata"), // 元数据
+    lastTestedAt: timestamp("last_tested_at", { withTimezone: true }), // 最后测试时间
+    lastTestStatus: varchar("last_test_status", { length: 20 }), // 最后测试状态（success/failed）
+    lastTestMessage: text("last_test_message"), // 最后测试消息
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => ({
+    providerIdx: index("api_configs_provider_idx").on(table.provider),
+    isActiveIdx: index("api_configs_is_active_idx").on(table.isActive),
+  })
+);
+
+export type ApiConfig = typeof apiConfigs.$inferSelect;
 
 // AI Conversation History Table
 export const aiConversations = pgTable(

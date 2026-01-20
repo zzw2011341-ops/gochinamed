@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/locales";
@@ -55,6 +56,7 @@ export default function AdminLayout({
     { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
     { name: "Payment Accounts", href: "/admin/payment-accounts", icon: CreditCard },
     { name: "Service Fees", href: "/admin/service-fees", icon: Percent },
+    { name: "API Configs", href: "/admin/api-configs", icon: Settings },
   ];
 
   const handleLogout = async () => {
