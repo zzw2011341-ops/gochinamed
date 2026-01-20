@@ -42,6 +42,9 @@ export default function PlanSelectionPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanOption | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 判断是否同城旅行
+  const isSameCity = bookingData?.originCity === bookingData?.destinationCity;
+
   useEffect(() => {
     // 从sessionStorage获取方案数据
     const savedData = sessionStorage.getItem('bookingPlans');
@@ -118,17 +121,15 @@ export default function PlanSelectionPage() {
                 } ${isRecommended && !isSelected ? 'border-blue-300 border-2' : ''}`}
                 onClick={() => handleSelectPlan(plan)}
               >
-                {/* 状态指示器 - 只在选中时显示对钩 */}
+                {/* 状态指示器 - 选中时显示蓝色圆圈和对钩 */}
                 <div className="absolute top-4 right-4 z-10">
-                  <div
-                    className={`w-10 h-10 rounded-full border-3 flex items-center justify-center transition-all duration-200 shadow-sm ${
-                      isSelected
-                        ? 'bg-blue-600 border-blue-600 shadow-lg'
-                        : 'bg-white border-gray-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="h-6 w-6 text-white" strokeWidth={3} />}
-                  </div>
+                  {isSelected ? (
+                    <div className="w-12 h-12 rounded-full bg-blue-600 border-[3px] border-blue-600 flex items-center justify-center shadow-lg animate-pulse">
+                      <Check className="h-7 w-7 text-white" strokeWidth={4} />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-white border-[2px] border-gray-300" />
+                  )}
                 </div>
 
                 {isRecommended && !isSelected && (
@@ -189,16 +190,27 @@ export default function PlanSelectionPage() {
                       </span>
                       <span className="font-medium">${plan.hotelFee}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <Plane className="h-4 w-4" />
-                        {language === 'zh' ? '机票费用' : 'Flight Fee'}
-                      </span>
-                      <span className="font-medium">${plan.flightFee}</span>
-                    </div>
+                    {/* 根据是否同城显示不同的费用类型 */}
+                    {isSameCity ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" />
+                          {language === 'zh' ? '车费' : 'Car Fee'}
+                        </span>
+                        <span className="font-medium">${plan.flightFee}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <Plane className="h-4 w-4" />
+                          {language === 'zh' ? '机票费用' : 'Flight Fee'}
+                        </span>
+                        <span className="font-medium">${plan.flightFee}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Hotel & Flight Info */}
+                  {/* Hotel & Transportation Info */}
                   <div className="space-y-2 border-t pt-4">
                     <div className="text-sm">
                       <div className="flex items-center gap-2 mb-1">
@@ -211,10 +223,28 @@ export default function PlanSelectionPage() {
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Plane className="h-4 w-4 text-gray-500" />
-                      <span className="capitalize">{plan.flightClass} Class</span>
-                    </div>
+                    {/* 根据是否同城显示不同的交通类型 */}
+                    {isSameCity ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="h-4 w-4 text-gray-500" />
+                        <span className="capitalize">
+                          {plan.flightClass === 'local-transportation' ? (
+                            language === 'zh' ? '本地出租车' : 'Local Taxi'
+                          ) : plan.flightClass === 'premium-transport' ? (
+                            language === 'zh' ? '专车服务' : 'Premium Car'
+                          ) : plan.flightClass === 'vip-transport' ? (
+                            language === 'zh' ? 'VIP专车' : 'VIP Car'
+                          ) : (
+                            plan.flightClass
+                          )}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Plane className="h-4 w-4 text-gray-500" />
+                        <span className="capitalize">{plan.flightClass} Class</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Highlights */}
