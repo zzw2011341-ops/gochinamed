@@ -57,6 +57,9 @@ export default function BookPage() {
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
 
+  // 判断是否同城旅行
+  const isSameCity = formData.originCity === formData.destinationCity;
+
   // 步骤标题
   const steps = [
     { id: 1, title: language === 'zh' ? '选择行程' : 'Travel', icon: Plane },
@@ -534,10 +537,18 @@ export default function BookPage() {
                       <span>{language === 'zh' ? '酒店费用' : 'Hotel Fee'}:</span>
                       <span className="font-medium">$100 - $300/night × {formData.numberOfPeople || 1}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>{language === 'zh' ? '机票费用' : 'Flight Fee'}:</span>
-                      <span className="font-medium">$800 - $1,500 × {formData.numberOfPeople || 1}</span>
-                    </div>
+                    {/* 根据是否同城显示不同的交通费用 */}
+                    {isSameCity ? (
+                      <div className="flex justify-between">
+                        <span>{language === 'zh' ? '车费' : 'Car Fee'}:</span>
+                        <span className="font-medium">$50 - $200 × {formData.numberOfPeople || 1}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span>{language === 'zh' ? '机票费用' : 'Flight Fee'}:</span>
+                        <span className="font-medium">$800 - $1,500 × {formData.numberOfPeople || 1}</span>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
