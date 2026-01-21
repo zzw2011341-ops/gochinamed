@@ -424,64 +424,184 @@ export default function ConfirmationPage() {
           {/* 就医 */}
           <TabsContent value="medical" className="space-y-6">
             {doctor && hospital ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Stethoscope className="h-5 w-5 text-blue-600" />
-                      {language === 'zh' ? '医生信息' : 'Doctor Information'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '姓名' : 'Name'}</div>
-                      <div className="font-medium">{doctor.nameEn} / {doctor.nameZh}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '职称' : 'Title'}</div>
-                      <div>{doctor.title}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '专长' : 'Specialties'}</div>
-                      <div>{doctor.specialties}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '经验' : 'Experience'}</div>
-                      <div>{doctor.experienceYears} {language === 'zh' ? '年' : 'years'}</div>
-                    </div>
-                    {order.doctorAppointmentDate && (
+              <div className="space-y-6">
+                {/* 医生和医院信息 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Stethoscope className="h-5 w-5 text-blue-600" />
+                        {language === 'zh' ? '医生信息' : 'Doctor Information'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
                       <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
-                        <div className="font-medium text-blue-600">
-                          {new Date(order.doctorAppointmentDate).toLocaleString()}
-                        </div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '姓名' : 'Name'}</div>
+                        <div className="font-medium">{doctor.nameEn} / {doctor.nameZh}</div>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '职称' : 'Title'}</div>
+                        <div>{doctor.title}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '专长' : 'Specialties'}</div>
+                        <div>{doctor.specialties}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '经验' : 'Experience'}</div>
+                        <div>{doctor.experienceYears} {language === 'zh' ? '年' : 'years'}</div>
+                      </div>
+                      {order.doctorAppointmentDate && (
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
+                          <div className="font-medium text-blue-600">
+                            {new Date(order.doctorAppointmentDate).toLocaleString()}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-blue-600" />
-                      {language === 'zh' ? '医院信息' : 'Hospital Information'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '名称' : 'Name'}</div>
-                      <div className="font-medium">{hospital.nameEn} / {hospital.nameZh}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '级别' : 'Level'}</div>
-                      <div>{hospital.level}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '地址' : 'Location'}</div>
-                      <div>{hospital.location}</div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-blue-600" />
+                        {language === 'zh' ? '医院信息' : 'Hospital Information'}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '名称' : 'Name'}</div>
+                        <div className="font-medium">{hospital.nameEn} / {hospital.nameZh}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '级别' : 'Level'}</div>
+                        <div>{hospital.level}</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '地址' : 'Location'}</div>
+                        <div>{hospital.location}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* 医疗方案详细信息 */}
+                {(order.consultationDirection || order.examinationItems || order.surgeryTypes || order.treatmentDirection || order.rehabilitationDirection || order.medicalPlan) && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                        {language === 'zh' ? '医疗方案' : 'Medical Plan'}
+                      </CardTitle>
+                      <CardDescription>
+                        {language === 'zh' ? '为您定制的医疗服务方案' : 'Personalized medical treatment plan'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {order.medicalPlan && (
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <h4 className="font-medium text-blue-900 mb-2">{language === 'zh' ? '方案概述' : 'Plan Overview'}</h4>
+                          <p className="text-sm text-gray-700">{order.medicalPlan}</p>
+                        </div>
+                      )}
+
+                      {order.consultationDirection && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <Stethoscope className="h-4 w-4 text-blue-600" />
+                            {language === 'zh' ? '咨询方向' : 'Consultation Direction'}
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700">{getConsultationDirectionLabel(order.consultationDirection, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.examinationItems && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <Ticket className="h-4 w-4 text-blue-600" />
+                            {language === 'zh' ? '检查项目' : 'Examination Items'}
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700">{getExaminationItemsLabel(order.examinationItems, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.surgeryTypes && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-red-600" />
+                            {language === 'zh' ? '手术类型' : 'Surgery Types'}
+                          </h4>
+                          <div className="bg-red-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700">{getSurgeryTypesLabel(order.surgeryTypes, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.treatmentDirection && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                            {language === 'zh' ? '治疗方向' : 'Treatment Direction'}
+                          </h4>
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700">{getTreatmentDirectionLabel(order.treatmentDirection, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.rehabilitationDirection && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-green-600" />
+                            {language === 'zh' ? '康复方向' : 'Rehabilitation Direction'}
+                          </h4>
+                          <div className="bg-green-50 rounded-lg p-3">
+                            <p className="text-sm text-gray-700">{getRehabilitationDirectionLabel(order.rehabilitationDirection, language)}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.planAdjustments && order.planAdjustments.length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                            {language === 'zh' ? '方案调整记录' : 'Plan Adjustments'}
+                          </h4>
+                          <div className="space-y-2">
+                            {order.planAdjustments.map((adjustment: string, index: number) => (
+                              <div key={index} className="bg-blue-50 rounded-lg p-3">
+                                <p className="text-sm text-gray-700">{adjustment}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {order.priceAdjustmentAmount && order.priceAdjustmentAmount !== 0 && (
+                        <div className={`p-4 rounded-lg ${order.priceAdjustmentAmount > 0 ? 'bg-orange-50' : 'bg-green-50'}`}>
+                          <h4 className="font-medium text-sm mb-2">
+                            {language === 'zh' ? '价格调整' : 'Price Adjustment'}
+                          </h4>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-700">
+                              {order.priceAdjustmentStatus === 'approved'
+                                ? (language === 'zh' ? '已批准的调整' : 'Approved Adjustment')
+                                : (language === 'zh' ? '待审核的调整' : 'Pending Adjustment')}
+                            </span>
+                            <span className={`font-medium ${order.priceAdjustmentAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                              {order.priceAdjustmentAmount > 0 ? '+' : ''}{costs.currency} {order.priceAdjustmentAmount.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             ) : (
               <Card>
@@ -1238,4 +1358,99 @@ function formatDateTimeRange(startDate: Date | string | null, endDate: Date | st
   }
 
   return result;
+}
+
+// 获取咨询方向标签
+function getConsultationDirectionLabel(value: string, language: string): string {
+  const labels: Record<string, { zh: string; en: string; de: string; fr: string }> = {
+    general: { zh: '一般健康咨询', en: 'General Health', de: 'Allgemeine Gesundheit', fr: 'Santé générale' },
+    internal: { zh: '内科咨询', en: 'Internal Medicine', de: 'Innere Medizin', fr: 'Médecine interne' },
+    surgery: { zh: '外科咨询', en: 'Surgery', de: 'Chirurgie', fr: 'Chirurgie' },
+    pediatrics: { zh: '儿科咨询', en: 'Pediatrics', de: 'Pädiatrie', fr: 'Pédiatrie' },
+    obstetrics: { zh: '妇产科咨询', en: 'Obstetrics', de: 'Gynäkologie', fr: 'Gynécologie' },
+    orthopedics: { zh: '骨科咨询', en: 'Orthopedics', de: 'Orthopädie', fr: 'Orthopédie' },
+    neurology: { zh: '神经科咨询', en: 'Neurology', de: 'Neurologie', fr: 'Neurologie' },
+    cardiology: { zh: '心血管科咨询', en: 'Cardiology', de: 'Kardiologie', fr: 'Cardiologie' },
+    oncology: { zh: '肿瘤科咨询', en: 'Oncology', de: 'Onkologie', fr: 'Oncologie' },
+    dermatology: { zh: '皮肤科咨询', en: 'Dermatology', de: 'Dermatologie', fr: 'Dermatologie' },
+    ophthalmology: { zh: '眼科咨询', en: 'Ophthalmology', de: 'Ophthalmologie', fr: 'Ophtalmologie' },
+    ent: { zh: '耳鼻喉科咨询', en: 'ENT', de: 'HNO', fr: 'ORL' },
+    traditional_chinese: { zh: '中医咨询', en: 'Traditional Chinese Medicine', de: 'TCM', fr: 'Médecine traditionnelle chinoise' },
+    rehabilitation: { zh: '康复咨询', en: 'Rehabilitation', de: 'Rehabilitation', fr: 'Réadaptation' },
+    nutrition: { zh: '营养咨询', en: 'Nutrition', de: 'Ernährung', fr: 'Nutrition' },
+  };
+  return (labels[value] as any)?.[language] || value;
+}
+
+// 获取检查项目标签
+function getExaminationItemsLabel(value: string, language: string): string {
+  const labels: Record<string, { zh: string; en: string; de: string; fr: string }> = {
+    blood_test: { zh: '血液检查', en: 'Blood Test', de: 'Bluttest', fr: 'Test sanguin' },
+    urine_test: { zh: '尿液检查', en: 'Urine Test', de: 'Urintest', fr: 'Analyse d\'urine' },
+    ct_scan: { zh: 'CT扫描', en: 'CT Scan', de: 'CT-Scan', fr: 'Scanner CT' },
+    mri: { zh: '核磁共振', en: 'MRI', de: 'MRT', fr: 'IRM' },
+    ultrasound: { zh: '超声波检查', en: 'Ultrasound', de: 'Ultraschall', fr: 'Échographie' },
+    x_ray: { zh: 'X光检查', en: 'X-Ray', de: 'Röntgen', fr: 'Radiographie' },
+    ecg: { zh: '心电图', en: 'ECG', de: 'EKG', fr: 'ECG' },
+    endoscopy: { zh: '内窥镜检查', en: 'Endoscopy', de: 'Endoskopie', fr: 'Endoscopie' },
+    biopsy: { zh: '活检', en: 'Biopsy', de: 'Biopsie', fr: 'Biopsie' },
+    pet_scan: { zh: 'PET扫描', en: 'PET Scan', de: 'PET-Scan', fr: 'Scanner PET' },
+    bone_density: { zh: '骨密度检查', en: 'Bone Density', de: 'Knochendichte', fr: 'Densité osseuse' },
+    colonoscopy: { zh: '结肠镜检查', en: 'Colonoscopy', de: 'Koloskopie', fr: 'Coloscopie' },
+    comprehensive: { zh: '综合体检套餐', en: 'Comprehensive Checkup', de: 'Umfassende Untersuchung', fr: 'Bilan complet' },
+  };
+  return (labels[value] as any)?.[language] || value;
+}
+
+// 获取手术类型标签
+function getSurgeryTypesLabel(value: string, language: string): string {
+  const labels: Record<string, { zh: string; en: string; de: string; fr: string }> = {
+    cardiac_surgery: { zh: '心脏手术', en: 'Cardiac Surgery', de: 'Herzchirurgie', fr: 'Chirurgie cardiaque' },
+    neurosurgery: { zh: '神经外科手术', en: 'Neurosurgery', de: 'Neurochirurgie', fr: 'Neurochirurgie' },
+    orthopedic_surgery: { zh: '骨科手术', en: 'Orthopedic Surgery', de: 'Orthopädie', fr: 'Chirurgie orthopédique' },
+    cosmetic_surgery: { zh: '整形外科手术', en: 'Cosmetic Surgery', de: 'Plastische Chirurgie', fr: 'Chirurgie esthétique' },
+    ophthalmic_surgery: { zh: '眼科手术', en: 'Ophthalmic Surgery', de: 'Augenchirurgie', fr: 'Chirurgie ophtalmique' },
+    dental_surgery: { zh: '牙科手术', en: 'Dental Surgery', de: 'Zahnchirurgie', fr: 'Chirurgie dentaire' },
+    general_surgery: { zh: '普通外科手术', en: 'General Surgery', de: 'Allgemeine Chirurgie', fr: 'Chirurgie générale' },
+    gynecologic_surgery: { zh: '妇科手术', en: 'Gynecologic Surgery', de: 'Gynäkologische Chirurgie', fr: 'Chirurgie gynécologique' },
+    urology_surgery: { zh: '泌尿外科手术', en: 'Urology Surgery', de: 'Urologie', fr: 'Urologie' },
+    oncology_surgery: { zh: '肿瘤手术', en: 'Oncology Surgery', de: 'Tumorchirurgie', fr: 'Chirurgie oncologique' },
+    pediatric_surgery: { zh: '儿科手术', en: 'Pediatric Surgery', de: 'Kinderchirurgie', fr: 'Chirurgie pédiatrique' },
+    vascular_surgery: { zh: '血管手术', en: 'Vascular Surgery', de: 'Gefäßchirurgie', fr: 'Chirurgie vasculaire' },
+  };
+  return (labels[value] as any)?.[language] || value;
+}
+
+// 获取治疗方向标签
+function getTreatmentDirectionLabel(value: string, language: string): string {
+  const labels: Record<string, { zh: string; en: string; de: string; fr: string }> = {
+    physical_therapy: { zh: '物理治疗', en: 'Physical Therapy', de: 'Physiotherapie', fr: 'Physiothérapie' },
+    medication: { zh: '药物治疗', en: 'Medication', de: 'Medikation', fr: 'Médication' },
+    radiation: { zh: '放射治疗', en: 'Radiation Therapy', de: 'Strahlentherapie', fr: 'Radiothérapie' },
+    chemotherapy: { zh: '化疗', en: 'Chemotherapy', de: 'Chemotherapie', fr: 'Chimiothérapie' },
+    immunotherapy: { zh: '免疫治疗', en: 'Immunotherapy', de: 'Immuntherapie', fr: 'Immunothérapie' },
+    targeted_therapy: { zh: '靶向治疗', en: 'Targeted Therapy', de: 'Gezielte Therapie', fr: 'Thérapie ciblée' },
+    hormone_therapy: { zh: '激素治疗', en: 'Hormone Therapy', de: 'Hormontherapie', fr: 'Hormonothérapie' },
+    laser_therapy: { zh: '激光治疗', en: 'Laser Therapy', de: 'Lasertherapie', fr: 'Thérapie laser' },
+    acupuncture: { zh: '针灸治疗', en: 'Acupuncture', de: 'Akupunktur', fr: 'Acupuncture' },
+    massage: { zh: '按摩治疗', en: 'Massage Therapy', de: 'Massagetherapie', fr: 'Massothérapie' },
+  };
+  return (labels[value] as any)?.[language] || value;
+}
+
+// 获取康复方向标签
+function getRehabilitationDirectionLabel(value: string, language: string): string {
+  const labels: Record<string, { zh: string; en: string; de: string; fr: string }> = {
+    post_surgery: { zh: '术后康复', en: 'Post-Surgery Rehabilitation', de: 'Postoperative Rehabilitation', fr: 'Rééducation post-opératoire' },
+    stroke: { zh: '中风康复', en: 'Stroke Rehabilitation', de: 'Schlaganfall-Rehabilitation', fr: 'Rééducation post-AVC' },
+    orthopedic_rehab: { zh: '骨科康复', en: 'Orthopedic Rehabilitation', de: 'Orthopädische Rehabilitation', fr: 'Rééducation orthopédique' },
+    cardiac_rehab: { zh: '心脏康复', en: 'Cardiac Rehabilitation', de: 'Herzrehabilitation', fr: 'Rééducation cardiaque' },
+    neurological_rehab: { zh: '神经康复', en: 'Neurological Rehabilitation', de: 'Neurologische Rehabilitation', fr: 'Rééducation neurologique' },
+    sports_rehab: { zh: '运动康复', en: 'Sports Rehabilitation', de: 'Sportrehabilitation', fr: 'Rééducation sportive' },
+    pediatric_rehab: { zh: '儿童康复', en: 'Pediatric Rehabilitation', de: 'Kinderrehabilitation', fr: 'Rééducation pédiatrique' },
+    pulmonary_rehab: { zh: '肺康复', en: 'Pulmonary Rehabilitation', de: 'Lungenrehabilitation', fr: 'Rééducation pulmonaire' },
+    pain_management: { zh: '疼痛管理', en: 'Pain Management', de: 'Schmerzmanagement', fr: 'Gestion de la douleur' },
+    cognitive_rehab: { zh: '认知康复', en: 'Cognitive Rehabilitation', de: 'Kognitive Rehabilitation', fr: 'Rééducation cognitive' },
+  };
+  return (labels[value] as any)?.[language] || value;
 }

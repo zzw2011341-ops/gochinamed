@@ -50,6 +50,11 @@ export default function BookPage() {
     selectedHospital: "",
     selectedDoctor: "",
     treatmentType: "",
+    consultationDirection: "",
+    examinationItems: "",
+    surgeryTypes: "",
+    treatmentDirection: "",
+    rehabilitationDirection: "",
     budget: user?.budget?.toString() || "",
   });
 
@@ -466,6 +471,44 @@ export default function BookPage() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* 咨询方向选择 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '咨询方向' : 'Consultation Direction'}
+                    <span className="text-gray-400 font-normal ml-2">
+                      ({language === 'zh' ? '可选' : 'Optional'})
+                    </span>
+                  </label>
+                  <Select
+                    value={formData.consultationDirection}
+                    onValueChange={(value) => setFormData({ ...formData, consultationDirection: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'zh' ? '选择咨询方向' : 'Select consultation direction'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">{language === 'zh' ? '一般健康咨询' : 'General Health'}</SelectItem>
+                      <SelectItem value="internal">{language === 'zh' ? '内科咨询' : 'Internal Medicine'}</SelectItem>
+                      <SelectItem value="surgery">{language === 'zh' ? '外科咨询' : 'Surgery'}</SelectItem>
+                      <SelectItem value="pediatrics">{language === 'zh' ? '儿科咨询' : 'Pediatrics'}</SelectItem>
+                      <SelectItem value="obstetrics">{language === 'zh' ? '妇产科咨询' : 'Obstetrics'}</SelectItem>
+                      <SelectItem value="orthopedics">{language === 'zh' ? '骨科咨询' : 'Orthopedics'}</SelectItem>
+                      <SelectItem value="neurology">{language === 'zh' ? '神经科咨询' : 'Neurology'}</SelectItem>
+                      <SelectItem value="cardiology">{language === 'zh' ? '心血管科咨询' : 'Cardiology'}</SelectItem>
+                      <SelectItem value="oncology">{language === 'zh' ? '肿瘤科咨询' : 'Oncology'}</SelectItem>
+                      <SelectItem value="dermatology">{language === 'zh' ? '皮肤科咨询' : 'Dermatology'}</SelectItem>
+                      <SelectItem value="ophthalmology">{language === 'zh' ? '眼科咨询' : 'Ophthalmology'}</SelectItem>
+                      <SelectItem value="ent">{language === 'zh' ? '耳鼻喉科咨询' : 'ENT'}</SelectItem>
+                      <SelectItem value="traditional_chinese">{language === 'zh' ? '中医咨询' : 'Traditional Chinese Medicine'}</SelectItem>
+                      <SelectItem value="rehabilitation">{language === 'zh' ? '康复咨询' : 'Rehabilitation'}</SelectItem>
+                      <SelectItem value="nutrition">{language === 'zh' ? '营养咨询' : 'Nutrition'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'zh' ? '选择您需要的咨询方向，我们将为您匹配专业的医生' : 'Select the consultation direction you need for specialized doctor matching'}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -510,6 +553,42 @@ export default function BookPage() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* 检查项目选择 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '检查项目' : 'Examination Items'}
+                    <span className="text-gray-400 font-normal ml-2">
+                      ({language === 'zh' ? '可选' : 'Optional'})
+                    </span>
+                  </label>
+                  <Select
+                    value={formData.examinationItems}
+                    onValueChange={(value) => setFormData({ ...formData, examinationItems: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={language === 'zh' ? '选择检查项目' : 'Select examination items'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="blood_test">{language === 'zh' ? '血液检查' : 'Blood Test'}</SelectItem>
+                      <SelectItem value="urine_test">{language === 'zh' ? '尿液检查' : 'Urine Test'}</SelectItem>
+                      <SelectItem value="ct_scan">{language === 'zh' ? 'CT扫描' : 'CT Scan'}</SelectItem>
+                      <SelectItem value="mri">{language === 'zh' ? '核磁共振' : 'MRI'}</SelectItem>
+                      <SelectItem value="ultrasound">{language === 'zh' ? '超声波检查' : 'Ultrasound'}</SelectItem>
+                      <SelectItem value="x_ray">{language === 'zh' ? 'X光检查' : 'X-Ray'}</SelectItem>
+                      <SelectItem value="ecg">{language === 'zh' ? '心电图' : 'ECG'}</SelectItem>
+                      <SelectItem value="endoscopy">{language === 'zh' ? '内窥镜检查' : 'Endoscopy'}</SelectItem>
+                      <SelectItem value="biopsy">{language === 'zh' ? '活检' : 'Biopsy'}</SelectItem>
+                      <SelectItem value="pet_scan">{language === 'zh' ? 'PET扫描' : 'PET Scan'}</SelectItem>
+                      <SelectItem value="bone_density">{language === 'zh' ? '骨密度检查' : 'Bone Density'}</SelectItem>
+                      <SelectItem value="colonoscopy">{language === 'zh' ? '结肠镜检查' : 'Colonoscopy'}</SelectItem>
+                      <SelectItem value="comprehensive">{language === 'zh' ? '综合体检套餐' : 'Comprehensive Checkup'}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {language === 'zh' ? '选择您需要的检查项目，便于医生提前了解您的健康状况' : 'Select the examination items you need for better health assessment'}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -536,6 +615,113 @@ export default function BookPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* 手术种类选择 */}
+                {formData.treatmentType === 'surgery' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'zh' ? '手术种类' : 'Surgery Types'}
+                      <span className="text-gray-400 font-normal ml-2">
+                        ({language === 'zh' ? '可选' : 'Optional'})
+                      </span>
+                    </label>
+                    <Select
+                      value={formData.surgeryTypes}
+                      onValueChange={(value) => setFormData({ ...formData, surgeryTypes: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'zh' ? '选择手术种类' : 'Select surgery type'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cardiac_surgery">{language === 'zh' ? '心脏手术' : 'Cardiac Surgery'}</SelectItem>
+                        <SelectItem value="neurosurgery">{language === 'zh' ? '神经外科手术' : 'Neurosurgery'}</SelectItem>
+                        <SelectItem value="orthopedic_surgery">{language === 'zh' ? '骨科手术' : 'Orthopedic Surgery'}</SelectItem>
+                        <SelectItem value="cosmetic_surgery">{language === 'zh' ? '整形外科手术' : 'Cosmetic Surgery'}</SelectItem>
+                        <SelectItem value="ophthalmic_surgery">{language === 'zh' ? '眼科手术' : 'Ophthalmic Surgery'}</SelectItem>
+                        <SelectItem value="dental_surgery">{language === 'zh' ? '牙科手术' : 'Dental Surgery'}</SelectItem>
+                        <SelectItem value="general_surgery">{language === 'zh' ? '普通外科手术' : 'General Surgery'}</SelectItem>
+                        <SelectItem value="gynecologic_surgery">{language === 'zh' ? '妇科手术' : 'Gynecologic Surgery'}</SelectItem>
+                        <SelectItem value="urology_surgery">{language === 'zh' ? '泌尿外科手术' : 'Urology Surgery'}</SelectItem>
+                        <SelectItem value="oncology_surgery">{language === 'zh' ? '肿瘤手术' : 'Oncology Surgery'}</SelectItem>
+                        <SelectItem value="pediatric_surgery">{language === 'zh' ? '儿科手术' : 'Pediatric Surgery'}</SelectItem>
+                        <SelectItem value="vascular_surgery">{language === 'zh' ? '血管手术' : 'Vascular Surgery'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'zh' ? '选择您需要的手术类型，将影响治疗方案和费用' : 'Select the surgery type you need, which will affect treatment plan and cost'}
+                    </p>
+                  </div>
+                )}
+
+                {/* 治疗方向选择 */}
+                {formData.treatmentType === 'therapy' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'zh' ? '治疗方向' : 'Treatment Direction'}
+                      <span className="text-gray-400 font-normal ml-2">
+                        ({language === 'zh' ? '可选' : 'Optional'})
+                      </span>
+                    </label>
+                    <Select
+                      value={formData.treatmentDirection}
+                      onValueChange={(value) => setFormData({ ...formData, treatmentDirection: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'zh' ? '选择治疗方向' : 'Select treatment direction'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="physical_therapy">{language === 'zh' ? '物理治疗' : 'Physical Therapy'}</SelectItem>
+                        <SelectItem value="medication">{language === 'zh' ? '药物治疗' : 'Medication'}</SelectItem>
+                        <SelectItem value="radiation">{language === 'zh' ? '放射治疗' : 'Radiation Therapy'}</SelectItem>
+                        <SelectItem value="chemotherapy">{language === 'zh' ? '化疗' : 'Chemotherapy'}</SelectItem>
+                        <SelectItem value="immunotherapy">{language === 'zh' ? '免疫治疗' : 'Immunotherapy'}</SelectItem>
+                        <SelectItem value="targeted_therapy">{language === 'zh' ? '靶向治疗' : 'Targeted Therapy'}</SelectItem>
+                        <SelectItem value="hormone_therapy">{language === 'zh' ? '激素治疗' : 'Hormone Therapy'}</SelectItem>
+                        <SelectItem value="laser_therapy">{language === 'zh' ? '激光治疗' : 'Laser Therapy'}</SelectItem>
+                        <SelectItem value="acupuncture">{language === 'zh' ? '针灸治疗' : 'Acupuncture'}</SelectItem>
+                        <SelectItem value="massage">{language === 'zh' ? '按摩治疗' : 'Massage Therapy'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'zh' ? '选择您需要的治疗方向，确保针对性治疗' : 'Select the treatment direction you need for targeted therapy'}
+                    </p>
+                  </div>
+                )}
+
+                {/* 康复方向选择 */}
+                {formData.treatmentType === 'rehabilitation' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {language === 'zh' ? '康复方向' : 'Rehabilitation Direction'}
+                      <span className="text-gray-400 font-normal ml-2">
+                        ({language === 'zh' ? '可选' : 'Optional'})
+                      </span>
+                    </label>
+                    <Select
+                      value={formData.rehabilitationDirection}
+                      onValueChange={(value) => setFormData({ ...formData, rehabilitationDirection: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={language === 'zh' ? '选择康复方向' : 'Select rehabilitation direction'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="post_surgery">{language === 'zh' ? '术后康复' : 'Post-Surgery Rehabilitation'}</SelectItem>
+                        <SelectItem value="stroke">{language === 'zh' ? '中风康复' : 'Stroke Rehabilitation'}</SelectItem>
+                        <SelectItem value="orthopedic_rehab">{language === 'zh' ? '骨科康复' : 'Orthopedic Rehabilitation'}</SelectItem>
+                        <SelectItem value="cardiac_rehab">{language === 'zh' ? '心脏康复' : 'Cardiac Rehabilitation'}</SelectItem>
+                        <SelectItem value="neurological_rehab">{language === 'zh' ? '神经康复' : 'Neurological Rehabilitation'}</SelectItem>
+                        <SelectItem value="sports_rehab">{language === 'zh' ? '运动康复' : 'Sports Rehabilitation'}</SelectItem>
+                        <SelectItem value="pediatric_rehab">{language === 'zh' ? '儿童康复' : 'Pediatric Rehabilitation'}</SelectItem>
+                        <SelectItem value="pulmonary_rehab">{language === 'zh' ? '肺康复' : 'Pulmonary Rehabilitation'}</SelectItem>
+                        <SelectItem value="pain_management">{language === 'zh' ? '疼痛管理' : 'Pain Management'}</SelectItem>
+                        <SelectItem value="cognitive_rehab">{language === 'zh' ? '认知康复' : 'Cognitive Rehabilitation'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {language === 'zh' ? '选择您需要的康复方向，加快恢复进程' : 'Select the rehabilitation direction you need to speed up recovery'}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

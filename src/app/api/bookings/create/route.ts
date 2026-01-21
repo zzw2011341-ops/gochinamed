@@ -18,6 +18,11 @@ interface BookingRequest {
   selectedHospital?: string;
   selectedDoctor?: string;
   treatmentType: string;
+  consultationDirection?: string;
+  examinationItems?: string;
+  surgeryTypes?: string;
+  treatmentDirection?: string;
+  rehabilitationDirection?: string;
   budget: string;
 }
 
@@ -47,6 +52,18 @@ interface PlanOption {
   // 医疗服务关联
   doctorId?: string;
   hospitalId?: string;
+  // 医疗方案详细字段
+  consultationDirection?: string;
+  examinationItems?: string;
+  surgeryTypes?: string;
+  treatmentDirection?: string;
+  rehabilitationDirection?: string;
+  medicalPlan?: string;
+  planAdjustments?: string[];
+  // 验证信息
+  isPriceValidated?: boolean;
+  priceAdjustmentStatus?: 'pending' | 'approved' | 'rejected';
+  priceAdjustmentAmount?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -141,6 +158,11 @@ User Details:
 - Destination City: ${destinationCity}
 - Travel Date: ${travelDate}
 - Treatment Type: ${treatmentType || 'General Consultation'}
+- Consultation Direction: ${body.consultationDirection || 'Not specified'}
+- Examination Items: ${body.examinationItems || 'Not specified'}
+- Surgery Types: ${body.surgeryTypes || 'Not specified'}
+- Treatment Direction: ${body.treatmentDirection || 'Not specified'}
+- Rehabilitation Direction: ${body.rehabilitationDirection || 'Not specified'}
 - Budget: $${budget || 'Not specified'}
 - Number of Travelers: ${numberOfPeople}
 ${weatherPrompt}
@@ -172,7 +194,14 @@ For each option, provide a JSON object with this structure:
   "duration": "e.g., 7 days 6 nights",
   "hotelName": "Hotel name",
   "hotelStars": number (1-5),
-  "flightClass": "${isSameCity ? 'local-transportation' : 'economy/business/first'}"
+  "flightClass": "${isSameCity ? 'local-transportation' : 'economy/business/first'}",
+  "consultationDirection": "${body.consultationDirection || 'Based on treatment type'}",
+  "examinationItems": "${body.examinationItems || 'Recommended tests'}",
+  "surgeryTypes": "${body.surgeryTypes || 'Specific surgery type if applicable'}",
+  "treatmentDirection": "${body.treatmentDirection || 'Treatment approach'}",
+  "rehabilitationDirection": "${body.rehabilitationDirection || 'Rehabilitation focus if needed'}",
+  "medicalPlan": "Detailed medical plan description",
+  "isPriceValidated": true
 }
 
 ${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set all medical fees (medicalSurgeryFee, medicineFee, nursingFee, nutritionFee, medicalFee) to 0 for all plans.' : ''}
@@ -206,16 +235,54 @@ Return ONLY the JSON array with 3 options, no additional text.`;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
         // 如果解析失败，生成默认方案
-        plans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople);
+        plans = generateDefaultPlans(
+          budget,
+          treatmentType,
+          selectedHospital,
+          selectedDoctor,
+          numberOfPeople,
+          isSameCity,
+          body.consultationDirection,
+          body.examinationItems,
+          body.surgeryTypes,
+          body.treatmentDirection,
+          body.rehabilitationDirection
+        );
       }
 
       // 确保我们有3个方案
       if (!Array.isArray(plans) || plans.length !== 3) {
-        plans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
+        plans = generateDefaultPlans(
+          budget,
+          treatmentType,
+          selectedHospital,
+          selectedDoctor,
+          numberOfPeople,
+          isSameCity,
+          body.consultationDirection,
+          body.examinationItems,
+          body.surgeryTypes,
+          body.treatmentDirection,
+          body.rehabilitationDirection
+        );
       }
 
       // 清理和验证数据，确保所有必需字段都存在
-      plans = plans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople, selectedDoctor, selectedHospital));
+      plans = plans.map(plan =>
+        normalizePlan(
+          plan,
+          isSameCity,
+          hasMedicalSelection,
+          numberOfPeople,
+          selectedDoctor,
+          selectedHospital,
+          body.consultationDirection,
+          body.examinationItems,
+          body.surgeryTypes,
+          body.treatmentDirection,
+          body.rehabilitationDirection
+        )
+      );
 
       return NextResponse.json({
         success: true,
@@ -242,9 +309,35 @@ Return ONLY the JSON array with 3 options, no additional text.`;
     } catch (aiError) {
       console.error('AI generation failed, using default plans:', aiError);
       // AI生成失败时使用默认方案
-      let defaultPlans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
+      let defaultPlans = generateDefaultPlans(
+        budget,
+        treatmentType,
+        selectedHospital,
+        selectedDoctor,
+        numberOfPeople,
+        isSameCity,
+        body.consultationDirection,
+        body.examinationItems,
+        body.surgeryTypes,
+        body.treatmentDirection,
+        body.rehabilitationDirection
+      );
       // 确保数据归一化
-      defaultPlans = defaultPlans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople, selectedDoctor, selectedHospital));
+      defaultPlans = defaultPlans.map(plan =>
+        normalizePlan(
+          plan,
+          isSameCity,
+          hasMedicalSelection,
+          numberOfPeople,
+          selectedDoctor,
+          selectedHospital,
+          body.consultationDirection,
+          body.examinationItems,
+          body.surgeryTypes,
+          body.treatmentDirection,
+          body.rehabilitationDirection
+        )
+      );
       return NextResponse.json({
         success: true,
         plans: defaultPlans,
@@ -284,7 +377,12 @@ function generateDefaultPlans(
   selectedHospital?: string,
   selectedDoctor?: string,
   numberOfPeople: number = 1,
-  isSameCity: boolean = false
+  isSameCity: boolean = false,
+  consultationDirection?: string,
+  examinationItems?: string,
+  surgeryTypes?: string,
+  treatmentDirection?: string,
+  rehabilitationDirection?: string
 ): PlanOption[] {
   const baseBudget = parseFloat(budget) || 3000;
   const hasMedicalSelection = selectedHospital || selectedDoctor;
@@ -334,6 +432,15 @@ function generateDefaultPlans(
       flightClass: isSameCity ? 'local-transportation' : 'economy',
       doctorId: selectedDoctor || undefined,
       hospitalId: selectedHospital || undefined,
+      consultationDirection: consultationDirection || treatmentType || 'general_consultation',
+      examinationItems: examinationItems || 'basic_checkup',
+      surgeryTypes: surgeryTypes || (treatmentType === 'surgery' ? 'general_surgery' : undefined),
+      treatmentDirection: treatmentDirection || (treatmentType === 'therapy' ? 'physical_therapy' : undefined),
+      rehabilitationDirection: rehabilitationDirection || (treatmentType === 'rehabilitation' ? 'post_surgery' : undefined),
+      medicalPlan: 'Basic medical plan focusing on essential treatments and follow-up care.',
+      isPriceValidated: true,
+      priceAdjustmentStatus: 'pending' as const,
+      priceAdjustmentAmount: 0,
     },
     {
       id: 'standard',
@@ -364,6 +471,15 @@ function generateDefaultPlans(
       flightClass: isSameCity ? 'premium-transport' : 'standard',
       doctorId: selectedDoctor || undefined,
       hospitalId: selectedHospital || undefined,
+      consultationDirection: consultationDirection || treatmentType || 'comprehensive_consultation',
+      examinationItems: examinationItems || 'comprehensive_tests',
+      surgeryTypes: surgeryTypes || (treatmentType === 'surgery' ? 'specialized_surgery' : undefined),
+      treatmentDirection: treatmentDirection || (treatmentType === 'therapy' ? 'comprehensive_therapy' : undefined),
+      rehabilitationDirection: rehabilitationDirection || (treatmentType === 'rehabilitation' ? 'comprehensive_rehab' : undefined),
+      medicalPlan: 'Comprehensive medical plan including specialist consultation, detailed examinations, and personalized treatment protocols.',
+      isPriceValidated: true,
+      priceAdjustmentStatus: 'pending' as const,
+      priceAdjustmentAmount: 0,
     },
     {
       id: 'premium',
@@ -396,6 +512,15 @@ function generateDefaultPlans(
       flightClass: isSameCity ? 'vip-transport' : 'business',
       doctorId: selectedDoctor || undefined,
       hospitalId: selectedHospital || undefined,
+      consultationDirection: consultationDirection || treatmentType || 'vip_consultation',
+      examinationItems: examinationItems || 'vip_comprehensive_tests',
+      surgeryTypes: surgeryTypes || (treatmentType === 'surgery' ? 'advanced_surgery' : undefined),
+      treatmentDirection: treatmentDirection || (treatmentType === 'therapy' ? 'advanced_therapy' : undefined),
+      rehabilitationDirection: rehabilitationDirection || (treatmentType === 'rehabilitation' ? 'vip_rehab' : undefined),
+      medicalPlan: 'VIP medical plan with access to top specialists, cutting-edge diagnostic equipment, personalized treatment protocols, and comprehensive rehabilitation services.',
+      isPriceValidated: true,
+      priceAdjustmentStatus: 'pending' as const,
+      priceAdjustmentAmount: 0,
     }
   ];
 
@@ -413,7 +538,12 @@ function normalizePlan(
   hasMedicalSelection: boolean,
   numberOfPeople: number,
   selectedDoctor?: string,
-  selectedHospital?: string
+  selectedHospital?: string,
+  consultationDirection?: string,
+  examinationItems?: string,
+  surgeryTypes?: string,
+  treatmentDirection?: string,
+  rehabilitationDirection?: string
 ): PlanOption {
   const defaultPlan = {
     name: 'Standard Plan',
@@ -436,6 +566,15 @@ function normalizePlan(
     flightClass: isSameCity ? 'local-transportation' : 'economy',
     doctorId: undefined,
     hospitalId: undefined,
+    consultationDirection: consultationDirection || 'general_consultation',
+    examinationItems: examinationItems || 'basic_checkup',
+    surgeryTypes: surgeryTypes,
+    treatmentDirection: treatmentDirection,
+    rehabilitationDirection: rehabilitationDirection,
+    medicalPlan: 'Standard medical plan with comprehensive care.',
+    isPriceValidated: true,
+    priceAdjustmentStatus: 'pending' as const,
+    priceAdjustmentAmount: 0,
   };
 
   const normalized: any = { ...defaultPlan };
@@ -464,6 +603,20 @@ function normalizePlan(
 
   if (plan.hospitalId) normalized.hospitalId = plan.hospitalId;
   else if (selectedHospital) normalized.hospitalId = selectedHospital;
+
+  // 处理新的医疗方案字段
+  if (plan.consultationDirection) normalized.consultationDirection = plan.consultationDirection;
+  if (plan.examinationItems) normalized.examinationItems = plan.examinationItems;
+  if (plan.surgeryTypes) normalized.surgeryTypes = plan.surgeryTypes;
+  if (plan.treatmentDirection) normalized.treatmentDirection = plan.treatmentDirection;
+  if (plan.rehabilitationDirection) normalized.rehabilitationDirection = plan.rehabilitationDirection;
+  if (plan.medicalPlan) normalized.medicalPlan = plan.medicalPlan;
+  if (plan.planAdjustments && Array.isArray(plan.planAdjustments)) normalized.planAdjustments = plan.planAdjustments;
+  if (typeof plan.isPriceValidated === 'boolean') normalized.isPriceValidated = plan.isPriceValidated;
+  if (plan.priceAdjustmentStatus && ['pending', 'approved', 'rejected'].includes(plan.priceAdjustmentStatus)) {
+    normalized.priceAdjustmentStatus = plan.priceAdjustmentStatus;
+  }
+  if (typeof plan.priceAdjustmentAmount === 'number') normalized.priceAdjustmentAmount = plan.priceAdjustmentAmount;
 
   // 重新计算医疗费用（如果没有医疗服务，则所有医疗费用为0）
   if (!hasMedicalSelection) {
