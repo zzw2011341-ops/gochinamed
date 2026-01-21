@@ -901,26 +901,28 @@ export function generateRealisticFlightNumber(
 
 /**
  * 计算航班费用（美元转人民币，汇率约7.2）
+ * 修复版本：使用 searchFlightRoute 获取正确的航班信息（包含强制中转逻辑）
  */
-export function calculateFlightCostUSD(
+export async function calculateFlightCostUSD(
   origin: string,
   destination: string,
   classType: 'economy' | 'business' | 'first',
   numberOfPassengers: number
-): { minPrice: number; maxPrice: number; typicalPrice: number } {
-  const route = getFromCache(origin, destination) || getPredefinedRoute(origin, destination);
-  
+): Promise<{ minPrice: number; maxPrice: number; typicalPrice: number }> {
+  // 调用 searchFlightRoute 获取正确的航班信息（包含强制中转逻辑）
+  const route = await searchFlightRoute(origin, destination);
+
   let basePrice = route?.typicalPriceUSD || 500;
-  
+
   // 根据舱位调整价格
   const classMultiplier = {
     economy: 1,
     business: 2.5,
     first: 5,
   };
-  
+
   const adjustedPrice = basePrice * classMultiplier[classType];
-  
+
   return {
     minPrice: Math.round(adjustedPrice * 0.8 * numberOfPassengers),
     maxPrice: Math.round(adjustedPrice * 1.2 * numberOfPassengers),

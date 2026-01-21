@@ -287,7 +287,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
         // 如果解析失败，生成默认方案
-        plans = generateDefaultPlans(
+        plans = await generateDefaultPlans(
           budget,
           treatmentType,
           selectedHospital,
@@ -306,7 +306,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
 
       // 确保我们有3个方案
       if (!Array.isArray(plans) || plans.length !== 3) {
-        plans = generateDefaultPlans(
+        plans = await generateDefaultPlans(
           budget,
           treatmentType,
           selectedHospital,
@@ -366,7 +366,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
     } catch (aiError) {
       console.error('AI generation failed, using default plans:', aiError);
       // AI生成失败时使用默认方案
-      let defaultPlans = generateDefaultPlans(
+      let defaultPlans = await generateDefaultPlans(
         budget,
         treatmentType,
         selectedHospital,
@@ -431,7 +431,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
 }
 
 // 生成默认方案（当AI不可用时）
-function generateDefaultPlans(
+async function generateDefaultPlans(
   budget: string,
   treatmentType: string,
   selectedHospital?: string,
@@ -445,7 +445,7 @@ function generateDefaultPlans(
   rehabilitationDirection?: string,
   originCity: string = 'Origin',
   destinationCity: string = 'Destination'
-): PlanOption[] {
+): Promise<PlanOption[]> {
   const baseBudget = parseFloat(budget) || 3000;
   const hasMedicalSelection = selectedHospital || selectedDoctor;
 
@@ -509,21 +509,21 @@ function generateDefaultPlans(
     standardFlightCost = { minPrice: 0, maxPrice: 0, typicalPrice: 0 };
     premiumFlightCost = { minPrice: 0, maxPrice: 0, typicalPrice: 0 };
   } else {
-    // 国际/长途旅行：使用真实航班价格
+    // 国际/长途旅行：使用真实航班价格（包含强制中转逻辑）
     try {
-      budgetFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'economy', numberOfPeople);
-      standardFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'business', numberOfPeople);
-      premiumFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'first', numberOfPeople);
-      
+      budgetFlightCost = await calculateFlightCostUSD(originCity, destinationCity, 'economy', numberOfPeople);
+      standardFlightCost = await calculateFlightCostUSD(originCity, destinationCity, 'business', numberOfPeople);
+      premiumFlightCost = await calculateFlightCostUSD(originCity, destinationCity, 'first', numberOfPeople);
+
       // 转换为人民币
       budgetFlightCost.minPrice = Math.round(budgetFlightCost.minPrice * USD_TO_CNY);
       budgetFlightCost.maxPrice = Math.round(budgetFlightCost.maxPrice * USD_TO_CNY);
       budgetFlightCost.typicalPrice = Math.round(budgetFlightCost.typicalPrice * USD_TO_CNY);
-      
+
       standardFlightCost.minPrice = Math.round(standardFlightCost.minPrice * USD_TO_CNY);
       standardFlightCost.maxPrice = Math.round(standardFlightCost.maxPrice * USD_TO_CNY);
       standardFlightCost.typicalPrice = Math.round(standardFlightCost.typicalPrice * USD_TO_CNY);
-      
+
       premiumFlightCost.minPrice = Math.round(premiumFlightCost.minPrice * USD_TO_CNY);
       premiumFlightCost.maxPrice = Math.round(premiumFlightCost.maxPrice * USD_TO_CNY);
       premiumFlightCost.typicalPrice = Math.round(premiumFlightCost.typicalPrice * USD_TO_CNY);
