@@ -6,7 +6,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Check, Star, Plane, Hotel, Stethoscope, DollarSign, Calendar, MapPin } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Check, Star, Plane, Hotel, Stethoscope, DollarSign, Calendar, MapPin, Info } from 'lucide-react';
 
 interface PlanOption {
   id: string;
@@ -51,6 +52,8 @@ export default function PlanSelectionPage() {
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanOption | null>(null);
   const [loading, setLoading] = useState(true);
+  const [includeTourism, setIncludeTourism] = useState(false); // 是否包含旅游服务
+  const [tourismFee, setTourismFee] = useState(0); // 旅游服务费用
 
   // 判断是否同城旅行
   const isSameCity = bookingData?.originCity === bookingData?.destinationCity;
@@ -76,10 +79,36 @@ export default function PlanSelectionPage() {
   const handleProceedToPayment = () => {
     if (!selectedPlan) return;
 
+    // 如果选择了旅游服务，添加门票费用
+    const finalPlan = includeTourism
+      ? {
+          ...selectedPlan,
+          ticketFee: tourismFee,
+          totalAmount: (selectedPlan.totalAmount || 0) + tourismFee,
+        }
+      : selectedPlan;
+
     // 保存选中的方案
-    sessionStorage.setItem('selectedPlan', JSON.stringify(selectedPlan));
+    sessionStorage.setItem('selectedPlan', JSON.stringify(finalPlan));
+    sessionStorage.setItem('includeTourism', JSON.stringify(includeTourism));
     // 跳转到支付页面
     router.push('/book/payment');
+  };
+
+  // 计算旅游服务费用（基于基础估算）
+  useEffect(() => {
+    if (includeTourism && bookingData) {
+      // 根据城市估算旅游费用（每人每天50-100美元，7天）
+      const baseTourismFee = 7 * 80; // 7天，每天80美元
+      setTourismFee(baseTourismFee);
+    } else {
+      setTourismFee(0);
+    }
+  }, [includeTourism, bookingData]);
+
+  // 计算实际总价
+  const getTotalPrice = (plan: PlanOption) => {
+    return (plan.totalAmount || 0) + (includeTourism ? tourismFee : 0);
   };
 
   if (loading) {
@@ -116,6 +145,43 @@ export default function PlanSelectionPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* 旅游服务选项 */}
+        <Card className="mb-8 border-2 border-blue-200 bg-blue-50/30">
+          <CardHeader>
+            <div className="flex items-start gap-4">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <CardTitle className="text-lg">
+                  {language === 'zh' ? '旅游计划选项' : 'Tourism Options'}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {language === 'zh'
+                    ? '这是一个医疗旅游平台，主要提供医疗服务。如需在治疗期间游览当地景点，可选择添加旅游服务。'
+                    : 'This is a medical tourism platform focused on healthcare services. You can add tourism services if you wish to visit local attractions during your treatment.'}
+                </CardDescription>
+              </div>
+              <Switch
+                checked={includeTourism}
+                onCheckedChange={setIncludeTourism}
+                className="mt-2"
+              />
+            </div>
+          </CardHeader>
+          {includeTourism && (
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-100 rounded-lg p-3">
+                <MapPin className="h-4 w-4" />
+                <span>
+                  {language === 'zh'
+                    ? `已添加旅游服务（门票费：$${tourismFee.toLocaleString()}）`
+                    : `Tourism services added (Ticket fee: $${tourismFee.toLocaleString()})`
+                  }
+                </span>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {plans.map((plan, index) => {
             const isSelected = selectedPlan?.id === plan.id;
@@ -157,12 +223,12 @@ export default function PlanSelectionPage() {
 
                 <CardContent className="space-y-4">
                   {/* Price */}
-                  <div className="bg-blue-50 rounded-lg p-4">
+                  <div className={`rounded-lg p-4 ${includeTourism ? 'bg-purple-50' : 'bg-blue-50'}`}>
                     <div className="text-sm text-gray-600 mb-1">
                       {language === 'zh' ? '总价' : 'Total Price'}
                     </div>
-                    <div className="text-3xl font-bold text-blue-600">
-                      ${(plan.totalAmount || 0).toLocaleString()}
+                    <div className={`text-3xl font-bold ${includeTourism ? 'text-purple-600' : 'text-blue-600'}`}>
+                      ${getTotalPrice(plan).toLocaleString()}
                     </div>
                   </div>
 
@@ -243,14 +309,28 @@ export default function PlanSelectionPage() {
                       </div>
                     )}
 
-                    {/* 其他费用 */}
-                    <div className="flex justify-between text-sm">
-                      <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        {language === 'zh' ? '门票' : 'Tickets'}
-                      </span>
-                      <span className="font-medium">${(plan.ticketFee || 0).toLocaleString()}</span>
-                    </div>
+                    {/* 其他费用 - 旅游服务 */}
+                    {includeTourism ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-purple-600" />
+                          {language === 'zh' ? '旅游门票' : 'Tourism Tickets'}
+                        </span>
+                        <span className="font-medium text-purple-600">
+                          ${tourismFee.toLocaleString()}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between text-sm text-gray-400">
+                        <span className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          {language === 'zh' ? '门票' : 'Tickets'}
+                        </span>
+                        <span className="font-medium">
+                          {language === 'zh' ? '不包含' : 'Not included'}
+                        </span>
+                      </div>
+                    )}
 
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center gap-2">

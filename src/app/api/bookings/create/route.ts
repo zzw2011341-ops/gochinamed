@@ -704,35 +704,51 @@ function normalizePlan(
     planTreatmentType = 'consultation';
   }
 
-  // 根据治疗类型调整医疗费用
-  let adjustedMedicalSurgeryFee = plan.medicalSurgeryFee || 0;
-  let adjustedMedicineFee = plan.medicineFee || 0;
-  let adjustedNursingFee = plan.nursingFee || 0;
-  let adjustedNutritionFee = plan.nutritionFee || 0;
+  // 根据治疗类型调整医疗费用（强制覆盖AI生成的数据）
+  let adjustedMedicalSurgeryFee = 0;
+  let adjustedMedicineFee = 0;
+  let adjustedNursingFee = 0;
+  let adjustedNutritionFee = 0;
 
-  // 检查类型：根据治疗类型严格限制费用
+  // 强制根据治疗类型严格限制费用
   if (planTreatmentType === 'examination') {
-    // 检查类型：不应该有手术费、护理费、营养费
+    // 检查类型：强制清零手术费、护理费、营养费
     adjustedMedicalSurgeryFee = 0;
     adjustedNursingFee = 0;
     adjustedNutritionFee = 0;
-    // 检查类型可能有药费（如CT扫描的造影剂等），限制在合理范围
-    adjustedMedicineFee = Math.min(adjustedMedicineFee, 300);
+    // 检查类型药费（如CT扫描的造影剂等），限制在合理范围（0-300）
+    adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 300);
   } else if (planTreatmentType === 'consultation') {
-    // 咨询类型：不应该有手术费、护理费、营养费
+    // 咨询类型：强制清零手术费、护理费、营养费
     adjustedMedicalSurgeryFee = 0;
     adjustedNursingFee = 0;
     adjustedNutritionFee = 0;
-    // 咨询类型药费较少
-    adjustedMedicineFee = Math.min(adjustedMedicineFee, 200);
+    // 咨询类型药费较少（0-200）
+    adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 200);
   } else if (planTreatmentType === 'surgery') {
-    // 手术类型：保留所有费用（不做限制）
+    // 手术类型：保留费用，但要确保合理性
+    adjustedMedicalSurgeryFee = Math.max(plan.medicalSurgeryFee || 0, 0);
+    adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
+    adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
+    adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
   } else if (planTreatmentType === 'therapy') {
-    // 治疗类型：不应该有手术费
+    // 治疗类型：强制清零手术费
     adjustedMedicalSurgeryFee = 0;
+    adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
+    adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
+    adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
   } else if (planTreatmentType === 'rehabilitation') {
-    // 康复类型：不应该有手术费
+    // 康复类型：强制清零手术费
     adjustedMedicalSurgeryFee = 0;
+    adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
+    adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
+    adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
+  } else {
+    // 默认类型：保守处理
+    adjustedMedicalSurgeryFee = 0;
+    adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 100);
+    adjustedNursingFee = 0;
+    adjustedNutritionFee = 0;
   }
 
   // 计算医疗总费用
@@ -778,7 +794,8 @@ function normalizePlan(
   if (plan.hotelFee !== undefined) normalized.hotelFee = Number(plan.hotelFee) || defaultPlan.hotelFee;
   if (plan.flightFee !== undefined) normalized.flightFee = Number(plan.flightFee) || defaultPlan.flightFee;
   if (plan.carFee !== undefined) normalized.carFee = Number(plan.carFee) || defaultPlan.carFee;
-  if (plan.ticketFee !== undefined) normalized.ticketFee = Number(plan.ticketFee) || defaultPlan.ticketFee;
+  // 强制设置ticketFee为0（医疗旅游不包含门票），忽略AI生成的任何值
+  normalized.ticketFee = 0;
   if (plan.reservationFee !== undefined) normalized.reservationFee = Number(plan.reservationFee) || defaultPlan.reservationFee;
 
   // 使用调整后的医疗费用（根据治疗类型限制）
@@ -812,9 +829,6 @@ function normalizePlan(
     normalized.priceAdjustmentStatus = plan.priceAdjustmentStatus;
   }
   if (typeof plan.priceAdjustmentAmount === 'number') normalized.priceAdjustmentAmount = plan.priceAdjustmentAmount;
-
-  // 强制设置ticketFee为0（医疗旅游不包含门票）
-  normalized.ticketFee = 0;
 
   // 重新计算医疗费用（如果没有医疗服务，则所有医疗费用为0）
   if (!hasMedicalSelection) {

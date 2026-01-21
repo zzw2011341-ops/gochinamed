@@ -76,7 +76,9 @@ const CITY_TO_AIRPORT_CODE: Record<string, string> = {
 };
 
 // 预定义的一些常见航线数据（作为后备）
+// 注意：这些数据仅用于主要枢纽之间的直飞航线，对于非主要枢纽或长途航线，应该使用中转逻辑
 const PREDEFINED_ROUTES: Record<string, Omit<FlightRoute, 'lastUpdated'>> = {
+  // 中国国内航线（主要城市之间）
   'PEK-CGQ': {
     origin: 'Beijing',
     destination: 'Changchun',
@@ -101,89 +103,142 @@ const PREDEFINED_ROUTES: Record<string, Omit<FlightRoute, 'lastUpdated'>> = {
     maxPriceUSD: 250,
     typicalPriceUSD: 150,
   },
-  'JFK-PEK': {
-    origin: 'New York',
-    destination: 'Beijing',
+  'PEK-SHA': {
+    origin: 'Beijing',
+    destination: 'Shanghai',
+    hasDirectFlight: true,
+    connectionCities: [],
+    estimatedDurationMinutes: 120,
+    flightNumbers: ['CA1501', 'CA1503', 'MU5101', 'MU5103'],
+    airlines: ['Air China', 'China Eastern'],
+    minPriceUSD: 100,
+    maxPriceUSD: 300,
+    typicalPriceUSD: 150,
+  },
+
+  // 国际航线（仅主要枢纽之间的直飞，其他城市需要中转）
+  // 中国主要枢纽（北京、上海、广州）到欧美主要枢纽
+  'PEK-JFK': {
+    origin: 'Beijing',
+    destination: 'New York',
     hasDirectFlight: true,
     connectionCities: [],
     estimatedDurationMinutes: 840, // 14小时
-    flightNumbers: ['CA981', 'CA983', 'MU586'],
-    airlines: ['Air China', 'China Eastern'],
+    flightNumbers: ['CA981', 'CA983'],
+    airlines: ['Air China'],
     minPriceUSD: 800,
     maxPriceUSD: 2000,
     typicalPriceUSD: 1200,
   },
-  'JFK-PVG': {
-    origin: 'New York',
-    destination: 'Shanghai',
+  'PEK-LAX': {
+    origin: 'Beijing',
+    destination: 'Los Angeles',
     hasDirectFlight: true,
     connectionCities: [],
     estimatedDurationMinutes: 900, // 15小时
-    flightNumbers: ['MU586', 'UA858', 'DL288'],
-    airlines: ['China Eastern', 'United', 'Delta'],
+    flightNumbers: ['CA987', 'CA989'],
+    airlines: ['Air China'],
     minPriceUSD: 800,
     maxPriceUSD: 2200,
     typicalPriceUSD: 1300,
   },
-  'LHR-PEK': {
-    origin: 'London',
-    destination: 'Beijing',
+  'PVG-JFK': {
+    origin: 'Shanghai',
+    destination: 'New York',
+    hasDirectFlight: true,
+    connectionCities: [],
+    estimatedDurationMinutes: 900, // 15小时
+    flightNumbers: ['MU586', 'MU588'],
+    airlines: ['China Eastern'],
+    minPriceUSD: 800,
+    maxPriceUSD: 2200,
+    typicalPriceUSD: 1300,
+  },
+  'PVG-LAX': {
+    origin: 'Shanghai',
+    destination: 'Los Angeles',
+    hasDirectFlight: true,
+    connectionCities: [],
+    estimatedDurationMinutes: 960, // 16小时
+    flightNumbers: ['MU577', 'MU585'],
+    airlines: ['China Eastern'],
+    minPriceUSD: 800,
+    maxPriceUSD: 2400,
+    typicalPriceUSD: 1400,
+  },
+  'PEK-LHR': {
+    origin: 'Beijing',
+    destination: 'London',
     hasDirectFlight: true,
     connectionCities: [],
     estimatedDurationMinutes: 600, // 10小时
-    flightNumbers: ['CA938', 'CA856', 'VS251'],
-    airlines: ['Air China', 'Virgin Atlantic'],
+    flightNumbers: ['CA937', 'CA939'],
+    airlines: ['Air China'],
     minPriceUSD: 700,
     maxPriceUSD: 1800,
     typicalPriceUSD: 1100,
   },
-  'FRA-PEK': {
-    origin: 'Frankfurt',
-    destination: 'Beijing',
+  'PEK-FRA': {
+    origin: 'Beijing',
+    destination: 'Frankfurt',
     hasDirectFlight: true,
     connectionCities: [],
     estimatedDurationMinutes: 540, // 9小时
-    flightNumbers: ['CA932', 'CA936', 'LH720'],
-    airlines: ['Air China', 'Lufthansa'],
+    flightNumbers: ['CA931', 'CA965'],
+    airlines: ['Air China'],
     minPriceUSD: 650,
     maxPriceUSD: 1700,
     typicalPriceUSD: 1000,
   },
-  'CDG-PEK': {
-    origin: 'Paris',
-    destination: 'Beijing',
+  'PEK-CDG': {
+    origin: 'Beijing',
+    destination: 'Paris',
     hasDirectFlight: true,
     connectionCities: [],
     estimatedDurationMinutes: 600, // 10小时
-    flightNumbers: ['CA934', 'AF128', 'MU554'],
-    airlines: ['Air China', 'Air France', 'China Eastern'],
+    flightNumbers: ['CA933', 'CA875'],
+    airlines: ['Air China'],
     minPriceUSD: 700,
     maxPriceUSD: 1800,
     typicalPriceUSD: 1100,
   },
-  'NRT-PEK': {
-    origin: 'Tokyo',
-    destination: 'Beijing',
+  'PEK-NRT': {
+    origin: 'Beijing',
+    destination: 'Tokyo',
     hasDirectFlight: true,
     connectionCities: [],
-    estimatedDurationMinutes: 240, // 4小时
-    flightNumbers: ['JL021', 'CA182', 'NH903'],
-    airlines: ['JAL', 'Air China', 'ANA'],
-    minPriceUSD: 400,
-    maxPriceUSD: 900,
-    typicalPriceUSD: 550,
-  },
-  'ICN-PEK': {
-    origin: 'Seoul',
-    destination: 'Beijing',
-    hasDirectFlight: true,
-    connectionCities: [],
-    estimatedDurationMinutes: 120, // 2小时
-    flightNumbers: ['KE853', 'OZ331', 'CA124'],
-    airlines: ['Korean Air', 'Asiana', 'Air China'],
+    estimatedDurationMinutes: 180, // 3小时
+    flightNumbers: ['CA181', 'CA925'],
+    airlines: ['Air China'],
     minPriceUSD: 300,
     maxPriceUSD: 700,
     typicalPriceUSD: 450,
+  },
+  'PEK-ICN': {
+    origin: 'Beijing',
+    destination: 'Seoul',
+    hasDirectFlight: true,
+    connectionCities: [],
+    estimatedDurationMinutes: 120, // 2小时
+    flightNumbers: ['CA123', 'CA125'],
+    airlines: ['Air China'],
+    minPriceUSD: 200,
+    maxPriceUSD: 500,
+    typicalPriceUSD: 300,
+  },
+
+  // 东南亚主要航线
+  'PEK-SIN': {
+    origin: 'Beijing',
+    destination: 'Singapore',
+    hasDirectFlight: true,
+    connectionCities: [],
+    estimatedDurationMinutes: 360, // 6小时
+    flightNumbers: ['SQ801', 'CA969'],
+    airlines: ['Singapore Airlines', 'Air China'],
+    minPriceUSD: 400,
+    maxPriceUSD: 900,
+    typicalPriceUSD: 550,
   },
 };
 
@@ -235,16 +290,16 @@ function saveToCache(route: FlightRoute): void {
 async function searchRealFlightData(origin: string, destination: string): Promise<FlightRoute | null> {
   const config = new Config();
   const searchClient = new SearchClient(config);
-  
+
   try {
     // 构建搜索查询
     const originAirport = getAirportCode(origin);
     const destAirport = getAirportCode(destination);
-    
-    const searchQuery = `flights ${origin} to ${destination} price duration airlines ${new Date().getFullYear()}`;
-    
+
+    const searchQuery = `flights from ${origin} to ${destination} direct flight connection price duration airlines ${new Date().getFullYear()}`;
+
     const response = await searchClient.webSearch(searchQuery, 5, true);
-    
+
     if (response.web_items && response.web_items.length > 0) {
       // 解析搜索结果
       const flightRoute: FlightRoute = {
@@ -260,18 +315,34 @@ async function searchRealFlightData(origin: string, destination: string): Promis
         typicalPriceUSD: 0,
         lastUpdated: new Date(),
       };
-      
+
       // 分析搜索结果提取航班信息
       let hasFlightInfo = false;
-      
+
       for (const item of response.web_items) {
         const text = `${item.title} ${item.snippet} ${item.summary || ''}`.toLowerCase();
-        
+
         // 检测是否有直飞航班
-        if (text.includes('direct flight') || text.includes('non-stop')) {
+        if (text.includes('direct flight') || text.includes('non-stop') || text.includes('nonstop')) {
           flightRoute.hasDirectFlight = true;
         }
-        
+
+        // 检测是否需要中转
+        if (text.includes('connecting flight') || text.includes('connection') || text.includes('stopover') || text.includes('layover')) {
+          flightRoute.hasDirectFlight = false;
+
+          // 尝试提取中转城市
+          const hubCities = ['beijing', 'shanghai', 'guangzhou', 'tokyo', 'seoul', 'singapore', 'dubai', 'hong kong', 'london', 'paris', 'frankfurt'];
+          for (const hub of hubCities) {
+            if (text.includes(hub)) {
+              const formattedHub = hub.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+              if (!flightRoute.connectionCities?.includes(formattedHub)) {
+                flightRoute.connectionCities?.push(formattedHub);
+              }
+            }
+          }
+        }
+
         // 提取价格信息
         const priceMatch = text.match(/\$?(\d{3,5})\s*(usd|dollars?)/i);
         if (priceMatch) {
@@ -284,7 +355,7 @@ async function searchRealFlightData(origin: string, destination: string): Promis
           }
           hasFlightInfo = true;
         }
-        
+
         // 提取飞行时长
         const durationMatch = text.match(/(\d+)\s*hours?\s*(\d+)?\s*minutes?/i);
         if (durationMatch) {
@@ -296,7 +367,7 @@ async function searchRealFlightData(origin: string, destination: string): Promis
           }
           hasFlightInfo = true;
         }
-        
+
         // 提取航空公司信息
         const airlines = ['air china', 'china eastern', 'china southern', 'united', 'delta', 'american', 'lufthansa', 'british airways', 'air france', 'korean air', 'jal', 'ana', 'singapore airlines', 'emirates', 'qatar'];
         for (const airline of airlines) {
@@ -307,7 +378,7 @@ async function searchRealFlightData(origin: string, destination: string): Promis
             }
           }
         }
-        
+
         // 提取航班号
         const flightNumberMatch = text.match(/\b([A-Z]{2}\d{3,4})\b/g);
         if (flightNumberMatch) {
@@ -318,17 +389,25 @@ async function searchRealFlightData(origin: string, destination: string): Promis
           }
         }
       }
-      
+
       // 如果找到航班信息，设置典型价格和更新缓存
       if (hasFlightInfo) {
         // 典型价格为最小值和最大值的中间值
         flightRoute.typicalPriceUSD = Math.round((flightRoute.minPriceUSD + flightRoute.maxPriceUSD) / 2);
-        
+
         // 如果没有提取到飞行时长，使用距离估算
         if (flightRoute.estimatedDurationMinutes === 0) {
           flightRoute.estimatedDurationMinutes = estimateFlightDurationByDistance(origin, destination);
         }
-        
+
+        // 如果搜索结果显示需要中转但没有提取到中转城市，使用规则判断
+        if (!flightRoute.hasDirectFlight && (!flightRoute.connectionCities || flightRoute.connectionCities.length === 0)) {
+          const connectionCity = getConnectionCity(origin, destination);
+          if (connectionCity) {
+            flightRoute.connectionCities = [connectionCity];
+          }
+        }
+
         saveToCache(flightRoute);
         return flightRoute;
       }
@@ -336,27 +415,88 @@ async function searchRealFlightData(origin: string, destination: string): Promis
   } catch (error) {
     console.error('Error searching flight data:', error);
   }
-  
+
   return null;
 }
 
 /**
- * 判断航线是否可能需要中转
+ * 判断航线是否需要中转
+ * 规则：
+ * 1. 中国非主要枢纽城市到国际城市需要中转（经北京/上海/广州）
+ * 2. 国际城市到中国非主要枢纽城市需要中转
+ * 3. 跨洲长途航线（如欧洲-大洋洲）通常需要中转
+ * 4. 非主要国际枢纽之间的长途航线需要中转
  */
 function shouldRequireConnection(origin: string, destination: string): boolean {
-  const majorInternationalHubs = ['Beijing', 'Shanghai', 'Guangzhou', 'Hong Kong', 'Tokyo', 'Seoul', 'Singapore', 'Dubai'];
-  const majorUSCities = ['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Miami', 'Washington'];
-  
-  const isOriginSmallChinaCity = !majorInternationalHubs.includes(origin) && CHINA_CITIES.includes(origin);
-  const isDestinationUSCity = majorUSCities.includes(destination);
-  const isOriginUSCity = majorUSCities.includes(origin);
-  const isDestinationSmallChinaCity = !majorInternationalHubs.includes(destination) && CHINA_CITIES.includes(destination);
-  
-  // 小城市到国际城市需要中转
-  if ((isOriginSmallChinaCity && isDestinationUSCity) || (isOriginUSCity && isDestinationSmallChinaCity)) {
+  // 中国主要国际枢纽
+  const chinaMajorHubs = ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Hong Kong'];
+
+  // 主要国际枢纽（可以直飞的城市）
+  const majorInternationalHubs = [
+    // 中国
+    ...chinaMajorHubs,
+    // 美国
+    'New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Washington',
+    // 欧洲
+    'London', 'Paris', 'Frankfurt', 'Amsterdam', 'Rome', 'Madrid',
+    // 亚洲
+    'Tokyo', 'Seoul', 'Singapore', 'Dubai', 'Bangkok', 'Hong Kong', 'Mumbai',
+    // 大洋洲
+    'Sydney', 'Melbourne',
+  ];
+
+  // 判断是否是主要枢纽
+  const isOriginMajorHub = majorInternationalHubs.includes(origin);
+  const isDestinationMajorHub = majorInternationalHubs.includes(destination);
+
+  // 判断是否是中国城市
+  const isOriginChina = CHINA_CITIES.includes(origin);
+  const isDestinationChina = CHINA_CITIES.includes(destination);
+
+  // 判断是否是主要国际城市（美国、欧洲、澳大利亚等）
+  const isOriginInternational = ['New York', 'Los Angeles', 'San Francisco', 'London', 'Paris', 'Frankfurt', 'Tokyo', 'Sydney'].includes(origin);
+  const isDestinationInternational = ['New York', 'Los Angeles', 'San Francisco', 'London', 'Paris', 'Frankfurt', 'Tokyo', 'Sydney'].includes(destination);
+
+  // 情况1：中国非主要枢纽到国际城市（需要中转）
+  if (isOriginChina && !isOriginMajorHub && isDestinationInternational) {
     return true;
   }
-  
+
+  // 情况2：国际城市到中国非主要枢纽（需要中转）
+  if (isDestinationChina && !isDestinationMajorHub && isOriginInternational) {
+    return true;
+  }
+
+  // 情况3：中国小城市之间（可能不需要中转，但距离远可能需要）
+  if (isOriginChina && isDestinationChina && !isOriginMajorHub && !isDestinationMajorHub) {
+    // 距离远的中国城市之间可能需要中转
+    const farDistancePairs = [
+      ['Urumqi', 'Harbin'], ['Urumqi', 'Changchun'], ['Urumqi', 'Shenyang'],
+      ['Lhasa', 'Harbin'], ['Lhasa', 'Changchun'],
+      ['Sanya', 'Urumqi'], ['Sanya', 'Lhasa'],
+    ];
+    for (const pair of farDistancePairs) {
+      if ((pair[0] === origin && pair[1] === destination) || (pair[0] === destination && pair[1] === origin)) {
+        return true;
+      }
+    }
+  }
+
+  // 情况4：非主要枢纽之间的长途国际航线（需要中转）
+  if (!isOriginMajorHub && !isDestinationMajorHub && isOriginInternational && isDestinationInternational) {
+    // 检查是否是远距离（比如东欧到南美）
+    const longDistancePairs = [
+      ['Rome', 'Sydney'], ['Madrid', 'Tokyo'],
+    ];
+    for (const pair of longDistancePairs) {
+      if ((pair[0] === origin && pair[1] === destination) || (pair[0] === destination && pair[1] === origin)) {
+        return true;
+      }
+    }
+    return true; // 默认需要中转
+  }
+
+  // 默认：如果两端都是主要枢纽，可能直飞
   return false;
 }
 
@@ -390,21 +530,109 @@ function estimateFlightDurationByDistance(origin: string, destination: string): 
 
 /**
  * 获取推荐的中转城市
+ * 根据出发地和目的地选择最佳中转枢纽
  */
 function getConnectionCity(origin: string, destination: string): string {
-  const majorUSCities = ['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Miami', 'Washington'];
-  
-  // 中国城市到美国城市，推荐北京
-  if (CHINA_CITIES.includes(origin) && majorUSCities.includes(destination)) {
+  // 中国主要枢纽
+  const chinaHubs = ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Hong Kong'];
+
+  // 主要国际枢纽
+  const majorInternationalHubs = [
+    'New York', 'Los Angeles', 'San Francisco', 'London', 'Paris', 'Frankfurt',
+    'Tokyo', 'Seoul', 'Singapore', 'Dubai', 'Bangkok', 'Sydney'
+  ];
+
+  const isOriginChina = CHINA_CITIES.includes(origin);
+  const isDestinationChina = CHINA_CITIES.includes(destination);
+
+  // 规则1：中国城市到国际城市，优先推荐北京/上海/广州
+  if (isOriginChina && !isDestinationChina) {
+    // 东北城市（长春、哈尔滨、沈阳）推荐北京
+    if (['Changchun', 'Harbin', 'Shenyang'].includes(origin)) {
+      return 'Beijing';
+    }
+    // 华东地区推荐上海
+    if (['Hangzhou', 'Nanjing', 'Suzhou', 'Ningbo'].includes(origin) || origin.includes('Shanghai')) {
+      return 'Shanghai';
+    }
+    // 华南地区推荐广州/深圳
+    if (['Guangzhou', 'Shenzhen', 'Foshan', 'Dongguan'].includes(origin)) {
+      return 'Guangzhou';
+    }
+    // 西南地区推荐成都
+    if (['Chengdu', 'Chongqing', 'Kunming', 'Guiyang'].includes(origin)) {
+      return 'Chengdu';
+    }
+    // 默认推荐北京
     return 'Beijing';
   }
-  
-  // 美国城市到中国城市，推荐北京
-  if (majorUSCities.includes(origin) && CHINA_CITIES.includes(destination)) {
+
+  // 规则2：国际城市到中国城市，优先推荐北京/上海/广州
+  if (!isOriginChina && isDestinationChina) {
+    // 北美城市推荐北京
+    if (['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Washington', 'Toronto'].includes(origin)) {
+      return 'Beijing';
+    }
+    // 欧洲城市推荐上海或北京
+    if (['London', 'Paris', 'Frankfurt', 'Amsterdam', 'Rome', 'Madrid'].includes(origin)) {
+      return 'Shanghai';
+    }
+    // 东南亚城市推荐广州或成都
+    if (['Singapore', 'Bangkok', 'Kuala Lumpur', 'Jakarta', 'Manila'].includes(origin)) {
+      return 'Guangzhou';
+    }
+    // 日韩推荐北京
+    if (['Tokyo', 'Seoul', 'Osaka'].includes(origin)) {
+      return 'Beijing';
+    }
+    // 默认推荐北京
     return 'Beijing';
   }
-  
-  // 默认返回空
+
+  // 规则3：中国小城市之间，推荐最近的枢纽
+  if (isOriginChina && isDestinationChina) {
+    // 东北地区之间推荐北京
+    if (['Changchun', 'Harbin', 'Shenyang'].includes(origin) && ['Changchun', 'Harbin', 'Shenyang'].includes(destination)) {
+      return 'Beijing';
+    }
+    // 西北地区推荐西安或北京
+    if (['Urumqi', 'Lhasa'].includes(origin) || ['Urumqi', 'Lhasa'].includes(destination)) {
+      return 'Beijing';
+    }
+    // 西南地区推荐成都
+    if (['Chengdu', 'Chongqing', 'Kunming', 'Guiyang'].includes(origin) && ['Chengdu', 'Chongqing', 'Kunming', 'Guiyang'].includes(destination)) {
+      return 'Chengdu';
+    }
+    // 华南地区推荐广州
+    if (['Guangzhou', 'Shenzhen', 'Nanning'].includes(origin) && ['Guangzhou', 'Shenzhen', 'Nanning'].includes(destination)) {
+      return 'Guangzhou';
+    }
+    // 默认推荐北京
+    return 'Beijing';
+  }
+
+  // 规则4：国际长途航线（如欧洲-澳大利亚），推荐Dubai或Singapore
+  if (!isOriginChina && !isDestinationChina) {
+    const europe = ['London', 'Paris', 'Frankfurt', 'Rome', 'Madrid'];
+    const oceania = ['Sydney', 'Melbourne', 'Auckland'];
+
+    if (europe.includes(origin) && oceania.includes(destination)) {
+      return 'Singapore';
+    }
+    if (oceania.includes(origin) && europe.includes(destination)) {
+      return 'Singapore';
+    }
+
+    // 欧洲-美洲，推荐Dubai或London
+    if (europe.includes(origin) && majorInternationalHubs.includes(destination)) {
+      return 'Dubai';
+    }
+    if (majorInternationalHubs.includes(origin) && europe.includes(destination)) {
+      return 'Dubai';
+    }
+  }
+
+  // 默认返回空字符串（不需要中转）
   return '';
 }
 
@@ -428,6 +656,7 @@ function getPredefinedRoute(origin: string, destination: string): FlightRoute | 
 /**
  * 搜索航班航线
  * 优先使用缓存，其次使用预定义数据，最后使用联网搜索
+ * 对于非预定义的航线，强制应用中转逻辑
  */
 export async function searchFlightRoute(
   origin: string,
@@ -438,30 +667,62 @@ export async function searchFlightRoute(
   if (cached) {
     return cached;
   }
-  
-  // 2. 检查预定义数据
+
+  // 2. 检查预定义数据（仅适用于主要枢纽之间的直飞航线）
   const predefined = getPredefinedRoute(origin, destination);
   if (predefined) {
+    // 即使有预定义数据，也要检查是否应该中转
+    const requiresConnection = shouldRequireConnection(origin, destination);
+    if (requiresConnection) {
+      // 覆盖预定义数据，强制中转
+      predefined.hasDirectFlight = false;
+      const connectionCity = getConnectionCity(origin, destination);
+      if (connectionCity) {
+        predefined.connectionCities = [connectionCity];
+      }
+      // 增加中转时间
+      predefined.estimatedDurationMinutes += 120 + Math.floor(Math.random() * 120);
+      // 增加中转费用
+      predefined.minPriceUSD = Math.round(predefined.minPriceUSD * 1.3);
+      predefined.maxPriceUSD = Math.round(predefined.maxPriceUSD * 1.5);
+      predefined.typicalPriceUSD = Math.round(predefined.typicalPriceUSD * 1.4);
+    }
     saveToCache(predefined);
     return predefined;
   }
-  
+
   // 3. 使用联网搜索
   const realData = await searchRealFlightData(origin, destination);
   if (realData) {
+    // 如果联网搜索没有返回中转信息，但根据规则应该中转，则强制应用中转逻辑
+    const requiresConnection = shouldRequireConnection(origin, destination);
+    if (requiresConnection && realData.hasDirectFlight) {
+      console.log(`Overriding direct flight for ${origin} to ${destination} to require connection`);
+      realData.hasDirectFlight = false;
+      const connectionCity = getConnectionCity(origin, destination);
+      if (connectionCity) {
+        realData.connectionCities = [connectionCity];
+      }
+      // 增加中转时间
+      realData.estimatedDurationMinutes += 120 + Math.floor(Math.random() * 120);
+      // 增加中转费用
+      realData.minPriceUSD = Math.round(realData.minPriceUSD * 1.3);
+      realData.maxPriceUSD = Math.round(realData.maxPriceUSD * 1.5);
+      realData.typicalPriceUSD = Math.round(realData.typicalPriceUSD * 1.4);
+    }
     return realData;
   }
-  
+
   // 4. 如果都失败了，使用估算数据
   const estimatedDuration = estimateFlightDurationByDistance(origin, destination);
   const requiresConnection = shouldRequireConnection(origin, destination);
   const connectionCity = getConnectionCity(origin, destination);
-  
+
   // 如果需要中转，增加中转时间（2-4小时）
-  const estimatedDurationWithConnection = requiresConnection 
-    ? estimatedDuration + (120 + Math.floor(Math.random() * 120)) 
+  const estimatedDurationWithConnection = requiresConnection
+    ? estimatedDuration + (120 + Math.floor(Math.random() * 120))
     : estimatedDuration;
-  
+
   const estimatedRoute: FlightRoute = {
     origin,
     destination,
@@ -475,7 +736,7 @@ export async function searchFlightRoute(
     typicalPriceUSD: Math.round(estimatedDurationWithConnection * 3.5),
     lastUpdated: new Date(),
   };
-  
+
   saveToCache(estimatedRoute);
   return estimatedRoute;
 }
