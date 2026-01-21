@@ -187,6 +187,9 @@ const PREDEFINED_ROUTES: Record<string, Omit<FlightRoute, 'lastUpdated'>> = {
   },
 };
 
+// 中国城市列表（用于判断航线类型）
+const CHINA_CITIES = ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Chongqing', 'Hangzhou', 'Nanjing', 'Wuhan', 'Xi\'an', 'Tianjin', 'Qingdao', 'Dalian', 'Xiamen', 'Kunming', 'Changsha', 'Harbin', 'Changchun', 'Shenyang', 'Urumqi', 'Lhasa', 'Sanya', 'Guiyang', 'Nanning'];
+
 /**
  * 获取城市对应的机场代码
  */
@@ -338,6 +341,26 @@ async function searchRealFlightData(origin: string, destination: string): Promis
 }
 
 /**
+ * 判断航线是否可能需要中转
+ */
+function shouldRequireConnection(origin: string, destination: string): boolean {
+  const majorInternationalHubs = ['Beijing', 'Shanghai', 'Guangzhou', 'Hong Kong', 'Tokyo', 'Seoul', 'Singapore', 'Dubai'];
+  const majorUSCities = ['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Miami', 'Washington'];
+  
+  const isOriginSmallChinaCity = !majorInternationalHubs.includes(origin) && CHINA_CITIES.includes(origin);
+  const isDestinationUSCity = majorUSCities.includes(destination);
+  const isOriginUSCity = majorUSCities.includes(origin);
+  const isDestinationSmallChinaCity = !majorInternationalHubs.includes(destination) && CHINA_CITIES.includes(destination);
+  
+  // 小城市到国际城市需要中转
+  if ((isOriginSmallChinaCity && isDestinationUSCity) || (isOriginUSCity && isDestinationSmallChinaCity)) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * 根据城市距离估算飞行时长
  */
 function estimateFlightDurationByDistance(origin: string, destination: string): number {
@@ -363,6 +386,26 @@ function estimateFlightDurationByDistance(origin: string, destination: string): 
   const routeKey2 = `${destination}-${origin}`;
   
   return distanceTable[routeKey1] || distanceTable[routeKey2] || 240; // 默认4小时
+}
+
+/**
+ * 获取推荐的中转城市
+ */
+function getConnectionCity(origin: string, destination: string): string {
+  const majorUSCities = ['New York', 'Los Angeles', 'San Francisco', 'Chicago', 'Miami', 'Washington'];
+  
+  // 中国城市到美国城市，推荐北京
+  if (CHINA_CITIES.includes(origin) && majorUSCities.includes(destination)) {
+    return 'Beijing';
+  }
+  
+  // 美国城市到中国城市，推荐北京
+  if (majorUSCities.includes(origin) && CHINA_CITIES.includes(destination)) {
+    return 'Beijing';
+  }
+  
+  // 默认返回空
+  return '';
 }
 
 /**
@@ -411,17 +454,25 @@ export async function searchFlightRoute(
   
   // 4. 如果都失败了，使用估算数据
   const estimatedDuration = estimateFlightDurationByDistance(origin, destination);
+  const requiresConnection = shouldRequireConnection(origin, destination);
+  const connectionCity = getConnectionCity(origin, destination);
+  
+  // 如果需要中转，增加中转时间（2-4小时）
+  const estimatedDurationWithConnection = requiresConnection 
+    ? estimatedDuration + (120 + Math.floor(Math.random() * 120)) 
+    : estimatedDuration;
+  
   const estimatedRoute: FlightRoute = {
     origin,
     destination,
-    hasDirectFlight: false,
-    connectionCities: [],
-    estimatedDurationMinutes: estimatedDuration,
+    hasDirectFlight: !requiresConnection,
+    connectionCities: requiresConnection && connectionCity ? [connectionCity] : [],
+    estimatedDurationMinutes: estimatedDurationWithConnection,
     flightNumbers: [],
     airlines: [],
-    minPriceUSD: Math.round(estimatedDuration * 2), // 基于时长估算价格
-    maxPriceUSD: Math.round(estimatedDuration * 5),
-    typicalPriceUSD: Math.round(estimatedDuration * 3.5),
+    minPriceUSD: Math.round(estimatedDurationWithConnection * 2), // 基于时长估算价格（包含中转）
+    maxPriceUSD: Math.round(estimatedDurationWithConnection * 5),
+    typicalPriceUSD: Math.round(estimatedDurationWithConnection * 3.5),
     lastUpdated: new Date(),
   };
   
@@ -546,10 +597,8 @@ export async function searchMultipleRoutes(routes: Array<{ origin: string; desti
  * 检查两个城市是否在同一个国家（简化判断）
  */
 export function isSameCountry(city1: string, city2: string): boolean {
-  const chinaCities = ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Chongqing', 'Hangzhou', 'Nanjing', 'Wuhan', 'Xi\'an', 'Tianjin', 'Qingdao', 'Dalian', 'Xiamen', 'Kunming', 'Changsha', 'Harbin', 'Changchun', 'Shenyang', 'Urumqi', 'Lhasa', 'Sanya', 'Guiyang', 'Nanning'];
-  
-  const city1InChina = chinaCities.some(c => city1.toLowerCase().includes(c.toLowerCase()));
-  const city2InChina = chinaCities.some(c => city2.toLowerCase().includes(c.toLowerCase()));
+  const city1InChina = CHINA_CITIES.some(c => city1.toLowerCase().includes(c.toLowerCase()));
+  const city2InChina = CHINA_CITIES.some(c => city2.toLowerCase().includes(c.toLowerCase()));
   
   return city1InChina && city2InChina;
 }

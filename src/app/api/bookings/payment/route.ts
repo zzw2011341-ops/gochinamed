@@ -218,13 +218,23 @@ export async function POST(request: NextRequest) {
         const outboundFlightNumber = generateRealisticFlightNumber(originCity, destinationCity, 'economy');
         const outboundDurationMinutes = outboundRoute.estimatedDurationMinutes;
         const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
+        
+        // 生成航班描述，包含中转信息
+        let outboundDescription = `Flight from ${originCity} to ${destinationCity}`;
+        if (outboundRoute.hasDirectFlight) {
+          outboundDescription += ' (Direct)';
+        } else if (outboundRoute.connectionCities && outboundRoute.connectionCities.length > 0) {
+          outboundDescription += ` (Via ${outboundRoute.connectionCities.join(', ')})`;
+        } else {
+          outboundDescription += ' (Connection required)';
+        }
 
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
           type: 'flight',
           name: `Flight ${outboundFlightNumber}`,
-          description: `Flight from ${originCity} to ${destinationCity}${outboundRoute.hasDirectFlight ? ' (Direct)' : ''}`,
+          description: outboundDescription,
           startDate: travelDate,
           endDate: outboundEndTime,
           location: `${originCity} - ${destinationCity}`,
@@ -242,13 +252,23 @@ export async function POST(request: NextRequest) {
         const returnFlightNumber = generateRealisticFlightNumber(destinationCity, originCity, 'economy');
         const returnDurationMinutes = returnRoute.estimatedDurationMinutes;
         const returnEndTime = new Date(returnDate.getTime() + returnDurationMinutes * 60 * 1000);
+        
+        // 生成航班描述，包含中转信息
+        let returnDescription = `Flight from ${destinationCity} to ${originCity}`;
+        if (returnRoute.hasDirectFlight) {
+          returnDescription += ' (Direct)';
+        } else if (returnRoute.connectionCities && returnRoute.connectionCities.length > 0) {
+          returnDescription += ` (Via ${returnRoute.connectionCities.join(', ')})`;
+        } else {
+          returnDescription += ' (Connection required)';
+        }
 
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
           type: 'flight',
           name: `Flight ${returnFlightNumber}`,
-          description: `Flight from ${destinationCity} to ${originCity}${returnRoute.hasDirectFlight ? ' (Direct)' : ''}`,
+          description: returnDescription,
           startDate: returnDate,
           endDate: returnEndTime,
           location: `${destinationCity} - ${originCity}`,
