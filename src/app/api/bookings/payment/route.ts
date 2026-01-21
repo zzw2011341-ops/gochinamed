@@ -4,6 +4,7 @@ import { orders, itineraries, users, serviceFees, doctors, hospitals } from '@/s
 import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { searchFlightRoute, generateRealisticFlightNumber, calculateFlightCostUSD } from '@/lib/services/flightSearchService';
 
 interface PaymentRequest {
   userId: string;
@@ -180,51 +181,101 @@ export async function POST(request: NextRequest) {
     const isSameCity = originCity === destinationCity;
 
     if (!isSameCity) {
-      // 创建去程航班
-      const outboundFlightNumber = generateFlightNumber(originCity, destinationCity);
-      const outboundDurationMinutes = estimateFlightDuration(originCity, destinationCity);
-      const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
+      // 获取真实的航班数据
+      try {
+        // 获取去程航班信息
+        const outboundRoute = await searchFlightRoute(originCity, destinationCity);
+        const outboundFlightNumber = generateRealisticFlightNumber(originCity, destinationCity, 'economy');
+        const outboundDurationMinutes = outboundRoute.estimatedDurationMinutes;
+        const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
 
-      await db.insert(itineraries).values({
-        id: uuidv4(),
-        orderId: order.id,
-        type: 'flight',
-        name: `Flight ${outboundFlightNumber}`,
-        description: `Flight from ${originCity} to ${destinationCity}`,
-        startDate: travelDate,
-        endDate: outboundEndTime,
-        location: `${originCity} - ${destinationCity}`,
-        price: (plan.flightFee / 2).toString(), // 往返机票费用平分
-        flightNumber: outboundFlightNumber,
-        durationMinutes: outboundDurationMinutes,
-        status: 'pending',
-        notificationSent: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+        await db.insert(itineraries).values({
+          id: uuidv4(),
+          orderId: order.id,
+          type: 'flight',
+          name: `Flight ${outboundFlightNumber}`,
+          description: `Flight from ${originCity} to ${destinationCity}${outboundRoute.hasDirectFlight ? ' (Direct)' : ''}`,
+          startDate: travelDate,
+          endDate: outboundEndTime,
+          location: `${originCity} - ${destinationCity}`,
+          price: (plan.flightFee / 2).toString(), // 往返机票费用平分
+          flightNumber: outboundFlightNumber,
+          durationMinutes: outboundDurationMinutes,
+          status: 'pending',
+          notificationSent: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
 
-      // 创建回程航班
-      const returnFlightNumber = generateFlightNumber(destinationCity, originCity);
-      const returnDurationMinutes = estimateFlightDuration(destinationCity, originCity);
-      const returnEndTime = new Date(returnDate.getTime() + returnDurationMinutes * 60 * 1000);
+        // 创建回程航班
+        const returnRoute = await searchFlightRoute(destinationCity, originCity);
+        const returnFlightNumber = generateRealisticFlightNumber(destinationCity, originCity, 'economy');
+        const returnDurationMinutes = returnRoute.estimatedDurationMinutes;
+        const returnEndTime = new Date(returnDate.getTime() + returnDurationMinutes * 60 * 1000);
 
-      await db.insert(itineraries).values({
-        id: uuidv4(),
-        orderId: order.id,
-        type: 'flight',
-        name: `Flight ${returnFlightNumber}`,
-        description: `Flight from ${destinationCity} to ${originCity}`,
-        startDate: returnDate,
-        endDate: returnEndTime,
-        location: `${destinationCity} - ${originCity}`,
-        price: (plan.flightFee / 2).toString(), // 往返机票费用平分
-        flightNumber: returnFlightNumber,
-        durationMinutes: returnDurationMinutes,
-        status: 'pending',
-        notificationSent: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+        await db.insert(itineraries).values({
+          id: uuidv4(),
+          orderId: order.id,
+          type: 'flight',
+          name: `Flight ${returnFlightNumber}`,
+          description: `Flight from ${destinationCity} to ${originCity}${returnRoute.hasDirectFlight ? ' (Direct)' : ''}`,
+          startDate: returnDate,
+          endDate: returnEndTime,
+          location: `${destinationCity} - ${originCity}`,
+          price: (plan.flightFee / 2).toString(), // 往返机票费用平分
+          flightNumber: returnFlightNumber,
+          durationMinutes: returnDurationMinutes,
+          status: 'pending',
+          notificationSent: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      } catch (error) {
+        console.error('Error creating flight itineraries:', error);
+        // 如果航班搜索失败，使用备用方案（但不推荐）
+        const outboundFlightNumber = generateRealisticFlightNumber(originCity, destinationCity, 'economy');
+        const outboundDurationMinutes = 120; // 默认2小时
+        const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
+
+        await db.insert(itineraries).values({
+          id: uuidv4(),
+          orderId: order.id,
+          type: 'flight',
+          name: `Flight ${outboundFlightNumber}`,
+          description: `Flight from ${originCity} to ${destinationCity}`,
+          startDate: travelDate,
+          endDate: outboundEndTime,
+          location: `${originCity} - ${destinationCity}`,
+          price: (plan.flightFee / 2).toString(),
+          flightNumber: outboundFlightNumber,
+          durationMinutes: outboundDurationMinutes,
+          status: 'pending',
+          notificationSent: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        const returnFlightNumber = generateRealisticFlightNumber(destinationCity, originCity, 'economy');
+        const returnEndTime = new Date(returnDate.getTime() + outboundDurationMinutes * 60 * 1000);
+
+        await db.insert(itineraries).values({
+          id: uuidv4(),
+          orderId: order.id,
+          type: 'flight',
+          name: `Flight ${returnFlightNumber}`,
+          description: `Flight from ${destinationCity} to ${originCity}`,
+          startDate: returnDate,
+          endDate: returnEndTime,
+          location: `${destinationCity} - ${originCity}`,
+          price: (plan.flightFee / 2).toString(),
+          flightNumber: returnFlightNumber,
+          durationMinutes: outboundDurationMinutes,
+          status: 'pending',
+          notificationSent: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
 
     // 生成酒店房间号和详细信息
@@ -428,35 +479,6 @@ async function bookItineraryServices(db: any, orderId: string, bookingData: any)
     console.error('Failed to book itinerary services:', error);
     throw error;
   }
-}
-
-/**
- * 生成航班号
- */
-function generateFlightNumber(originCity: string, destCity: string): string {
-  const airlines = ['CA', 'MU', 'CZ', 'HU', 'FM', 'ZH'];
-  const randomAirline = airlines[Math.floor(Math.random() * airlines.length)];
-  const randomDigits = Math.floor(1000 + Math.random() * 9000);
-  return `${randomAirline}${randomDigits}`;
-}
-
-/**
- * 估算飞行时长（分钟）
- */
-function estimateFlightDuration(originCity: string, destCity: string): number {
-  // 简化计算：假设平均飞行速度为800公里/小时
-  // 实际项目中应该根据实际城市距离计算
-  const cityDistances: { [key: string]: number } = {
-    'Beijing-Shanghai': 120, // 约2小时
-    'Shanghai-Beijing': 120,
-    'Beijing-Guangzhou': 180, // 约3小时
-    'Guangzhou-Beijing': 180,
-    'Shanghai-Guangzhou': 150, // 约2.5小时
-    'Guangzhou-Shanghai': 150,
-  };
-
-  const routeKey = `${originCity}-${destCity}`;
-  return cityDistances[routeKey] || 120; // 默认2小时
 }
 
 /**

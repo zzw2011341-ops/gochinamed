@@ -3,6 +3,7 @@ import { getDb } from 'coze-coding-dev-sdk';
 import { users } from '@/storage/database/shared/schema';
 import { eq } from 'drizzle-orm';
 import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { calculateFlightCostUSD } from '@/lib/services/flightSearchService';
 
 const config = new Config();
 const llmClient = new LLMClient(config);
@@ -217,15 +218,15 @@ FEE CALCULATION RULES FOR "${treatmentType || 'consultation'}":${getFeeInstructi
 
 Please generate 3 distinct options with different price points and features:
 1. Budget-Friendly Option (Basic hotel, economy flight, essential services)
-2. Standard Option (Mid-range hotel, standard flight, good services)
-3. Premium Option (Luxury hotel, business class flight, comprehensive services)
+2. Standard Option (Mid-range hotel, business class flight, good services)
+3. Premium Option (Luxury hotel, first class flight, comprehensive services)
 
 For each option, provide a JSON object with this structure:
 {
   "name": "Option Name (e.g., Budget-Friendly Plan)",
   "description": "Brief description of what this plan offers",
   "hotelFee": number (100-500 per night * 7 days * ${numberOfPeople} travelers),
-  "flightFee": number (${isSameCity ? '0 for same-city travel' : '500-2000 * ${numberOfPeople} travelers'}),
+  "flightFee": number (${isSameCity ? '0 for same-city travel' : '4000-20000 * ${numberOfPeople} travelers based on actual flight costs: economy class for budget (4000-6000 CNY), business class for standard (8000-15000 CNY), first class for premium (15000-25000 CNY). For international flights like New York to Beijing, use realistic prices: $800-$2500 USD (5760-18000 CNY)'}),
   "carFee": number (${isSameCity ? '50-200 for local transportation' : '30-100 for local airport-hotel transfers'}),
   "ticketFee": 0 (MEDICAL TOURISM: No tourist attractions, this is for medical treatment),
   "reservationFee": number (50-200 for appointment booking),
@@ -252,6 +253,11 @@ For each option, provide a JSON object with this structure:
 ${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set all medical fees (medicalSurgeryFee, medicineFee, nursingFee, nutritionFee, medicalFee) to 0 for all plans.' : ''}
 ${isSameCity ? 'CRITICAL: Since origin and destination are the same city, set flightFee to 0. Use carFee for local transportation (taxi/car rental).' : ''}
 CRITICAL: This is a MEDICAL TOURISM platform, NOT a tourism platform. Do NOT include tourist attractions, sightseeing, or entertainment fees (ticketFee = 0).
+IMPORTANT: Flight costs must be realistic based on the route from ${originCity} to ${destinationCity}. For example:
+- Beijing to Changchun (domestic): 80-200 USD per person
+- New York to Beijing (international): 800-2500 USD per person
+- London to Beijing (international): 700-2000 USD per person
+Use the exchange rate of 7.2 CNY per USD for price calculations.
 
 Return ONLY the JSON array with 3 options, no additional text.`;
 
@@ -292,7 +298,9 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           body.examinationItems,
           body.surgeryTypes,
           body.treatmentDirection,
-          body.rehabilitationDirection
+          body.rehabilitationDirection,
+          originCity,
+          destinationCity
         );
       }
 
@@ -309,7 +317,9 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           body.examinationItems,
           body.surgeryTypes,
           body.treatmentDirection,
-          body.rehabilitationDirection
+          body.rehabilitationDirection,
+          originCity,
+          destinationCity
         );
       }
 
@@ -366,7 +376,9 @@ Return ONLY the JSON array with 3 options, no additional text.`;
         body.examinationItems,
         body.surgeryTypes,
         body.treatmentDirection,
-        body.rehabilitationDirection
+        body.rehabilitationDirection,
+        originCity,
+        destinationCity
       );
       // 确保数据归一化
       defaultPlans = defaultPlans.map(plan =>
@@ -428,7 +440,9 @@ function generateDefaultPlans(
   examinationItems?: string,
   surgeryTypes?: string,
   treatmentDirection?: string,
-  rehabilitationDirection?: string
+  rehabilitationDirection?: string,
+  originCity: string = 'Origin',
+  destinationCity: string = 'Destination'
 ): PlanOption[] {
   const baseBudget = parseFloat(budget) || 3000;
   const hasMedicalSelection = selectedHospital || selectedDoctor;
@@ -483,10 +497,46 @@ function generateDefaultPlans(
   const standardFees = getMedicalFees(treatmentType, 1.5);
   const premiumFees = getMedicalFees(treatmentType, 2.5);
 
-  // 同城旅行使用交通费用，不同城市使用机票费用
-  const budgetFlightFee = isSameCity ? 0 : 600 * numberOfPeople;
-  const standardFlightFee = isSameCity ? 0 : 900 * numberOfPeople;
-  const premiumFlightFee = isSameCity ? 0 : 1500 * numberOfPeople;
+  // 使用真实航班价格（转换为人民币，汇率约7.2）
+  const USD_TO_CNY = 7.2;
+  let budgetFlightCost, standardFlightCost, premiumFlightCost;
+
+  if (isSameCity) {
+    // 同城旅行：无机票费用
+    budgetFlightCost = { minPrice: 0, maxPrice: 0, typicalPrice: 0 };
+    standardFlightCost = { minPrice: 0, maxPrice: 0, typicalPrice: 0 };
+    premiumFlightCost = { minPrice: 0, maxPrice: 0, typicalPrice: 0 };
+  } else {
+    // 国际/长途旅行：使用真实航班价格
+    try {
+      budgetFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'economy', numberOfPeople);
+      standardFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'business', numberOfPeople);
+      premiumFlightCost = calculateFlightCostUSD(originCity, destinationCity, 'first', numberOfPeople);
+      
+      // 转换为人民币
+      budgetFlightCost.minPrice = Math.round(budgetFlightCost.minPrice * USD_TO_CNY);
+      budgetFlightCost.maxPrice = Math.round(budgetFlightCost.maxPrice * USD_TO_CNY);
+      budgetFlightCost.typicalPrice = Math.round(budgetFlightCost.typicalPrice * USD_TO_CNY);
+      
+      standardFlightCost.minPrice = Math.round(standardFlightCost.minPrice * USD_TO_CNY);
+      standardFlightCost.maxPrice = Math.round(standardFlightCost.maxPrice * USD_TO_CNY);
+      standardFlightCost.typicalPrice = Math.round(standardFlightCost.typicalPrice * USD_TO_CNY);
+      
+      premiumFlightCost.minPrice = Math.round(premiumFlightCost.minPrice * USD_TO_CNY);
+      premiumFlightCost.maxPrice = Math.round(premiumFlightCost.maxPrice * USD_TO_CNY);
+      premiumFlightCost.typicalPrice = Math.round(premiumFlightCost.typicalPrice * USD_TO_CNY);
+    } catch (error) {
+      console.error('Error calculating flight costs:', error);
+      // 如果计算失败，使用保守估计
+      budgetFlightCost = { minPrice: 4000, maxPrice: 6000, typicalPrice: 5000 };
+      standardFlightCost = { minPrice: 8000, maxPrice: 12000, typicalPrice: 10000 };
+      premiumFlightCost = { minPrice: 15000, maxPrice: 25000, typicalPrice: 20000 };
+    }
+  }
+
+  const budgetFlightFee = budgetFlightCost.typicalPrice;
+  const standardFlightFee = standardFlightCost.typicalPrice;
+  const premiumFlightFee = premiumFlightCost.typicalPrice;
 
   const budgetCarFee = isSameCity ? 80 * numberOfPeople : 50 * numberOfPeople;
   const standardCarFee = isSameCity ? 120 * numberOfPeople : 80 * numberOfPeople;
