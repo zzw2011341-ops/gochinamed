@@ -75,6 +75,9 @@ export default function ConfirmationPage() {
 
   const { order, user, doctor, hospital, itinerary, reservations, costs, weatherForecast, travelTips, timeline } = itineraryData;
 
+  // 判断是否有医疗服务（检查是否有type='ticket'的行程项或医疗费用>0）
+  const hasMedicalServices = itinerary.some((item: any) => item.type === 'ticket') || (costs.medicalFee && costs.medicalFee > 0);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <style jsx global>{`
@@ -392,6 +395,18 @@ export default function ConfirmationPage() {
                             {item.subtitle && (
                               <p className="text-sm text-blue-600 mt-1">{item.subtitle}</p>
                             )}
+                            {item.route && (
+                              <p className="text-sm text-gray-700 mt-1 flex items-center gap-2">
+                                <MapPin className="h-4 w-4" />
+                                {item.route}
+                              </p>
+                            )}
+                            {item.flightType && (
+                              <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                                <Plane className="h-4 w-4" />
+                                {item.flightType === '直飞' ? '直飞' : '中转'}
+                              </p>
+                            )}
                             <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                               <Clock className="h-4 w-4" />
                               {formatDateTimeRange(item.date, item.endDate)}
@@ -399,7 +414,7 @@ export default function ConfirmationPage() {
                             {item.duration && (
                               <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                                 <FileText className="h-4 w-4" />
-                                {language === 'zh' ? '用时' : 'Duration'}: {item.duration}
+                                {language === 'zh' ? '用时' : 'Duration'}: {item.durationFormatted || item.duration}
                               </div>
                             )}
                             {item.weather && (
@@ -423,68 +438,110 @@ export default function ConfirmationPage() {
 
           {/* 就医 */}
           <TabsContent value="medical" className="space-y-6">
-            {doctor && hospital ? (
+            {hasMedicalServices ? (
               <div className="space-y-6">
                 {/* 医生和医院信息 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {doctor && hospital && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Stethoscope className="h-5 w-5 text-blue-600" />
+                          {language === 'zh' ? '医生信息' : 'Doctor Information'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '姓名' : 'Name'}</div>
+                          <div className="font-medium">{doctor.nameEn} / {doctor.nameZh}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '职称' : 'Title'}</div>
+                          <div>{doctor.title}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '专长' : 'Specialties'}</div>
+                          <div>{doctor.specialties}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '经验' : 'Experience'}</div>
+                          <div>{doctor.experienceYears} {language === 'zh' ? '年' : 'years'}</div>
+                        </div>
+                        {order.doctorAppointmentDate && (
+                          <div>
+                            <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
+                            <div className="font-medium text-blue-600">
+                              {new Date(order.doctorAppointmentDate).toLocaleString()}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <MapPin className="h-5 w-5 text-blue-600" />
+                          {language === 'zh' ? '医院信息' : 'Hospital Information'}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '名称' : 'Name'}</div>
+                          <div className="font-medium">{hospital.nameEn} / {hospital.nameZh}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '级别' : 'Level'}</div>
+                          <div>{hospital.level}</div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '地址' : 'Location'}</div>
+                          <div>{hospital.location}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {/* 如果没有医生和医院，但显示医疗服务 */}
+                {(!doctor || !hospital) && hasMedicalServices && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Stethoscope className="h-5 w-5 text-blue-600" />
-                        {language === 'zh' ? '医生信息' : 'Doctor Information'}
+                        {language === 'zh' ? '医疗服务' : 'Medical Services'}
                       </CardTitle>
+                      <CardDescription>
+                        {language === 'zh' ? '医疗服务详情' : 'Medical service details'}
+                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '姓名' : 'Name'}</div>
-                        <div className="font-medium">{doctor.nameEn} / {doctor.nameZh}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '职称' : 'Title'}</div>
-                        <div>{doctor.title}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '专长' : 'Specialties'}</div>
-                        <div>{doctor.specialties}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '经验' : 'Experience'}</div>
-                        <div>{doctor.experienceYears} {language === 'zh' ? '年' : 'years'}</div>
-                      </div>
-                      {order.doctorAppointmentDate && (
-                        <div>
-                          <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
-                          <div className="font-medium text-blue-600">
-                            {new Date(order.doctorAppointmentDate).toLocaleString()}
+                    <CardContent>
+                      <div className="text-center py-4">
+                        <Stethoscope className="h-10 w-10 text-blue-500 mx-auto mb-3" />
+                        <p className="text-gray-600 mb-2">
+                          {language === 'zh' ? '此订单包含医疗服务' : 'This order includes medical services'}
+                        </p>
+                        {costs.medicalFee > 0 && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <div className="text-sm text-blue-900">
+                              {language === 'zh' ? '医疗费用' : 'Medical Fee'}: {costs.currency} {costs.medicalFee.toLocaleString()}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MapPin className="h-5 w-5 text-blue-600" />
-                        {language === 'zh' ? '医院信息' : 'Hospital Information'}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '名称' : 'Name'}</div>
-                        <div className="font-medium">{hospital.nameEn} / {hospital.nameZh}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '级别' : 'Level'}</div>
-                        <div>{hospital.level}</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '地址' : 'Location'}</div>
-                        <div>{hospital.location}</div>
+                        )}
+                        {!doctor && (
+                          <div className="mt-2 text-sm text-gray-500">
+                            {language === 'zh' ? '未绑定特定医生' : 'No specific doctor linked'}
+                          </div>
+                        )}
+                        {!hospital && (
+                          <div className="mt-2 text-sm text-gray-500">
+                            {language === 'zh' ? '未绑定特定医院' : 'No specific hospital linked'}
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                )}
 
                 {/* 医疗方案详细信息 */}
                 {(order.consultationDirection || order.examinationItems || order.surgeryTypes || order.treatmentDirection || order.rehabilitationDirection || order.medicalPlan) && (

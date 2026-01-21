@@ -336,7 +336,8 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           body.examinationItems,
           body.surgeryTypes,
           body.treatmentDirection,
-          body.rehabilitationDirection
+          body.rehabilitationDirection,
+          treatmentType
         )
       );
 
@@ -393,7 +394,8 @@ Return ONLY the JSON array with 3 options, no additional text.`;
           body.examinationItems,
           body.surgeryTypes,
           body.treatmentDirection,
-          body.rehabilitationDirection
+          body.rehabilitationDirection,
+          treatmentType
         )
       );
       return NextResponse.json({
@@ -682,10 +684,25 @@ function normalizePlan(
   examinationItems?: string,
   surgeryTypes?: string,
   treatmentDirection?: string,
-  rehabilitationDirection?: string
+  rehabilitationDirection?: string,
+  treatmentType?: string
 ): PlanOption {
-  // 获取治疗类型，如果没有则默认为consultation
-  const planTreatmentType = treatmentDirection || consultationDirection || 'consultation';
+  // 获取治疗类型，优先使用treatmentType参数，然后依次检查其他字段
+  // 优先级：treatmentType > examinationItems > surgeryTypes > treatmentDirection > rehabilitationDirection > consultationDirection > 'consultation'
+  let planTreatmentType = 'consultation';
+  if (treatmentType && treatmentType !== 'consultation') {
+    planTreatmentType = treatmentType;
+  } else if (examinationItems && examinationItems !== 'not_applicable') {
+    planTreatmentType = 'examination';
+  } else if (surgeryTypes && surgeryTypes !== undefined) {
+    planTreatmentType = 'surgery';
+  } else if (treatmentDirection && treatmentDirection !== 'not_applicable') {
+    planTreatmentType = 'therapy';
+  } else if (rehabilitationDirection && rehabilitationDirection !== 'not_applicable') {
+    planTreatmentType = 'rehabilitation';
+  } else if (consultationDirection && consultationDirection !== 'general_consultation') {
+    planTreatmentType = 'consultation';
+  }
 
   // 根据治疗类型调整医疗费用
   let adjustedMedicalSurgeryFee = plan.medicalSurgeryFee || 0;
@@ -693,19 +710,28 @@ function normalizePlan(
   let adjustedNursingFee = plan.nursingFee || 0;
   let adjustedNutritionFee = plan.nutritionFee || 0;
 
-  // 检查类型：根据治疗类型限制费用
-  if (planTreatmentType === 'consultation' || planTreatmentType === 'examination') {
-    // 咨询和检查类型：不应该有手术费、护理费、营养费
+  // 检查类型：根据治疗类型严格限制费用
+  if (planTreatmentType === 'examination') {
+    // 检查类型：不应该有手术费、护理费、营养费
     adjustedMedicalSurgeryFee = 0;
     adjustedNursingFee = 0;
     adjustedNutritionFee = 0;
-    // 检查类型可能有药费（如CT扫描的造影剂），咨询类型药费较少
+    // 检查类型可能有药费（如CT扫描的造影剂等），限制在合理范围
+    adjustedMedicineFee = Math.min(adjustedMedicineFee, 300);
+  } else if (planTreatmentType === 'consultation') {
+    // 咨询类型：不应该有手术费、护理费、营养费
+    adjustedMedicalSurgeryFee = 0;
+    adjustedNursingFee = 0;
+    adjustedNutritionFee = 0;
+    // 咨询类型药费较少
     adjustedMedicineFee = Math.min(adjustedMedicineFee, 200);
   } else if (planTreatmentType === 'surgery') {
-    // 手术类型：保留所有费用
-    // 不做限制
-  } else if (planTreatmentType === 'therapy' || planTreatmentType === 'rehabilitation') {
-    // 治疗/康复类型：不应该有手术费
+    // 手术类型：保留所有费用（不做限制）
+  } else if (planTreatmentType === 'therapy') {
+    // 治疗类型：不应该有手术费
+    adjustedMedicalSurgeryFee = 0;
+  } else if (planTreatmentType === 'rehabilitation') {
+    // 康复类型：不应该有手术费
     adjustedMedicalSurgeryFee = 0;
   }
 

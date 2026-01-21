@@ -122,20 +122,50 @@ export async function POST(request: NextRequest) {
     const originCity = bookingData.originCity || 'Origin';
     const destinationCity = bookingData.destinationCity || 'Destination';
 
-    // 根据治疗类型调整医疗费用
-    const treatmentType = bookingData.treatmentType || 'checkup';
+    // 根据治疗类型严格调整医疗费用
+    const treatmentType = bookingData.treatmentType || 'consultation';
     let adjustedMedicalFee = plan.medicalFee;
+    let adjustedMedicalSurgeryFee = 0;
+    let adjustedMedicineFee = 0;
+    let adjustedNursingFee = 0;
+    let adjustedNutritionFee = 0;
 
-    // 检查类型只有检查费用，不应该有手术/护理/营养费
-    if (treatmentType === 'checkup') {
-      // 检查类型：只保留基础医疗咨询和检查费用
-      adjustedMedicalFee = Math.min(plan.medicalFee, 500); // 上限500美元
+    // 优先使用bookingData中的细分费用（如果AI已生成）
+    if (bookingData.medicalSurgeryFee !== undefined) {
+      adjustedMedicalSurgeryFee = Number(bookingData.medicalSurgeryFee);
+    }
+    if (bookingData.medicineFee !== undefined) {
+      adjustedMedicineFee = Number(bookingData.medicineFee);
+    }
+    if (bookingData.nursingFee !== undefined) {
+      adjustedNursingFee = Number(bookingData.nursingFee);
+    }
+    if (bookingData.nutritionFee !== undefined) {
+      adjustedNutritionFee = Number(bookingData.nutritionFee);
+    }
+
+    // 根据治疗类型严格限制费用
+    if (treatmentType === 'examination') {
+      // 检查类型：只保留合理的药费，其他费用为0
+      adjustedMedicalSurgeryFee = 0;
+      adjustedNursingFee = 0;
+      adjustedNutritionFee = 0;
+      adjustedMedicineFee = Math.min(adjustedMedicineFee, 300);
+      adjustedMedicalFee = adjustedMedicineFee; // 只包含药费
+    } else if (treatmentType === 'consultation') {
+      // 咨询类型：只保留少量药费
+      adjustedMedicalSurgeryFee = 0;
+      adjustedNursingFee = 0;
+      adjustedNutritionFee = 0;
+      adjustedMedicineFee = Math.min(adjustedMedicineFee, 200);
+      adjustedMedicalFee = adjustedMedicineFee;
     } else if (treatmentType === 'surgery') {
-      // 手术类型：保留手术费
-      adjustedMedicalFee = plan.medicalFee;
+      // 手术类型：保留所有费用
+      adjustedMedicalFee = adjustedMedicalSurgeryFee + adjustedMedicineFee + adjustedNursingFee + adjustedNutritionFee;
     } else if (treatmentType === 'therapy' || treatmentType === 'rehabilitation') {
-      // 治疗/康复类型：中等费用
-      adjustedMedicalFee = Math.min(plan.medicalFee, 2000);
+      // 治疗/康复类型：不包含手术费
+      adjustedMedicalSurgeryFee = 0;
+      adjustedMedicalFee = adjustedMedicineFee + adjustedNursingFee + adjustedNutritionFee;
     }
 
     // 计算各项服务费用

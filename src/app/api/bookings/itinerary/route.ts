@@ -281,9 +281,32 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
         details.flightNumber = item.flightNumber;
         details.subtitle = `Flight ${item.flightNumber}`;
       }
+      if (item.location) {
+        // location格式为 "Origin - Destination"
+        details.route = item.location;
+        details.subtitle = details.subtitle ? `${details.subtitle} · ${item.location}` : item.location;
+      }
+      if (item.description) {
+        // description中包含直飞/中转信息，格式为 "Flight from Origin to Destination (Direct)" 或 "Flight from Origin to Destination"
+        if (item.description.includes('(Direct)') || item.description.includes('(Direct)')) {
+          details.flightType = '直飞';
+          details.isDirect = true;
+        } else if (item.description.includes('Connection') || item.description.includes('Transfer')) {
+          details.flightType = '中转';
+          details.isDirect = false;
+        } else {
+          // 默认认为可能是直飞（除非description明确说明中转）
+          details.flightType = '直飞';
+          details.isDirect = true;
+        }
+      }
       if (item.durationMinutes) {
-        details.duration = `${item.durationMinutes} minutes`;
+        details.duration = `${item.durationMinutes} 分钟`;
         details.durationMinutes = item.durationMinutes;
+        // 计算飞行小时
+        const hours = Math.floor(item.durationMinutes / 60);
+        const minutes = item.durationMinutes % 60;
+        details.durationFormatted = hours > 0 ? `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}` : `${minutes}分钟`;
       }
     } else if (item.type === 'hotel') {
       if (item.roomNumber) {
