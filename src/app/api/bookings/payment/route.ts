@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { searchFlightRoute, generateRealisticFlightNumber, calculateFlightCostUSD } from '@/lib/services/flightSearchService';
+import { generateFlightDetails } from '@/lib/services/flightDetailsGenerator';
 
 interface PaymentRequest {
   userId: string;
@@ -215,32 +216,48 @@ export async function POST(request: NextRequest) {
       try {
         // 获取去程航班信息
         const outboundRoute = await searchFlightRoute(originCity, destinationCity);
-        const outboundFlightNumber = generateRealisticFlightNumber(originCity, destinationCity, 'economy');
-        const outboundDurationMinutes = outboundRoute.estimatedDurationMinutes;
-        const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
-        
+
+        // 生成详细的航班信息（包含中转信息）
+        const outboundFlightDetails = generateFlightDetails(
+          originCity,
+          destinationCity,
+          travelDate,
+          outboundRoute.hasDirectFlight,
+          outboundRoute.connectionCities?.[0],
+          outboundRoute.typicalPriceUSD
+        );
+
         // 生成航班描述，包含中转信息
-        let outboundDescription = `Flight from ${originCity} to ${destinationCity}`;
-        if (outboundRoute.hasDirectFlight) {
-          outboundDescription += ' (Direct)';
-        } else if (outboundRoute.connectionCities && outboundRoute.connectionCities.length > 0) {
-          outboundDescription += ` (Via ${outboundRoute.connectionCities.join(', ')})`;
+        let outboundDescription;
+        if (outboundFlightDetails.isDirect) {
+          const segment = outboundFlightDetails.segments[0];
+          outboundDescription = `Direct flight ${segment.flightNumber}`;
         } else {
-          outboundDescription += ' (Connection required)';
+          const first = outboundFlightDetails.segments[0];
+          const second = outboundFlightDetails.segments[1];
+          outboundDescription = `${first.flightNumber} + ${second.flightNumber} (Via ${outboundFlightDetails.connectionCity})`;
         }
 
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
           type: 'flight',
-          name: `Flight ${outboundFlightNumber}`,
+          name: outboundFlightDetails.isDirect
+            ? `Flight ${outboundFlightDetails.segments[0].flightNumber}`
+            : `Connecting Flight ${outboundFlightDetails.segments[0].flightNumber} + ${outboundFlightDetails.segments[1].flightNumber}`,
           description: outboundDescription,
-          startDate: travelDate,
-          endDate: outboundEndTime,
+          startDate: outboundFlightDetails.segments[0].departureTime,
+          endDate: outboundFlightDetails.segments[outboundFlightDetails.segments.length - 1].arrivalTime,
           location: `${originCity} - ${destinationCity}`,
           price: (plan.flightFee / 2).toString(), // 往返机票费用平分
-          flightNumber: outboundFlightNumber,
-          durationMinutes: outboundDurationMinutes,
+          flightNumber: outboundFlightDetails.segments[0].flightNumber, // 使用第一段航班号
+          durationMinutes: outboundFlightDetails.totalDurationMinutes,
+          metadata: {
+            flightDetails: outboundFlightDetails,
+            isDirect: outboundFlightDetails.isDirect,
+            connectionCity: outboundFlightDetails.connectionCity,
+            layoverMinutes: outboundFlightDetails.layoverMinutes,
+          },
           status: 'pending',
           notificationSent: false,
           createdAt: new Date(),
@@ -249,32 +266,48 @@ export async function POST(request: NextRequest) {
 
         // 创建回程航班
         const returnRoute = await searchFlightRoute(destinationCity, originCity);
-        const returnFlightNumber = generateRealisticFlightNumber(destinationCity, originCity, 'economy');
-        const returnDurationMinutes = returnRoute.estimatedDurationMinutes;
-        const returnEndTime = new Date(returnDate.getTime() + returnDurationMinutes * 60 * 1000);
-        
-        // 生成航班描述，包含中转信息
-        let returnDescription = `Flight from ${destinationCity} to ${originCity}`;
-        if (returnRoute.hasDirectFlight) {
-          returnDescription += ' (Direct)';
-        } else if (returnRoute.connectionCities && returnRoute.connectionCities.length > 0) {
-          returnDescription += ` (Via ${returnRoute.connectionCities.join(', ')})`;
+
+        // 生成详细的回程航班信息
+        const returnFlightDetails = generateFlightDetails(
+          destinationCity,
+          originCity,
+          returnDate,
+          returnRoute.hasDirectFlight,
+          returnRoute.connectionCities?.[0],
+          returnRoute.typicalPriceUSD
+        );
+
+        // 生成回程航班描述
+        let returnDescription;
+        if (returnFlightDetails.isDirect) {
+          const segment = returnFlightDetails.segments[0];
+          returnDescription = `Direct flight ${segment.flightNumber}`;
         } else {
-          returnDescription += ' (Connection required)';
+          const first = returnFlightDetails.segments[0];
+          const second = returnFlightDetails.segments[1];
+          returnDescription = `${first.flightNumber} + ${second.flightNumber} (Via ${returnFlightDetails.connectionCity})`;
         }
 
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
           type: 'flight',
-          name: `Flight ${returnFlightNumber}`,
+          name: returnFlightDetails.isDirect
+            ? `Flight ${returnFlightDetails.segments[0].flightNumber}`
+            : `Connecting Flight ${returnFlightDetails.segments[0].flightNumber} + ${returnFlightDetails.segments[1].flightNumber}`,
           description: returnDescription,
-          startDate: returnDate,
-          endDate: returnEndTime,
+          startDate: returnFlightDetails.segments[0].departureTime,
+          endDate: returnFlightDetails.segments[returnFlightDetails.segments.length - 1].arrivalTime,
           location: `${destinationCity} - ${originCity}`,
           price: (plan.flightFee / 2).toString(), // 往返机票费用平分
-          flightNumber: returnFlightNumber,
-          durationMinutes: returnDurationMinutes,
+          flightNumber: returnFlightDetails.segments[0].flightNumber,
+          durationMinutes: returnFlightDetails.totalDurationMinutes,
+          metadata: {
+            flightDetails: returnFlightDetails,
+            isDirect: returnFlightDetails.isDirect,
+            connectionCity: returnFlightDetails.connectionCity,
+            layoverMinutes: returnFlightDetails.layoverMinutes,
+          },
           status: 'pending',
           notificationSent: false,
           createdAt: new Date(),

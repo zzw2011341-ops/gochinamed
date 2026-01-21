@@ -3,6 +3,7 @@ import { getDb } from 'coze-coding-dev-sdk';
 import { orders, itineraries } from '@/storage/database/shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { searchFlightRoute } from '@/lib/services/flightSearchService';
+import { generateFlightDetails } from '@/lib/services/flightDetailsGenerator';
 
 /**
  * 修复订单的航班和酒店数据
@@ -59,22 +60,48 @@ export async function POST(request: NextRequest) {
             // 使用修复后的 searchFlightRoute 获取正确的航班信息
             const route = await searchFlightRoute(originCity, destCity);
 
+            // 生成详细的航班信息（包含中转信息）
+            const flightDetails = generateFlightDetails(
+              originCity,
+              destCity,
+              item.startDate || new Date(),
+              route.hasDirectFlight,
+              route.connectionCities?.[0],
+              route.typicalPriceUSD
+            );
+
             // 生成新的航班描述
-            let newDescription = `Flight from ${originCity} to ${destCity}`;
-            if (route.hasDirectFlight) {
-              newDescription += ' (Direct)';
-            } else if (route.connectionCities && route.connectionCities.length > 0) {
-              newDescription += ` (Via ${route.connectionCities.join(', ')})`;
+            let newDescription;
+            if (flightDetails.isDirect) {
+              const segment = flightDetails.segments[0];
+              newDescription = `Direct flight ${segment.flightNumber}`;
             } else {
-              newDescription += ' (Connection required)';
+              const first = flightDetails.segments[0];
+              const second = flightDetails.segments[1];
+              newDescription = `${first.flightNumber} + ${second.flightNumber} (Via ${flightDetails.connectionCity})`;
             }
+
+            // 生成新的航班名称
+            const newName = flightDetails.isDirect
+              ? `Flight ${flightDetails.segments[0].flightNumber}`
+              : `Connecting Flight ${flightDetails.segments[0].flightNumber} + ${flightDetails.segments[1].flightNumber}`;
 
             // 更新航班记录
             await db
               .update(itineraries)
               .set({
+                name: newName,
                 description: newDescription,
-                durationMinutes: route.estimatedDurationMinutes,
+                durationMinutes: flightDetails.totalDurationMinutes,
+                startDate: flightDetails.segments[0].departureTime,
+                endDate: flightDetails.segments[flightDetails.segments.length - 1].arrivalTime,
+                flightNumber: flightDetails.segments[0].flightNumber,
+                metadata: {
+                  flightDetails: flightDetails,
+                  isDirect: flightDetails.isDirect,
+                  connectionCity: flightDetails.connectionCity,
+                  layoverMinutes: flightDetails.layoverMinutes,
+                },
                 updatedAt: new Date(),
               })
               .where(eq(itineraries.id, item.id));
@@ -86,9 +113,10 @@ export async function POST(request: NextRequest) {
               oldDescription: item.description,
               newDescription,
               oldDuration: item.durationMinutes,
-              newDuration: route.estimatedDurationMinutes,
-              isDirect: route.hasDirectFlight,
-              connectionCities: route.connectionCities,
+              newDuration: flightDetails.totalDurationMinutes,
+              isDirect: flightDetails.isDirect,
+              connectionCities: flightDetails.connectionCity ? [flightDetails.connectionCity] : [],
+              segments: flightDetails.segments.length,
             });
 
             updatedCount++;

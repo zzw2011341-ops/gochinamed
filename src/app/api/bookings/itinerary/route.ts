@@ -277,47 +277,77 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
 
     // 添加详细信息
     if (item.type === 'flight') {
-      if (item.flightNumber) {
-        details.flightNumber = item.flightNumber;
-        details.subtitle = `Flight ${item.flightNumber}`;
-      }
-      if (item.location) {
-        // location格式为 "Origin - Destination"
-        details.route = item.location;
-        details.subtitle = details.subtitle ? `${details.subtitle} · ${item.location}` : item.location;
-      }
-      if (item.description) {
-        // description中包含直飞/中转信息
-        // 格式示例：
-        // - 直飞: "Flight from Origin to Destination (Direct)"
-        // - 中转: "Flight from Origin to Destination (Via Beijing)"
-        if (item.description.includes('(Direct)')) {
-          details.flightType = '直飞';
-          details.isDirect = true;
-        } else if (item.description.includes('(Via ')) {
-          details.flightType = '中转';
-          details.isDirect = false;
-          // 提取中转城市
-          const viaMatch = item.description.match(/\(Via\s+([^)]+)\)/);
-          if (viaMatch) {
-            details.connectionCities = viaMatch[1].split(',').map((c: string) => c.trim());
-          }
-        } else if (item.description.includes('Connection') || item.description.includes('Transfer')) {
-          details.flightType = '中转';
-          details.isDirect = false;
+      // 优先从 metadata 读取详细的航班信息
+      if (item.metadata && item.metadata.flightDetails) {
+        const flightDetails = item.metadata.flightDetails;
+
+        details.flightSegments = flightDetails.segments;
+        details.isDirect = flightDetails.isDirect;
+        details.flightType = flightDetails.isDirect ? '直飞' : '中转';
+
+        if (flightDetails.isDirect) {
+          const segment = flightDetails.segments[0];
+          details.flightNumber = segment.flightNumber;
+          details.subtitle = `Flight ${segment.flightNumber}`;
+          details.route = `${segment.origin} - ${segment.destination}`;
         } else {
-          // 默认认为可能是直飞（除非description明确说明中转）
-          details.flightType = '直飞';
-          details.isDirect = true;
+          const first = flightDetails.segments[0];
+          const second = flightDetails.segments[1];
+          details.flightNumber = `${first.flightNumber}+${second.flightNumber}`;
+          details.subtitle = `${first.flightNumber} + ${second.flightNumber}`;
+          details.route = `${first.origin} - ${second.destination}`;
+          details.connectionCity = flightDetails.connectionCity;
+          details.layoverMinutes = flightDetails.layoverMinutes;
+
+          // 格式化中转时间
+          const layoverHours = Math.floor(flightDetails.layoverMinutes! / 60);
+          const layoverMins = flightDetails.layoverMinutes! % 60;
+          details.layoverFormatted = layoverHours > 0 ? `${layoverHours}小时${layoverMins}分钟` : `${layoverMins}分钟`;
         }
-      }
-      if (item.durationMinutes) {
-        details.duration = `${item.durationMinutes} 分钟`;
-        details.durationMinutes = item.durationMinutes;
-        // 计算飞行小时
-        const hours = Math.floor(item.durationMinutes / 60);
-        const minutes = item.durationMinutes % 60;
-        details.durationFormatted = hours > 0 ? `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}` : `${minutes}分钟`;
+
+        if (item.durationMinutes) {
+          details.duration = `${item.durationMinutes} 分钟`;
+          details.durationMinutes = item.durationMinutes;
+          const hours = Math.floor(item.durationMinutes / 60);
+          const minutes = item.durationMinutes % 60;
+          details.durationFormatted = hours > 0 ? `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}` : `${minutes}分钟`;
+        }
+      } else {
+        // 兼容旧数据：从 description 解析
+        if (item.flightNumber) {
+          details.flightNumber = item.flightNumber;
+          details.subtitle = `Flight ${item.flightNumber}`;
+        }
+        if (item.location) {
+          details.route = item.location;
+          details.subtitle = details.subtitle ? `${details.subtitle} · ${item.location}` : item.location;
+        }
+        if (item.description) {
+          if (item.description.includes('(Direct)')) {
+            details.flightType = '直飞';
+            details.isDirect = true;
+          } else if (item.description.includes('(Via ')) {
+            details.flightType = '中转';
+            details.isDirect = false;
+            const viaMatch = item.description.match(/\(Via\s+([^)]+)\)/);
+            if (viaMatch) {
+              details.connectionCities = viaMatch[1].split(',').map((c: string) => c.trim());
+            }
+          } else if (item.description.includes('Connection') || item.description.includes('Transfer')) {
+            details.flightType = '中转';
+            details.isDirect = false;
+          } else {
+            details.flightType = '直飞';
+            details.isDirect = true;
+          }
+        }
+        if (item.durationMinutes) {
+          details.duration = `${item.durationMinutes} 分钟`;
+          details.durationMinutes = item.durationMinutes;
+          const hours = Math.floor(item.durationMinutes / 60);
+          const minutes = item.durationMinutes % 60;
+          details.durationFormatted = hours > 0 ? `${hours}小时${minutes > 0 ? `${minutes}分钟` : ''}` : `${minutes}分钟`;
+        }
       }
     } else if (item.type === 'hotel') {
       if (item.roomNumber) {

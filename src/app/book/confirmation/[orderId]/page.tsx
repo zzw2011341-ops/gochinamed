@@ -390,7 +390,7 @@ export default function ConfirmationPage() {
                       </div>
                       <div className="flex-1 pb-8">
                         <div className="flex items-start justify-between">
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-medium">{item.name}</h4>
                             {item.subtitle && (
                               <p className="text-sm text-blue-600 mt-1">{item.subtitle}</p>
@@ -401,20 +401,54 @@ export default function ConfirmationPage() {
                                 {item.route}
                               </p>
                             )}
-                            {item.flightType && (
+                            {item.flightSegments && item.flightSegments.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                {item.flightSegments.map((segment: any, segIndex: number) => (
+                                  <div key={segIndex} className="bg-gray-50 rounded-lg p-3 text-sm">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Plane className="h-4 w-4 text-blue-600" />
+                                      <span className="font-medium">{segment.flightNumber}</span>
+                                      <span className="text-gray-500">·</span>
+                                      <span className="text-gray-700">{segment.airline}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 text-gray-600">
+                                      <div>
+                                        <div className="text-xs text-gray-500">{language === 'zh' ? '出发' : 'Departure'}</div>
+                                        <div>{formatDateTime(segment.departureTime)}</div>
+                                        <div className="text-gray-700">{segment.origin}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-gray-500">{language === 'zh' ? '到达' : 'Arrival'}</div>
+                                        <div>{formatDateTime(segment.arrivalTime)}</div>
+                                        <div className="text-gray-700">{segment.destination}</div>
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {language === 'zh' ? '飞行时间' : 'Flight time'}: {Math.floor(segment.durationMinutes / 60)}h {segment.durationMinutes % 60}m
+                                    </div>
+                                    {segIndex < item.flightSegments.length - 1 && item.layoverMinutes && (
+                                      <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-orange-600">
+                                        {language === 'zh' ? '中转' : 'Layover'}: {item.connectionCity} - {item.layoverFormatted}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {item.flightType && !item.flightSegments && (
                               <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
                                 <Plane className="h-4 w-4" />
                                 {item.flightType === '直飞' ? '直飞' : '中转'}
                               </p>
                             )}
-                            <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                            <div className="text-sm text-gray-600 flex items-center gap-2 mt-2">
                               <Clock className="h-4 w-4" />
                               {formatDateTimeRange(item.date, item.endDate)}
                             </div>
                             {item.duration && (
                               <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                                 <FileText className="h-4 w-4" />
-                                {language === 'zh' ? '用时' : 'Duration'}: {item.durationFormatted || item.duration}
+                                {language === 'zh' ? '总用时' : 'Total duration'}: {item.durationFormatted || item.duration}
                               </div>
                             )}
                             {item.weather && (
@@ -424,7 +458,7 @@ export default function ConfirmationPage() {
                               </div>
                             )}
                           </div>
-                          <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'}>
+                          <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'} className="ml-4">
                             {item.status}
                           </Badge>
                         </div>
@@ -1381,6 +1415,20 @@ function getWeatherIcon(condition: string) {
     default:
       return '🌡️';
   }
+}
+
+function formatDateTime(date: Date | string | null): string {
+  if (!date) return '';
+
+  const d = new Date(date);
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+
+  return d.toLocaleString('en-US', options);
 }
 
 function formatDateTimeRange(startDate: Date | string | null, endDate: Date | string | null) {
