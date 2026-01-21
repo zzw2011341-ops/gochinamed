@@ -657,30 +657,28 @@ function getPredefinedRoute(origin: string, destination: string): FlightRoute | 
  * 搜索航班航线
  * 优先使用缓存，其次使用预定义数据，最后使用联网搜索
  * 对于非预定义的航线，强制应用中转逻辑
+ * 修复：移除缓存检查，每次重新计算以确保中转逻辑正确应用
  */
 export async function searchFlightRoute(
   origin: string,
   destination: string
 ): Promise<FlightRoute> {
-  // 1. 检查缓存
-  const cached = getFromCache(origin, destination);
-  if (cached) {
-    return cached;
-  }
+  // 1. 首先判断是否需要中转（强制规则，优先级最高）
+  const requiresConnection = shouldRequireConnection(origin, destination);
+  const connectionCity = getConnectionCity(origin, destination);
+
+  console.log(`[FlightRoute] ${origin} -> ${destination}: requiresConnection=${requiresConnection}, connectionCity=${connectionCity}`);
 
   // 2. 检查预定义数据（仅适用于主要枢纽之间的直飞航线）
   const predefined = getPredefinedRoute(origin, destination);
   if (predefined) {
     // 即使有预定义数据，也要检查是否应该中转
-    const requiresConnection = shouldRequireConnection(origin, destination);
     if (requiresConnection) {
+      console.log(`[FlightRoute] Overriding predefined route for ${origin} -> ${destination} to require connection`);
       // 覆盖预定义数据，强制中转
       predefined.hasDirectFlight = false;
-      const connectionCity = getConnectionCity(origin, destination);
-      if (connectionCity) {
-        predefined.connectionCities = [connectionCity];
-      }
-      // 增加中转时间
+      predefined.connectionCities = connectionCity ? [connectionCity] : [];
+      // 增加中转时间（2-4小时）
       predefined.estimatedDurationMinutes += 120 + Math.floor(Math.random() * 120);
       // 增加中转费用
       predefined.minPriceUSD = Math.round(predefined.minPriceUSD * 1.3);
@@ -694,29 +692,30 @@ export async function searchFlightRoute(
   // 3. 使用联网搜索
   const realData = await searchRealFlightData(origin, destination);
   if (realData) {
-    // 如果联网搜索没有返回中转信息，但根据规则应该中转，则强制应用中转逻辑
-    const requiresConnection = shouldRequireConnection(origin, destination);
-    if (requiresConnection && realData.hasDirectFlight) {
-      console.log(`Overriding direct flight for ${origin} to ${destination} to require connection`);
+    // 强制应用中转逻辑（优先级最高）
+    if (requiresConnection) {
+      console.log(`[FlightRoute] Forcing connection for ${origin} -> ${destination}`);
       realData.hasDirectFlight = false;
-      const connectionCity = getConnectionCity(origin, destination);
-      if (connectionCity) {
-        realData.connectionCities = [connectionCity];
+      realData.connectionCities = connectionCity ? [connectionCity] : [];
+
+      // 如果联网搜索没有正确设置中转，增加中转时间
+      if (realData.estimatedDurationMinutes < 600) {
+        realData.estimatedDurationMinutes += 120 + Math.floor(Math.random() * 120);
       }
-      // 增加中转时间
-      realData.estimatedDurationMinutes += 120 + Math.floor(Math.random() * 120);
+
       // 增加中转费用
-      realData.minPriceUSD = Math.round(realData.minPriceUSD * 1.3);
-      realData.maxPriceUSD = Math.round(realData.maxPriceUSD * 1.5);
-      realData.typicalPriceUSD = Math.round(realData.typicalPriceUSD * 1.4);
+      if (realData.minPriceUSD > 0) {
+        realData.minPriceUSD = Math.round(realData.minPriceUSD * 1.3);
+        realData.maxPriceUSD = Math.round(realData.maxPriceUSD * 1.5);
+        realData.typicalPriceUSD = Math.round(realData.typicalPriceUSD * 1.4);
+      }
     }
+    saveToCache(realData);
     return realData;
   }
 
   // 4. 如果都失败了，使用估算数据
   const estimatedDuration = estimateFlightDurationByDistance(origin, destination);
-  const requiresConnection = shouldRequireConnection(origin, destination);
-  const connectionCity = getConnectionCity(origin, destination);
 
   // 如果需要中转，增加中转时间（2-4小时）
   const estimatedDurationWithConnection = requiresConnection
