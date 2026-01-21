@@ -1426,9 +1426,10 @@ function formatDateTime(date: Date | string | null): string {
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   };
 
-  return d.toLocaleString('en-US', options);
+  return d.toLocaleString('en-US', options) + ' UTC';
 }
 
 function formatDateTimeRange(startDate: Date | string | null, endDate: Date | string | null) {
@@ -1440,16 +1441,26 @@ function formatDateTimeRange(startDate: Date | string | null, endDate: Date | st
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'UTC',
   };
 
   let result = start.toLocaleString('en-US', options);
 
   if (endDate) {
     const end = new Date(endDate);
-    const isSameDay = start.toDateString() === end.toDateString();
+    // 使用 UTC 方法判断是否同一天，避免时区问题
+    const isSameDay = (
+      start.getUTCFullYear() === end.getUTCFullYear() &&
+      start.getUTCMonth() === end.getUTCMonth() &&
+      start.getUTCDate() === end.getUTCDate()
+    );
 
     if (isSameDay) {
-      const endTime = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const endTime = end.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZone: 'UTC'
+      });
       result += ` - ${endTime}`;
     } else {
       const endOptions: Intl.DateTimeFormatOptions = {
@@ -1457,12 +1468,13 @@ function formatDateTimeRange(startDate: Date | string | null, endDate: Date | st
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
+        timeZone: 'UTC',
       };
       result += ` - ${end.toLocaleString('en-US', endOptions)}`;
     }
   }
 
-  return result;
+  return result + ' UTC';
 }
 
 // 获取咨询方向标签
