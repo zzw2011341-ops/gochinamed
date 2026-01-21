@@ -389,10 +389,25 @@ export default function ConfirmationPage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <h4 className="font-medium">{item.name}</h4>
+                            {item.subtitle && (
+                              <p className="text-sm text-blue-600 mt-1">{item.subtitle}</p>
+                            )}
                             <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                               <Clock className="h-4 w-4" />
-                              {new Date(item.date).toLocaleString()}
+                              {formatDateTimeRange(item.date, item.endDate)}
                             </div>
+                            {item.duration && (
+                              <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                                <FileText className="h-4 w-4" />
+                                {language === 'zh' ? '用时' : 'Duration'}: {item.duration}
+                              </div>
+                            )}
+                            {item.weather && (
+                              <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                                <Cloud className="h-4 w-4" />
+                                {language === 'zh' ? '天气' : 'Weather'}: {item.weather.condition} ({item.weather.tempMin}°C - {item.weather.tempMax}°C)
+                              </div>
+                            )}
                           </div>
                           <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'}>
                             {item.status}
@@ -746,10 +761,25 @@ export default function ConfirmationPage() {
                           <div className="flex items-start justify-between">
                             <div>
                               <h4 className="font-medium">{item.name}</h4>
+                              {item.subtitle && (
+                                <p className="text-sm text-blue-600 mt-1">{item.subtitle}</p>
+                              )}
                               <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                                 <Clock className="h-4 w-4" />
-                                {new Date(item.date).toLocaleString()}
+                                {formatDateTimeRange(item.date, item.endDate)}
                               </div>
+                              {item.duration && (
+                                <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                                  <FileText className="h-4 w-4" />
+                                  {language === 'zh' ? '用时' : 'Duration'}: {item.duration}
+                                </div>
+                              )}
+                              {item.weather && (
+                                <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                                  <Cloud className="h-4 w-4" />
+                                  {language === 'zh' ? '天气' : 'Weather'}: {item.weather.condition} ({item.weather.tempMin}°C - {item.weather.tempMax}°C)
+                                </div>
+                              )}
                             </div>
                             <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'}>
                               {item.status}
@@ -1174,4 +1204,38 @@ function getWeatherIcon(condition: string) {
     default:
       return '🌡️';
   }
+}
+
+function formatDateTimeRange(startDate: Date | string | null, endDate: Date | string | null) {
+  if (!startDate) return '';
+
+  const start = new Date(startDate);
+  const options: Intl.DateTimeFormatOptions = {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  };
+
+  let result = start.toLocaleString('en-US', options);
+
+  if (endDate) {
+    const end = new Date(endDate);
+    const isSameDay = start.toDateString() === end.toDateString();
+
+    if (isSameDay) {
+      const endTime = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      result += ` - ${endTime}`;
+    } else {
+      const endOptions: Intl.DateTimeFormatOptions = {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      };
+      result += ` - ${end.toLocaleString('en-US', endOptions)}`;
+    }
+  }
+
+  return result;
 }

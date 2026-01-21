@@ -257,14 +257,51 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
 
   // 添加行程项目
   itineraryItems.forEach((item, index) => {
-    timeline.push({
+    const details: any = {
       id: item.id,
       type: item.type,
       name: item.name,
       date: item.startDate,
+      endDate: item.endDate,
       status: item.status,
       order: index,
-    });
+    };
+
+    // 添加详细信息
+    if (item.type === 'flight') {
+      if (item.flightNumber) {
+        details.flightNumber = item.flightNumber;
+        details.subtitle = `Flight ${item.flightNumber}`;
+      }
+      if (item.durationMinutes) {
+        details.duration = `${item.durationMinutes} minutes`;
+        details.durationMinutes = item.durationMinutes;
+      }
+    } else if (item.type === 'hotel') {
+      if (item.roomNumber) {
+        details.roomNumber = item.roomNumber;
+        details.subtitle = `Room ${item.roomNumber}`;
+      }
+      if (item.endDate) {
+        const nights = Math.ceil((new Date(item.endDate).getTime() - new Date(item.startDate).getTime()) / (24 * 60 * 60 * 1000));
+        details.duration = `${nights} nights`;
+      }
+    } else if (item.type === 'ticket') {
+      if (item.durationMinutes) {
+        details.duration = `${item.durationMinutes} minutes`;
+      }
+    }
+
+    // 添加天气信息
+    if (item.weatherCondition) {
+      details.weather = {
+        condition: item.weatherCondition,
+        tempMin: item.temperatureMin,
+        tempMax: item.temperatureMax,
+      };
+    }
+
+    timeline.push(details);
   });
 
   // 添加医生预约
@@ -274,8 +311,10 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
       type: 'doctor',
       name: 'Doctor Appointment',
       date: appointmentDate,
+      endDate: appointmentDate,
       status: 'scheduled',
       order: timeline.length,
+      duration: '60 minutes',
     });
   }
 

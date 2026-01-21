@@ -50,6 +50,34 @@ export async function POST(request: NextRequest) {
 
     const db = await getDb();
 
+    // 检查是否有重复订单（防止重复提交）
+    // 检查最近5分钟内，同一用户是否有相同金额的订单
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentOrders = await db
+      .select()
+      .from(orders)
+      .where(and(
+        eq(orders.userId, userId),
+        eq(orders.totalAmount, (plan.medicalFee + plan.hotelFee + plan.flightFee).toString())
+      ))
+      .orderBy(orders.createdAt);
+
+    // 找到最近5分钟内的订单
+    const duplicateOrder = recentOrders.find(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate > fiveMinutesAgo;
+    });
+
+    if (duplicateOrder) {
+      // 返回已存在的订单，避免重复创建
+      return NextResponse.json({
+        success: true,
+        orderId: duplicateOrder.id,
+        message: 'Payment successful. Your booking is being processed.',
+        redirectUrl: `/book/confirmation/${duplicateOrder.id}`,
+      });
+    }
+
     // 模拟支付处理（实际项目中应该集成真实的支付网关）
     // 这里我们假设支付总是成功的
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -122,45 +150,64 @@ export async function POST(request: NextRequest) {
     }).returning();
 
     // 创建行程记录
+    // 生成航班号和详细信息
+    const flightNumber = generateFlightNumber(bookingData.originCity, bookingData.destinationCity);
+    const flightDurationMinutes = estimateFlightDuration(bookingData.originCity, bookingData.destinationCity);
+    const flightEndTime = new Date(travelDate.getTime() + flightDurationMinutes * 60 * 1000);
+
     const flightItinerary = await db.insert(itineraries).values({
       id: uuidv4(),
       orderId: order.id,
       type: 'flight',
-      name: `Flight from ${bookingData.originCity || 'Origin'} to ${bookingData.destinationCity || 'Destination'}`,
-      description: `International flight for ${plan.name}`,
+      name: `Flight ${flightNumber}`,
+      description: `Flight from ${bookingData.originCity || 'Origin'} to ${bookingData.destinationCity || 'Destination'}`,
       startDate: travelDate,
-      endDate: travelDate,
+      endDate: flightEndTime,
       location: `${bookingData.originCity || 'Origin'} - ${bookingData.destinationCity || 'Destination'}`,
       price: plan.flightFee.toString(),
+      flightNumber: flightNumber,
+      durationMinutes: flightDurationMinutes,
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
 
+    // 生成酒店房间号和详细信息
+    const hotelName = bookingData.hotelName || 'Grand Hotel';
+    const roomNumber = generateRoomNumber();
+    const nights = Math.ceil((returnDate.getTime() - travelDate.getTime()) / (24 * 60 * 60 * 1000));
+
     await db.insert(itineraries).values({
       id: uuidv4(),
       orderId: order.id,
       type: 'hotel',
-      name: `${bookingData.hotelName || 'Hotel'} Accommodation`,
-      description: `${bookingData.nights || 7} nights hotel stay`,
+      name: hotelName,
+      description: `${nights} nights accommodation`,
       startDate: travelDate,
       endDate: returnDate,
       location: bookingData.destinationCity || 'Destination',
       price: plan.hotelFee.toString(),
+      hotelName: hotelName,
+      roomNumber: roomNumber,
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
+    // 创建医疗咨询记录
     await db.insert(itineraries).values({
       id: uuidv4(),
       orderId: order.id,
-      type: 'ticket', // 使用'ticket'类型代替'medical'
+      type: 'ticket',
       name: 'Medical Consultation',
       description: `Medical consultation at ${bookingData.hospitalName || 'Hospital'}`,
       startDate: appointmentDate,
+      endDate: appointmentDate,
+      location: bookingData.destinationCity || 'Destination',
+      price: plan.medicalFee.toString(),
+      durationMinutes: 60, // 假设咨询时间为60分钟
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
@@ -324,4 +371,42 @@ async function bookItineraryServices(db: any, orderId: string, bookingData: any)
     console.error('Failed to book itinerary services:', error);
     throw error;
   }
+}
+
+/**
+ * 生成航班号
+ */
+function generateFlightNumber(originCity: string, destCity: string): string {
+  const airlines = ['CA', 'MU', 'CZ', 'HU', 'FM', 'ZH'];
+  const randomAirline = airlines[Math.floor(Math.random() * airlines.length)];
+  const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  return `${randomAirline}${randomDigits}`;
+}
+
+/**
+ * 估算飞行时长（分钟）
+ */
+function estimateFlightDuration(originCity: string, destCity: string): number {
+  // 简化计算：假设平均飞行速度为800公里/小时
+  // 实际项目中应该根据实际城市距离计算
+  const cityDistances: { [key: string]: number } = {
+    'Beijing-Shanghai': 120, // 约2小时
+    'Shanghai-Beijing': 120,
+    'Beijing-Guangzhou': 180, // 约3小时
+    'Guangzhou-Beijing': 180,
+    'Shanghai-Guangzhou': 150, // 约2.5小时
+    'Guangzhou-Shanghai': 150,
+  };
+
+  const routeKey = `${originCity}-${destCity}`;
+  return cityDistances[routeKey] || 120; // 默认2小时
+}
+
+/**
+ * 生成房间号
+ */
+function generateRoomNumber(): string {
+  const floor = Math.floor(Math.random() * 20) + 1; // 1-20层
+  const room = Math.floor(Math.random() * 30) + 1; // 1-30号房间
+  return `${floor}${room.toString().padStart(2, '0')}`; // 例如：102, 1506
 }

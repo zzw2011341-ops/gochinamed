@@ -392,6 +392,14 @@ export const itineraries = pgTable(
     bookingConfirmation: text("booking_confirmation"),
     status: serviceReservationStatusEnum("status").notNull().default("pending"), // pending, confirmed, cancelled, completed
     notificationSent: boolean("notification_sent").default(false).notNull(),
+    flightNumber: varchar("flight_number", { length: 50 }),
+    trainNumber: varchar("train_number", { length: 50 }),
+    hotelName: varchar("hotel_name", { length: 255 }),
+    roomNumber: varchar("room_number", { length: 50 }),
+    durationMinutes: integer("duration_minutes"),
+    weatherCondition: varchar("weather_condition", { length: 100 }),
+    temperatureMin: decimal("temperature_min", { precision: 5, scale: 1 }),
+    temperatureMax: decimal("temperature_max", { precision: 5, scale: 1 }),
     metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
