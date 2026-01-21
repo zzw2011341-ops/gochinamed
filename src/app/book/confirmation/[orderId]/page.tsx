@@ -1421,34 +1421,38 @@ function formatDateTime(date: Date | string | null): string {
   if (!date) return '';
 
   const d = new Date(date);
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  };
 
-  return d.toLocaleString('en-US', options) + ' UTC';
+  // 手动格式化 UTC 时间，避免浏览器 timeZone 支持问题
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[d.getUTCMonth()];
+  const day = d.getUTCDate();
+  const hours = d.getUTCHours();
+  const minutes = d.getUTCMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+
+  return `${month} ${day}, ${hours12}:${minutes} ${ampm} UTC`;
 }
 
 function formatDateTimeRange(startDate: Date | string | null, endDate: Date | string | null) {
   if (!startDate) return '';
 
   const start = new Date(startDate);
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  };
 
-  let result = start.toLocaleString('en-US', options);
+  // 手动格式化开始时间（UTC）
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const startMonth = months[start.getUTCMonth()];
+  const startDay = start.getUTCDate();
+  const startHours = start.getUTCHours();
+  const startMinutes = start.getUTCMinutes().toString().padStart(2, '0');
+  const startAmpm = startHours >= 12 ? 'PM' : 'AM';
+  const startHours12 = startHours % 12 || 12;
+
+  let result = `${startMonth} ${startDay}, ${startHours12}:${startMinutes} ${startAmpm}`;
 
   if (endDate) {
     const end = new Date(endDate);
-    // 使用 UTC 方法判断是否同一天，避免时区问题
+    // 使用 UTC 方法判断是否同一天
     const isSameDay = (
       start.getUTCFullYear() === end.getUTCFullYear() &&
       start.getUTCMonth() === end.getUTCMonth() &&
@@ -1456,21 +1460,21 @@ function formatDateTimeRange(startDate: Date | string | null, endDate: Date | st
     );
 
     if (isSameDay) {
-      const endTime = end.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        timeZone: 'UTC'
-      });
-      result += ` - ${endTime}`;
+      // 同一天，只显示时间
+      const endHours = end.getUTCHours();
+      const endMinutes = end.getUTCMinutes().toString().padStart(2, '0');
+      const endAmpm = endHours >= 12 ? 'PM' : 'AM';
+      const endHours12 = endHours % 12 || 12;
+      result += ` - ${endHours12}:${endMinutes} ${endAmpm}`;
     } else {
-      const endOptions: Intl.DateTimeFormatOptions = {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'UTC',
-      };
-      result += ` - ${end.toLocaleString('en-US', endOptions)}`;
+      // 不同天，显示完整日期和时间
+      const endMonth = months[end.getUTCMonth()];
+      const endDay = end.getUTCDate();
+      const endHours = end.getUTCHours();
+      const endMinutes = end.getUTCMinutes().toString().padStart(2, '0');
+      const endAmpm = endHours >= 12 ? 'PM' : 'AM';
+      const endHours12 = endHours % 12 || 12;
+      result += ` - ${endMonth} ${endDay}, ${endHours12}:${endMinutes} ${endAmpm}`;
     }
   }
 
