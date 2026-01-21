@@ -111,67 +111,121 @@ export async function POST(request: NextRequest) {
     const flightMinFee = Number(flightFeeConfig?.minFee || 30);
     const hotelMinFee = Number(hotelFeeConfig?.minFee || 40);
 
-    // 计算各项服务费用
-    const medicalServiceFee = Math.max(plan.medicalFee * medicalRate, medicalMinFee);
-    const flightServiceFee = Math.max(plan.flightFee * flightRate, flightMinFee);
-    const hotelServiceFee = Math.max(plan.hotelFee * hotelRate, hotelMinFee);
-
-    const subtotal = plan.medicalFee + plan.hotelFee + plan.flightFee;
-    const totalServiceFee = medicalServiceFee + flightServiceFee + hotelServiceFee;
-    const totalAmount = subtotal + totalServiceFee;
-
-    // 获取用户的预订信息（从session或其他地方）
+    // 获取用户的预订信息（从plan.bookingData）
     const bookingData = plan.bookingData || {};
     const travelDate = new Date(bookingData.travelDate || Date.now() + 7 * 24 * 60 * 60 * 1000);
     const appointmentDate = new Date(bookingData.appointmentDate || Date.now() + 10 * 24 * 60 * 60 * 1000);
     const returnDate = new Date(bookingData.returnDate || Date.now() + 14 * 24 * 60 * 60 * 1000);
 
+    // 确保起降城市存在（如果缺失，使用默认值）
+    const originCity = bookingData.originCity || 'Origin';
+    const destinationCity = bookingData.destinationCity || 'Destination';
+
+    // 根据治疗类型调整医疗费用
+    const treatmentType = bookingData.treatmentType || 'checkup';
+    let adjustedMedicalFee = plan.medicalFee;
+
+    // 检查类型只有检查费用，不应该有手术/护理/营养费
+    if (treatmentType === 'checkup') {
+      // 检查类型：只保留基础医疗咨询和检查费用
+      adjustedMedicalFee = Math.min(plan.medicalFee, 500); // 上限500美元
+    } else if (treatmentType === 'surgery') {
+      // 手术类型：保留手术费
+      adjustedMedicalFee = plan.medicalFee;
+    } else if (treatmentType === 'therapy' || treatmentType === 'rehabilitation') {
+      // 治疗/康复类型：中等费用
+      adjustedMedicalFee = Math.min(plan.medicalFee, 2000);
+    }
+
+    // 计算各项服务费用
+    const medicalServiceFee = Math.max(adjustedMedicalFee * medicalRate, medicalMinFee);
+    const flightServiceFee = Math.max(plan.flightFee * flightRate, flightMinFee);
+    const hotelServiceFee = Math.max(plan.hotelFee * hotelRate, hotelMinFee);
+
+    const subtotal = adjustedMedicalFee + plan.hotelFee + plan.flightFee;
+    const totalServiceFee = medicalServiceFee + flightServiceFee + hotelServiceFee;
+    const totalAmount = subtotal + totalServiceFee;
+
     // 创建订单
     const [order] = await db.insert(orders).values({
       id: uuidv4(),
       userId,
-      doctorId: plan.doctorId || null,
-      hospitalId: plan.hospitalId || null,
+      doctorId: plan.bookingData?.doctorId || null,
+      hospitalId: null, // 从bookingData中获取hospitalId，如果有的话
       status: 'confirmed',
-      doctorAppointmentStatus: plan.doctorId ? 'pending' : 'confirmed',
-      doctorAppointmentDate: plan.doctorId ? appointmentDate : null,
+      doctorAppointmentStatus: plan.bookingData?.doctorId ? 'pending' : 'confirmed',
+      doctorAppointmentDate: plan.bookingData?.doctorId ? appointmentDate : null,
       serviceReservationStatus: 'pending',
-      medicalFee: plan.medicalFee.toString(),
+      medicalFee: adjustedMedicalFee.toString(),
       hotelFee: plan.hotelFee.toString(),
       flightFee: plan.flightFee.toString(),
-      ticketFee: '0',
+      ticketFee: '0', // 医疗旅游不需要门票费用
       subtotal: subtotal.toString(),
-      serviceFeeRate: '0.05',
+      serviceFeeRate: medicalRate.toString(),
       serviceFeeAmount: totalServiceFee.toString(),
       totalAmount: totalAmount.toString(),
       currency: 'USD',
+      // 医疗服务相关字段
+      consultationDirection: bookingData.consultationDirection || null,
+      examinationItems: bookingData.examinationItems ? JSON.stringify([bookingData.examinationItems]) : null,
+      surgeryTypes: bookingData.surgeryTypes ? JSON.stringify([bookingData.surgeryTypes]) : null,
+      treatmentDirection: bookingData.treatmentDirection || null,
+      rehabilitationDirection: bookingData.rehabilitationDirection || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }).returning();
 
     // 创建行程记录
-    // 生成航班号和详细信息
-    const flightNumber = generateFlightNumber(bookingData.originCity, bookingData.destinationCity);
-    const flightDurationMinutes = estimateFlightDuration(bookingData.originCity, bookingData.destinationCity);
-    const flightEndTime = new Date(travelDate.getTime() + flightDurationMinutes * 60 * 1000);
+    // 判断是否同城旅行（同城无需机票）
+    const isSameCity = originCity === destinationCity;
 
-    const flightItinerary = await db.insert(itineraries).values({
-      id: uuidv4(),
-      orderId: order.id,
-      type: 'flight',
-      name: `Flight ${flightNumber}`,
-      description: `Flight from ${bookingData.originCity || 'Origin'} to ${bookingData.destinationCity || 'Destination'}`,
-      startDate: travelDate,
-      endDate: flightEndTime,
-      location: `${bookingData.originCity || 'Origin'} - ${bookingData.destinationCity || 'Destination'}`,
-      price: plan.flightFee.toString(),
-      flightNumber: flightNumber,
-      durationMinutes: flightDurationMinutes,
-      status: 'pending',
-      notificationSent: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }).returning();
+    if (!isSameCity) {
+      // 创建去程航班
+      const outboundFlightNumber = generateFlightNumber(originCity, destinationCity);
+      const outboundDurationMinutes = estimateFlightDuration(originCity, destinationCity);
+      const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
+
+      await db.insert(itineraries).values({
+        id: uuidv4(),
+        orderId: order.id,
+        type: 'flight',
+        name: `Flight ${outboundFlightNumber}`,
+        description: `Flight from ${originCity} to ${destinationCity}`,
+        startDate: travelDate,
+        endDate: outboundEndTime,
+        location: `${originCity} - ${destinationCity}`,
+        price: (plan.flightFee / 2).toString(), // 往返机票费用平分
+        flightNumber: outboundFlightNumber,
+        durationMinutes: outboundDurationMinutes,
+        status: 'pending',
+        notificationSent: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // 创建回程航班
+      const returnFlightNumber = generateFlightNumber(destinationCity, originCity);
+      const returnDurationMinutes = estimateFlightDuration(destinationCity, originCity);
+      const returnEndTime = new Date(returnDate.getTime() + returnDurationMinutes * 60 * 1000);
+
+      await db.insert(itineraries).values({
+        id: uuidv4(),
+        orderId: order.id,
+        type: 'flight',
+        name: `Flight ${returnFlightNumber}`,
+        description: `Flight from ${destinationCity} to ${originCity}`,
+        startDate: returnDate,
+        endDate: returnEndTime,
+        location: `${destinationCity} - ${originCity}`,
+        price: (plan.flightFee / 2).toString(), // 往返机票费用平分
+        flightNumber: returnFlightNumber,
+        durationMinutes: returnDurationMinutes,
+        status: 'pending',
+        notificationSent: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
 
     // 生成酒店房间号和详细信息
     const hotelName = bookingData.hotelName || 'Grand Hotel';
@@ -201,13 +255,13 @@ export async function POST(request: NextRequest) {
       id: uuidv4(),
       orderId: order.id,
       type: 'ticket',
-      name: 'Medical Consultation',
-      description: `Medical consultation at ${bookingData.hospitalName || 'Hospital'}`,
+      name: getMedicalServiceName(bookingData.treatmentType),
+      description: getMedicalServiceDescription(bookingData.treatmentType, bookingData.consultationDirection, bookingData.examinationItems, bookingData.surgeryTypes, bookingData.treatmentDirection, bookingData.rehabilitationDirection),
       startDate: appointmentDate,
       endDate: appointmentDate,
-      location: bookingData.destinationCity || 'Destination',
-      price: plan.medicalFee.toString(),
-      durationMinutes: 60, // 假设咨询时间为60分钟
+      location: bookingData.destinationCity || destinationCity,
+      price: adjustedMedicalFee.toString(),
+      durationMinutes: 60, // 咨询时间为60分钟
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
@@ -306,9 +360,9 @@ async function bookItineraryServices(db: any, orderId: string, bookingData: any)
       where: eq(itineraries.orderId, orderId),
     });
 
-    // 预订航班
-    const flightItinerary = itinerariesList.find((i: any) => i.type === 'flight');
-    if (flightItinerary) {
+    // 预订航班（可能有两个航班：去程和回程）
+    const flightItineraries = itinerariesList.filter((i: any) => i.type === 'flight');
+    for (const flightItinerary of flightItineraries) {
       // 模拟航班预订
       const flightReference = `FL${Date.now().toString().slice(-8)}`;
       await db
@@ -409,4 +463,39 @@ function generateRoomNumber(): string {
   const floor = Math.floor(Math.random() * 20) + 1; // 1-20层
   const room = Math.floor(Math.random() * 30) + 1; // 1-30号房间
   return `${floor}${room.toString().padStart(2, '0')}`; // 例如：102, 1506
+}
+
+/**
+ * 根据治疗类型获取医疗服务名称
+ */
+function getMedicalServiceName(treatmentType?: string): string {
+  const serviceNames: Record<string, string> = {
+    'checkup': 'Medical Checkup',
+    'surgery': 'Medical Surgery',
+    'therapy': 'Medical Therapy',
+    'rehabilitation': 'Rehabilitation Program',
+    'consultation': 'Medical Consultation',
+  };
+  return serviceNames[treatmentType || 'consultation'] || 'Medical Consultation';
+}
+
+/**
+ * 根据治疗类型获取医疗服务描述
+ */
+function getMedicalServiceDescription(
+  treatmentType?: string,
+  consultationDirection?: string,
+  examinationItems?: string,
+  surgeryTypes?: string,
+  treatmentDirection?: string,
+  rehabilitationDirection?: string
+): string {
+  const descriptions: Record<string, string> = {
+    'checkup': `Medical checkup${examinationItems ? ` including ${examinationItems}` : ''}`,
+    'surgery': `Surgical procedure${surgeryTypes ? ` - ${surgeryTypes}` : ''}`,
+    'therapy': `Medical therapy${treatmentDirection ? ` - ${treatmentDirection}` : ''}`,
+    'rehabilitation': `Rehabilitation program${rehabilitationDirection ? ` - ${rehabilitationDirection}` : ''}`,
+    'consultation': `Medical consultation${consultationDirection ? ` - ${consultationDirection}` : ''}`,
+  };
+  return descriptions[treatmentType || 'consultation'] || 'Medical consultation';
 }

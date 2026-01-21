@@ -116,6 +116,14 @@ export async function GET(request: NextRequest) {
         serviceReservationStatus: order.serviceReservationStatus,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
+        // 医疗相关字段
+        consultationDirection: order.consultationDirection,
+        examinationItems: order.examinationItems,
+        surgeryTypes: order.surgeryTypes,
+        treatmentDirection: order.treatmentDirection,
+        rehabilitationDirection: order.rehabilitationDirection,
+        medicalPlan: order.medicalPlan,
+        planAdjustments: order.planAdjustments,
       },
       user: user ? {
         id: user.id,

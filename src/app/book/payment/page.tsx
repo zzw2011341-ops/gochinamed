@@ -22,6 +22,22 @@ interface PlanOption {
   serviceFeeRate?: number;
   serviceFeeAmount?: number;
   finalTotal?: number;
+  bookingData?: {
+    originCity: string;
+    destinationCity: string;
+    travelDate: string;
+    appointmentDate?: string;
+    returnDate?: string;
+    hotelName?: string;
+    hospitalName?: string;
+    doctorId?: string;
+    treatmentType?: string;
+    consultationDirection?: string;
+    examinationItems?: string;
+    surgeryTypes?: string;
+    treatmentDirection?: string;
+    rehabilitationDirection?: string;
+  };
 }
 
 interface ServiceFee {
@@ -60,10 +76,33 @@ export default function PaymentPage() {
   const [cvv, setCvv] = useState('');
 
   useEffect(() => {
-    // 从sessionStorage获取选中的方案
+    // 从sessionStorage获取选中的方案和预订数据
     const savedPlan = sessionStorage.getItem('selectedPlan');
+    const savedBookingData = sessionStorage.getItem('bookingPlans');
+
     if (savedPlan) {
-      setSelectedPlan(JSON.parse(savedPlan));
+      const plan = JSON.parse(savedPlan);
+      // 将bookingData附加到plan对象中
+      if (savedBookingData) {
+        const bookingDataFull = JSON.parse(savedBookingData);
+        plan.bookingData = {
+          originCity: bookingDataFull.requestData?.originCity || '',
+          destinationCity: bookingDataFull.requestData?.destinationCity || '',
+          travelDate: bookingDataFull.requestData?.travelDate || '',
+          appointmentDate: bookingDataFull.requestData?.appointmentDate || '',
+          returnDate: bookingDataFull.requestData?.returnDate || '',
+          hotelName: plan.hotelName,
+          hospitalName: bookingDataFull.requestData?.selectedHospital || '',
+          doctorId: bookingDataFull.requestData?.selectedDoctor || '',
+          treatmentType: bookingDataFull.requestData?.treatmentType || '',
+          consultationDirection: bookingDataFull.requestData?.consultationDirection || '',
+          examinationItems: bookingDataFull.requestData?.examinationItems || '',
+          surgeryTypes: bookingDataFull.requestData?.surgeryTypes || '',
+          treatmentDirection: bookingDataFull.requestData?.treatmentDirection || '',
+          rehabilitationDirection: bookingDataFull.requestData?.rehabilitationDirection || '',
+        };
+      }
+      setSelectedPlan(plan);
       setLoading(false);
     } else {
       // 如果没有选中的方案，返回方案选择页面
