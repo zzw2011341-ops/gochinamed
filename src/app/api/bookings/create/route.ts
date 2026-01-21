@@ -690,18 +690,29 @@ function normalizePlan(
   // 获取治疗类型，优先使用treatmentType参数，然后依次检查其他字段
   // 优先级：treatmentType > examinationItems > surgeryTypes > treatmentDirection > rehabilitationDirection > consultationDirection > 'consultation'
   let planTreatmentType = 'consultation';
+
+  console.log(`[normalizePlan] START: treatmentType=${treatmentType}, examinationItems=${examinationItems}, surgeryTypes=${surgeryTypes}, treatmentDirection=${treatmentDirection}, rehabilitationDirection=${rehabilitationDirection}, consultationDirection=${consultationDirection}`);
+
   if (treatmentType && treatmentType !== 'consultation') {
     planTreatmentType = treatmentType;
-  } else if (examinationItems && examinationItems !== 'not_applicable') {
+    console.log(`[normalizePlan] Determined type from treatmentType: ${planTreatmentType}`);
+  } else if (examinationItems && examinationItems !== 'not_applicable' && examinationItems !== 'basic_tests' && examinationItems !== 'recommended_tests') {
     planTreatmentType = 'examination';
-  } else if (surgeryTypes && surgeryTypes !== undefined) {
+    console.log(`[normalizePlan] Determined type from examinationItems: ${planTreatmentType}`);
+  } else if (surgeryTypes && surgeryTypes !== undefined && surgeryTypes !== 'not_applicable' && surgeryTypes !== '') {
     planTreatmentType = 'surgery';
-  } else if (treatmentDirection && treatmentDirection !== 'not_applicable') {
+    console.log(`[normalizePlan] Determined type from surgeryTypes: ${planTreatmentType}`);
+  } else if (treatmentDirection && treatmentDirection !== 'not_applicable' && treatmentDirection !== '') {
     planTreatmentType = 'therapy';
-  } else if (rehabilitationDirection && rehabilitationDirection !== 'not_applicable') {
+    console.log(`[normalizePlan] Determined type from treatmentDirection: ${planTreatmentType}`);
+  } else if (rehabilitationDirection && rehabilitationDirection !== 'not_applicable' && rehabilitationDirection !== '') {
     planTreatmentType = 'rehabilitation';
-  } else if (consultationDirection && consultationDirection !== 'general_consultation') {
+    console.log(`[normalizePlan] Determined type from rehabilitationDirection: ${planTreatmentType}`);
+  } else if (consultationDirection && consultationDirection !== 'general_consultation' && consultationDirection !== '') {
     planTreatmentType = 'consultation';
+    console.log(`[normalizePlan] Determined type from consultationDirection: ${planTreatmentType}`);
+  } else {
+    console.log(`[normalizePlan] Defaulting to consultation type`);
   }
 
   // 根据治疗类型调整医疗费用（强制覆盖AI生成的数据）
@@ -710,7 +721,8 @@ function normalizePlan(
   let adjustedNursingFee = 0;
   let adjustedNutritionFee = 0;
 
-  console.log(`[normalizePlan] Treatment type: ${planTreatmentType}, hasMedicalSelection: ${hasMedicalSelection}`);
+  console.log(`[normalizePlan] Treatment type FINAL: ${planTreatmentType}`);
+  console.log(`[normalizePlan] hasMedicalSelection: ${hasMedicalSelection}`);
   console.log(`[normalizePlan] Original fees - Surgery: ${plan.medicalSurgeryFee}, Medicine: ${plan.medicineFee}, Nursing: ${plan.nursingFee}, Nutrition: ${plan.nutritionFee}, Ticket: ${plan.ticketFee}`);
 
   // 强制根据治疗类型严格限制费用
@@ -721,7 +733,7 @@ function normalizePlan(
     adjustedNutritionFee = 0;
     // 检查类型药费（如CT扫描的造影剂等），限制在合理范围（0-300）
     adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 300);
-    console.log(`[normalizePlan] Examination type - Forced Surgery/Nursing/Nutrition to 0, limited Medicine to ${adjustedMedicineFee}`);
+    console.log(`[normalizePlan] ✓ EXAMINATION TYPE: Forced Surgery=0, Nursing=0, Nutrition=0, Medicine=${adjustedMedicineFee}`);
   } else if (planTreatmentType === 'consultation') {
     // 咨询类型：强制清零手术费、护理费、营养费
     adjustedMedicalSurgeryFee = 0;
@@ -729,35 +741,35 @@ function normalizePlan(
     adjustedNutritionFee = 0;
     // 咨询类型药费较少（0-200）
     adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 200);
-    console.log(`[normalizePlan] Consultation type - Forced Surgery/Nursing/Nutrition to 0, limited Medicine to ${adjustedMedicineFee}`);
+    console.log(`[normalizePlan] ✓ CONSULTATION TYPE: Forced Surgery=0, Nursing=0, Nutrition=0, Medicine=${adjustedMedicineFee}`);
   } else if (planTreatmentType === 'surgery') {
     // 手术类型：保留费用，但要确保合理性
     adjustedMedicalSurgeryFee = Math.max(plan.medicalSurgeryFee || 0, 0);
     adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
     adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
     adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
-    console.log(`[normalizePlan] Surgery type - Preserved all fees`);
+    console.log(`[normalizePlan] ✓ SURGERY TYPE: Preserved fees - Surgery=${adjustedMedicalSurgeryFee}, Medicine=${adjustedMedicineFee}, Nursing=${adjustedNursingFee}, Nutrition=${adjustedNutritionFee}`);
   } else if (planTreatmentType === 'therapy') {
     // 治疗类型：强制清零手术费
     adjustedMedicalSurgeryFee = 0;
     adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
     adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
     adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
-    console.log(`[normalizePlan] Therapy type - Forced Surgery to 0`);
+    console.log(`[normalizePlan] ✓ THERAPY TYPE: Forced Surgery=0, kept other fees - Medicine=${adjustedMedicineFee}, Nursing=${adjustedNursingFee}, Nutrition=${adjustedNutritionFee}`);
   } else if (planTreatmentType === 'rehabilitation') {
     // 康复类型：强制清零手术费
     adjustedMedicalSurgeryFee = 0;
     adjustedMedicineFee = Math.max(plan.medicineFee || 0, 0);
     adjustedNursingFee = Math.max(plan.nursingFee || 0, 0);
     adjustedNutritionFee = Math.max(plan.nutritionFee || 0, 0);
-    console.log(`[normalizePlan] Rehabilitation type - Forced Surgery to 0`);
+    console.log(`[normalizePlan] ✓ REHABILITATION TYPE: Forced Surgery=0, kept other fees - Medicine=${adjustedMedicineFee}, Nursing=${adjustedNursingFee}, Nutrition=${adjustedNutritionFee}`);
   } else {
     // 默认类型：保守处理
     adjustedMedicalSurgeryFee = 0;
     adjustedMedicineFee = Math.min(Math.max(plan.medicineFee || 0, 0), 100);
     adjustedNursingFee = 0;
     adjustedNutritionFee = 0;
-    console.log(`[normalizePlan] Default type - Conservative fees`);
+    console.log(`[normalizePlan] ✓ DEFAULT TYPE: Conservative fees - Surgery=0, Medicine=${adjustedMedicineFee}, Nursing=0, Nutrition=0`);
   }
 
   // 计算医疗总费用
@@ -803,8 +815,13 @@ function normalizePlan(
   if (plan.hotelFee !== undefined) normalized.hotelFee = Number(plan.hotelFee) || defaultPlan.hotelFee;
   if (plan.flightFee !== undefined) normalized.flightFee = Number(plan.flightFee) || defaultPlan.flightFee;
   if (plan.carFee !== undefined) normalized.carFee = Number(plan.carFee) || defaultPlan.carFee;
+
   // 强制设置ticketFee为0（医疗旅游不包含门票），忽略AI生成的任何值
   normalized.ticketFee = 0;
+  if (plan.ticketFee && plan.ticketFee !== 0) {
+    console.log(`[normalizePlan] ✓ FORCED: ticketFee was ${plan.ticketFee}, set to 0 (no tourist attractions)`);
+  }
+
   if (plan.reservationFee !== undefined) normalized.reservationFee = Number(plan.reservationFee) || defaultPlan.reservationFee;
 
   // 使用调整后的医疗费用（根据治疗类型限制）
@@ -846,8 +863,13 @@ function normalizePlan(
     normalized.nursingFee = 0;
     normalized.nutritionFee = 0;
     normalized.medicalFee = 0;
-    console.log(`[normalizePlan] No medical selection - all medical fees set to 0`);
+    console.log(`[normalizePlan] ✓ NO MEDICAL SELECTION: All medical fees set to 0`);
   }
+
+  // 重新计算总价
+  normalized.totalAmount = normalized.hotelFee + normalized.flightFee + normalized.carFee + normalized.ticketFee + normalized.reservationFee + normalized.medicalFee;
+
+  console.log(`[normalizePlan] ✓ FINAL: ticketFee=${normalized.ticketFee}, totalAmount=${normalized.totalAmount}`);
 
   // 重新计算医疗费用总和
   normalized.medicalFee =
