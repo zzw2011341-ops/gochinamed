@@ -109,11 +109,11 @@ export default function MyTripsPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <Button
             variant="ghost"
-            onClick={() => router.back()}
+            onClick={() => router.push('/')}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {language === 'zh' ? '返回' : 'Back'}
+            {language === 'zh' ? '返回首页' : 'Back to Home'}
           </Button>
           <h1 className="text-3xl font-bold">
             {language === 'zh' ? '我的行程' : 'My Trips'}
@@ -147,7 +147,11 @@ export default function MyTripsPage() {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => (
-              <Card key={order.id} className="overflow-hidden">
+              <Card
+                key={order.id}
+                className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => router.push(`/book/confirmation/${order.id}`)}
+              >
                 <CardHeader className="bg-gray-50 border-b">
                   <div className="flex items-center justify-between">
                     <div>

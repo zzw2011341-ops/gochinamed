@@ -102,7 +102,7 @@ export default function ConfirmationPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <Button
             variant="ghost"
-            onClick={() => router.push('/my-trips')}
+            onClick={() => router.replace('/my-trips')}
             className="mb-4 no-print"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
