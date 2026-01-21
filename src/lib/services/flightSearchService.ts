@@ -748,6 +748,7 @@ export async function searchFlightRoute(
 
 /**
  * 不使用缓存的联网搜索（用于强制重新计算）
+ * 注意：如果联网搜索失败（如 VEFAAS 错误），将返回 null，由调用方使用估算数据
  */
 async function searchRealFlightDataWithoutCache(origin: string, destination: string): Promise<FlightRoute | null> {
   const config = new Config();
@@ -856,7 +857,8 @@ async function searchRealFlightDataWithoutCache(origin: string, destination: str
       }
     }
   } catch (error) {
-    console.error('Error searching flight data without cache:', error);
+    console.error(`[FlightSearch] Search failed for ${origin} -> ${destination}, falling back to estimated data. Error:`, error);
+    // 返回 null，由调用方使用估算数据
   }
 
   return null;
