@@ -19,6 +19,7 @@ interface Doctor {
   specialtiesZh: string | null;
   imageUrl: string | null;
   consultationFee: string | null;
+  isFeatured?: boolean;
 }
 
 export default function HospitalDetailPage() {
@@ -215,30 +216,123 @@ export default function HospitalDetailPage() {
 
           {/* Specialties */}
           <TabsContent value="specialties">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Stethoscope className="h-5 w-5" />
-                  {t.hospitals?.specialties || "Medical Specialties"}
-                </CardTitle>
-                <CardDescription>
-                  {t.hospitals?.specialtiesDesc || "Medical departments and specialties available"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Stethoscope className="h-5 w-5" />
+                    {t.hospitals?.specialties || "Medical Specialties"}
+                  </CardTitle>
+                  <CardDescription>
+                    {t.hospitals?.specialtiesDesc || "Medical departments and specialties available"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {specialties.length > 0 ? (
+                      specialties.map((specialty: string, index: number) => (
+                        <Badge key={index} variant="secondary" className="px-3 py-2 text-sm">
+                          {specialty}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-gray-500">No specialties listed</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 医院强项展示 */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    {language === 'zh' ? '医院强项' : 'Hospital Strengths'}
+                  </CardTitle>
+                  <CardDescription>
+                    {language === 'zh' ? '该医院在以下领域表现卓越' : 'Areas of excellence for this hospital'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   {specialties.length > 0 ? (
-                    specialties.map((specialty: string, index: number) => (
-                      <Badge key={index} variant="secondary" className="px-3 py-2 text-sm">
-                        {specialty}
-                      </Badge>
-                    ))
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {specialties.slice(0, 6).map((specialty: string, index: number) => (
+                        <div key={index} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <Stethoscope className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <h4 className="font-semibold">{specialty}</h4>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {language === 'zh'
+                              ? `该科室拥有专业的医疗团队和先进的诊疗设备，提供高质量的医疗服务。`
+                              : `This department has professional medical team and advanced diagnostic equipment.`}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-gray-500">No specialties listed</p>
+                    <p className="text-gray-500">{language === 'zh' ? '暂无强项信息' : 'No strengths information'}</p>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* 名医拿手项目 */}
+              {doctors.filter(d => d.isFeatured).length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-600" />
+                      {language === 'zh' ? '名医拿手项目' : 'Expert Doctors Specialties'}
+                    </CardTitle>
+                    <CardDescription>
+                      {language === 'zh' ? '该院名医擅长的医疗项目' : 'Specialties of expert doctors at this hospital'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {doctors.filter(d => d.isFeatured).map((doctor, idx) => {
+                        const doctorSpecialties = doctor.specialtiesEn
+                          ? JSON.parse(doctor.specialtiesEn)
+                          : [];
+                        return (
+                          <div key={doctor.id} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border">
+                            <div className="flex items-start gap-3">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                                {doctor.nameEn.charAt(0)}
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900">
+                                  {doctor.nameEn}
+                                  {doctor.nameZh && <span className="ml-1 text-sm text-gray-600">({doctor.nameZh})</span>}
+                                </h4>
+                                <p className="text-sm text-gray-600 mb-2">{doctor.title}</p>
+                                {doctorSpecialties.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {doctorSpecialties.map((spec: string, sidx: number) => (
+                                      <Badge key={sidx} variant="outline" className="text-xs">
+                                        {spec}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {doctor.consultationFee && (
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-blue-600">${doctor.consultationFee}</p>
+                                  <p className="text-xs text-gray-600">Consultation</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           {/* Doctors */}

@@ -359,6 +359,17 @@ export const orders = pgTable(
     notes: text("notes"),
     travelNotes: text("travel_notes"), // Travel tips and warnings
     weatherForecast: jsonb("weather_forecast"), // Weather data for each stage
+    // 医疗服务相关字段
+    consultationDirection: text("consultation_direction"), // 咨询方向
+    examinationItems: jsonb("examination_items"), // 检查项目（JSON数组）
+    surgeryTypes: jsonb("surgery_types"), // 手术种类（JSON数组）
+    treatmentDirection: text("treatment_direction"), // 治疗方向
+    rehabilitationDirection: text("rehabilitation_direction"), // 康复方向
+    healthRecordsUrls: jsonb("health_records_urls"), // 健康档案文件URL列表（JSON数组）
+    medicalPlan: jsonb("medical_plan"), // AI生成的详细医疗方案（JSON对象）
+    planAdjustments: jsonb("plan_adjustments"), // 方案调整记录（JSON数组）
+    priceAdjustmentStatus: varchar("price_adjustment_status", { length: 20 }).default("none"), // 差价状态（none/pending/paid/overdue）
+    priceAdjustmentAmount: decimal("price_adjustment_amount", { precision: 10, scale: 2 }), // 需要补交的差价金额
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -866,7 +877,18 @@ export const updateOrderSchema = createCoercedInsertSchema(orders)
     serviceFeeRate: true,
     serviceFeeAmount: true,
     totalAmount: true,
+    currency: true,
     notes: true,
+    consultationDirection: true,
+    examinationItems: true,
+    surgeryTypes: true,
+    treatmentDirection: true,
+    rehabilitationDirection: true,
+    healthRecordsUrls: true,
+    medicalPlan: true,
+    planAdjustments: true,
+    priceAdjustmentStatus: true,
+    priceAdjustmentAmount: true,
   })
   .partial();
 

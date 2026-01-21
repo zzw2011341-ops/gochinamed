@@ -44,6 +44,9 @@ interface PlanOption {
   hotelName: string;
   hotelStars: number;
   flightClass: string;
+  // 医疗服务关联
+  doctorId?: string;
+  hospitalId?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -212,7 +215,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
       }
 
       // 清理和验证数据，确保所有必需字段都存在
-      plans = plans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople));
+      plans = plans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople, selectedDoctor, selectedHospital));
 
       return NextResponse.json({
         success: true,
@@ -241,7 +244,7 @@ Return ONLY the JSON array with 3 options, no additional text.`;
       // AI生成失败时使用默认方案
       let defaultPlans = generateDefaultPlans(budget, treatmentType, selectedHospital, selectedDoctor, numberOfPeople, isSameCity);
       // 确保数据归一化
-      defaultPlans = defaultPlans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople));
+      defaultPlans = defaultPlans.map(plan => normalizePlan(plan, isSameCity, hasMedicalSelection, numberOfPeople, selectedDoctor, selectedHospital));
       return NextResponse.json({
         success: true,
         plans: defaultPlans,
@@ -328,7 +331,9 @@ function generateDefaultPlans(
       duration: '7 days 6 nights',
       hotelName: 'City Comfort Hotel',
       hotelStars: 3,
-      flightClass: isSameCity ? 'local-transportation' : 'economy'
+      flightClass: isSameCity ? 'local-transportation' : 'economy',
+      doctorId: selectedDoctor || undefined,
+      hospitalId: selectedHospital || undefined,
     },
     {
       id: 'standard',
@@ -356,7 +361,9 @@ function generateDefaultPlans(
       duration: '7 days 6 nights',
       hotelName: 'Grand Medical Hotel',
       hotelStars: 4,
-      flightClass: isSameCity ? 'premium-transport' : 'standard'
+      flightClass: isSameCity ? 'premium-transport' : 'standard',
+      doctorId: selectedDoctor || undefined,
+      hospitalId: selectedHospital || undefined,
     },
     {
       id: 'premium',
@@ -386,7 +393,9 @@ function generateDefaultPlans(
       duration: '7 days 6 nights',
       hotelName: 'Royal Wellness Resort',
       hotelStars: 5,
-      flightClass: isSameCity ? 'vip-transport' : 'business'
+      flightClass: isSameCity ? 'vip-transport' : 'business',
+      doctorId: selectedDoctor || undefined,
+      hospitalId: selectedHospital || undefined,
     }
   ];
 
@@ -402,7 +411,9 @@ function normalizePlan(
   plan: any,
   isSameCity: boolean,
   hasMedicalSelection: boolean,
-  numberOfPeople: number
+  numberOfPeople: number,
+  selectedDoctor?: string,
+  selectedHospital?: string
 ): PlanOption {
   const defaultPlan = {
     name: 'Standard Plan',
@@ -422,7 +433,9 @@ function normalizePlan(
     duration: '7 days 6 nights',
     hotelName: 'Comfort Hotel',
     hotelStars: 4,
-    flightClass: isSameCity ? 'local-transportation' : 'economy'
+    flightClass: isSameCity ? 'local-transportation' : 'economy',
+    doctorId: undefined,
+    hospitalId: undefined,
   };
 
   const normalized: any = { ...defaultPlan };
@@ -445,6 +458,12 @@ function normalizePlan(
   if (plan.hotelName) normalized.hotelName = plan.hotelName;
   if (plan.hotelStars !== undefined) normalized.hotelStars = Math.min(5, Math.max(1, Number(plan.hotelStars) || 4));
   if (plan.flightClass) normalized.flightClass = plan.flightClass;
+  // 优先使用AI生成的doctorId和hospitalId，如果没有则使用传入的参数
+  if (plan.doctorId) normalized.doctorId = plan.doctorId;
+  else if (selectedDoctor) normalized.doctorId = selectedDoctor;
+
+  if (plan.hospitalId) normalized.hospitalId = plan.hospitalId;
+  else if (selectedHospital) normalized.hospitalId = selectedHospital;
 
   // 重新计算医疗费用（如果没有医疗服务，则所有医疗费用为0）
   if (!hasMedicalSelection) {
