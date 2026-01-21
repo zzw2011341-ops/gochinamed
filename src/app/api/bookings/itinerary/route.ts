@@ -287,10 +287,21 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
         details.subtitle = details.subtitle ? `${details.subtitle} · ${item.location}` : item.location;
       }
       if (item.description) {
-        // description中包含直飞/中转信息，格式为 "Flight from Origin to Destination (Direct)" 或 "Flight from Origin to Destination"
-        if (item.description.includes('(Direct)') || item.description.includes('(Direct)')) {
+        // description中包含直飞/中转信息
+        // 格式示例：
+        // - 直飞: "Flight from Origin to Destination (Direct)"
+        // - 中转: "Flight from Origin to Destination (Via Beijing)"
+        if (item.description.includes('(Direct)')) {
           details.flightType = '直飞';
           details.isDirect = true;
+        } else if (item.description.includes('(Via ')) {
+          details.flightType = '中转';
+          details.isDirect = false;
+          // 提取中转城市
+          const viaMatch = item.description.match(/\(Via\s+([^)]+)\)/);
+          if (viaMatch) {
+            details.connectionCities = viaMatch[1].split(',').map((c: string) => c.trim());
+          }
         } else if (item.description.includes('Connection') || item.description.includes('Transfer')) {
           details.flightType = '中转';
           details.isDirect = false;
