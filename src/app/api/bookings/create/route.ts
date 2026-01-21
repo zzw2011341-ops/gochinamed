@@ -151,6 +151,49 @@ export async function POST(request: NextRequest) {
       weatherPrompt = `\nWeather Forecast for ${destinationCity}: ${forecast}\n`;
     }
 
+    // 根据治疗类型确定费用策略
+    const getFeeInstructions = () => {
+      const feeRules: Record<string, string> = {
+        'consultation': `
+- medicalSurgeryFee: 0 (no surgery for consultation)
+- medicineFee: 50-200 (basic medication)
+- nursingFee: 0 (no nursing required)
+- nutritionFee: 0 (no nutrition required)
+- medicalFee: sum of above (50-200)
+- ticketFee: 0 (no tourist attractions for medical consultation)`,
+        'examination': `
+- medicalSurgeryFee: 0 (no surgery for examination)
+- medicineFee: 100-300 (test-related medications if needed)
+- nursingFee: 0 (no nursing required)
+- nutritionFee: 0 (no nutrition required)
+- medicalFee: sum of above (100-300, based on examination types like CT, MRI, etc.)
+- ticketFee: 0 (no tourist attractions for medical examination)`,
+        'surgery': `
+- medicalSurgeryFee: 2000-8000 (surgery costs based on type)
+- medicineFee: 300-800 (post-surgery medications)
+- nursingFee: 500-1500 (post-operative nursing care)
+- nutritionFee: 100-400 (recovery nutrition support)
+- medicalFee: sum of above (2900-10700)
+- ticketFee: 0 (no tourist attractions for surgery)`,
+        'therapy': `
+- medicalSurgeryFee: 0 (no surgery for therapy)
+- medicineFee: 200-600 (therapy medications)
+- nursingFee: 200-600 (therapy nursing support)
+- nutritionFee: 100-300 (therapy nutrition)
+- medicalFee: sum of above (500-1500)
+- ticketFee: 0 (no tourist attractions for therapy)`,
+        'rehabilitation': `
+- medicalSurgeryFee: 0 (no surgery for rehabilitation)
+- medicineFee: 150-400 (rehabilitation medications)
+- nursingFee: 400-1000 (intensive rehabilitation nursing)
+- nutritionFee: 200-500 (rehabilitation nutrition)
+- medicalFee: sum of above (750-1900)
+- ticketFee: 0 (no tourist attractions for rehabilitation)`,
+      };
+
+      return feeRules[treatmentType || 'consultation'] || feeRules['consultation'];
+    };
+
     const prompt = `You are a medical tourism consultant. Generate 3 different travel plan options for a patient.
 
 User Details:
@@ -170,6 +213,8 @@ ${weatherPrompt}
 - ${isSameCity ? '⚠️ IMPORTANT: Same-city travel (origin and destination are the same)' : 'Different-city travel'}
 ${exchangeRates ? `Currency rates (USD-based): CNY=${exchangeRates.CNY}, EUR=${exchangeRates.EUR}, GBP=${exchangeRates.GBP}\n` : ''}
 
+FEE CALCULATION RULES FOR "${treatmentType || 'consultation'}":${getFeeInstructions()}
+
 Please generate 3 distinct options with different price points and features:
 1. Budget-Friendly Option (Basic hotel, economy flight, essential services)
 2. Standard Option (Mid-range hotel, standard flight, good services)
@@ -182,13 +227,13 @@ For each option, provide a JSON object with this structure:
   "hotelFee": number (100-500 per night * 7 days * ${numberOfPeople} travelers),
   "flightFee": number (${isSameCity ? '0 for same-city travel' : '500-2000 * ${numberOfPeople} travelers'}),
   "carFee": number (${isSameCity ? '50-200 for local transportation' : '30-100 for local airport-hotel transfers'}),
-  "ticketFee": number (20-100 for tourist attractions),
+  "ticketFee": 0 (MEDICAL TOURISM: No tourist attractions, this is for medical treatment),
   "reservationFee": number (50-200 for appointment booking),
-  "medicalSurgeryFee": number (${hasMedicalSelection ? '2000-10000' : '0'}),
-  "medicineFee": number (${hasMedicalSelection ? '100-500' : '0'}),
-  "nursingFee": number (${hasMedicalSelection ? '200-800' : '0'}),
-  "nutritionFee": number (${hasMedicalSelection ? '50-300' : '0'}),
-  "medicalFee": number (sum of medicalSurgeryFee + medicineFee + nursingFee + nutritionFee, set to 0 if no doctor/hospital selected),
+  "medicalSurgeryFee": number (Based on treatment type rules above),
+  "medicineFee": number (Based on treatment type rules above),
+  "nursingFee": number (Based on treatment type rules above),
+  "nutritionFee": number (Based on treatment type rules above),
+  "medicalFee": number (sum of medicalSurgeryFee + medicineFee + nursingFee + nutritionFee),
   "totalAmount": number (sum of hotelFee + flightFee + carFee + ticketFee + reservationFee + medicalFee),
   "highlights": ["highlight1", "highlight2", "highlight3"],
   "duration": "e.g., 7 days 6 nights",
@@ -200,12 +245,13 @@ For each option, provide a JSON object with this structure:
   "surgeryTypes": "${body.surgeryTypes || 'Specific surgery type if applicable'}",
   "treatmentDirection": "${body.treatmentDirection || 'Treatment approach'}",
   "rehabilitationDirection": "${body.rehabilitationDirection || 'Rehabilitation focus if needed'}",
-  "medicalPlan": "Detailed medical plan description",
+  "medicalPlan": "Detailed medical plan description based on ${treatmentType || 'consultation'}",
   "isPriceValidated": true
 }
 
 ${!hasMedicalSelection ? 'IMPORTANT: Since no doctor or hospital was selected, set all medical fees (medicalSurgeryFee, medicineFee, nursingFee, nutritionFee, medicalFee) to 0 for all plans.' : ''}
 ${isSameCity ? 'CRITICAL: Since origin and destination are the same city, set flightFee to 0. Use carFee for local transportation (taxi/car rental).' : ''}
+CRITICAL: This is a MEDICAL TOURISM platform, NOT a tourism platform. Do NOT include tourist attractions, sightseeing, or entertainment fees (ticketFee = 0).
 
 Return ONLY the JSON array with 3 options, no additional text.`;
 
@@ -387,12 +433,55 @@ function generateDefaultPlans(
   const baseBudget = parseFloat(budget) || 3000;
   const hasMedicalSelection = selectedHospital || selectedDoctor;
 
-  // 医疗费用详细分类
-  const medicalSurgeryFeeBase = hasMedicalSelection ? 2000 : 0;
-  const medicineFeeBase = hasMedicalSelection ? 150 : 0;
-  const nursingFeeBase = hasMedicalSelection ? 300 : 0;
-  const nutritionFeeBase = hasMedicalSelection ? 80 : 0;
-  const medicalFeeBase = medicalSurgeryFeeBase + medicineFeeBase + nursingFeeBase + nutritionFeeBase;
+  // 根据治疗类型确定医疗费用
+  const getMedicalFees = (type: string, multiplier: number) => {
+    const fees: Record<string, { surgery: number; medicine: number; nursing: number; nutrition: number }> = {
+      'consultation': {
+        surgery: 0,
+        medicine: 50 * multiplier,
+        nursing: 0,
+        nutrition: 0,
+      },
+      'examination': {
+        surgery: 0,
+        medicine: 100 * multiplier,
+        nursing: 0,
+        nutrition: 0,
+      },
+      'surgery': {
+        surgery: 3000 * multiplier,
+        medicine: 300 * multiplier,
+        nursing: 600 * multiplier,
+        nutrition: 150 * multiplier,
+      },
+      'therapy': {
+        surgery: 0,
+        medicine: 250 * multiplier,
+        nursing: 300 * multiplier,
+        nutrition: 150 * multiplier,
+      },
+      'rehabilitation': {
+        surgery: 0,
+        medicine: 200 * multiplier,
+        nursing: 500 * multiplier,
+        nutrition: 250 * multiplier,
+      },
+    };
+
+    const selected = fees[type || 'consultation'] || fees['consultation'];
+    return {
+      surgery: selected.surgery,
+      medicine: selected.medicine,
+      nursing: selected.nursing,
+      nutrition: selected.nutrition,
+      total: selected.surgery + selected.medicine + selected.nursing + selected.nutrition,
+    };
+  };
+
+  // 获取不同等级的医疗费用
+  const budgetFees = getMedicalFees(treatmentType, 1);
+  const standardFees = getMedicalFees(treatmentType, 1.5);
+  const premiumFees = getMedicalFees(treatmentType, 2.5);
 
   // 同城旅行使用交通费用，不同城市使用机票费用
   const budgetFlightFee = isSameCity ? 0 : 600 * numberOfPeople;
@@ -411,20 +500,20 @@ function generateDefaultPlans(
       hotelFee: 700 * numberOfPeople,
       flightFee: budgetFlightFee,
       carFee: budgetCarFee,
-      ticketFee: 30 * numberOfPeople,
+      ticketFee: 0, // 医疗旅游不包含门票
       reservationFee: 50,
-      medicalSurgeryFee: medicalSurgeryFeeBase,
-      medicineFee: medicineFeeBase,
-      nursingFee: nursingFeeBase,
-      nutritionFee: nutritionFeeBase,
-      medicalFee: medicalFeeBase,
+      medicalSurgeryFee: budgetFees.surgery,
+      medicineFee: budgetFees.medicine,
+      nursingFee: budgetFees.nursing,
+      nutritionFee: budgetFees.nutrition,
+      medicalFee: budgetFees.total,
       totalAmount: 0, // 稍后计算
       highlights: [
         'Basic 3-star hotel accommodation',
         isSameCity ? 'Local taxi transportation' : 'Economy class flights',
-        ...hasMedicalSelection ? ['Essential medical consultation'] : [],
-        'Basic tourist attractions included',
-        'Standard appointment booking'
+        ...hasMedicalSelection ? [`Medical ${treatmentType || 'service'}`] : [],
+        'Standard appointment booking',
+        'Basic translation support'
       ],
       duration: '7 days 6 nights',
       hotelName: 'City Comfort Hotel',
@@ -433,11 +522,11 @@ function generateDefaultPlans(
       doctorId: selectedDoctor || undefined,
       hospitalId: selectedHospital || undefined,
       consultationDirection: consultationDirection || treatmentType || 'general_consultation',
-      examinationItems: examinationItems || 'basic_checkup',
+      examinationItems: examinationItems || (treatmentType === 'examination' ? 'basic_tests' : 'not_applicable'),
       surgeryTypes: surgeryTypes || (treatmentType === 'surgery' ? 'general_surgery' : undefined),
       treatmentDirection: treatmentDirection || (treatmentType === 'therapy' ? 'physical_therapy' : undefined),
       rehabilitationDirection: rehabilitationDirection || (treatmentType === 'rehabilitation' ? 'post_surgery' : undefined),
-      medicalPlan: 'Basic medical plan focusing on essential treatments and follow-up care.',
+      medicalPlan: `Basic medical plan for ${treatmentType || 'consultation'}. Essential services and follow-up care.`,
       isPriceValidated: true,
       priceAdjustmentStatus: 'pending' as const,
       priceAdjustmentAmount: 0,
@@ -449,21 +538,21 @@ function generateDefaultPlans(
       hotelFee: 1050 * numberOfPeople,
       flightFee: standardFlightFee,
       carFee: standardCarFee,
-      ticketFee: 60 * numberOfPeople,
+      ticketFee: 0, // 医疗旅游不包含门票
       reservationFee: 100,
-      medicalSurgeryFee: medicalSurgeryFeeBase + 1000,
-      medicineFee: medicineFeeBase + 50,
-      nursingFee: nursingFeeBase + 100,
-      nutritionFee: nutritionFeeBase + 30,
-      medicalFee: medicalFeeBase + 1180,
+      medicalSurgeryFee: standardFees.surgery,
+      medicineFee: standardFees.medicine,
+      nursingFee: standardFees.nursing,
+      nutritionFee: standardFees.nutrition,
+      medicalFee: standardFees.total,
       totalAmount: 0, // 稍后计算
       highlights: [
         '4-star hotel near hospital',
         isSameCity ? 'Premium car service' : 'Standard class flights',
-        ...hasMedicalSelection ? ['Comprehensive medical checkup'] : [],
-        'Premium tourist attractions',
+        ...hasMedicalSelection ? [`Comprehensive medical ${treatmentType || 'service'}`] : [],
         '24/7 translation service',
-        'Priority appointment booking'
+        'Priority appointment booking',
+        'Medical coordination assistance'
       ],
       duration: '7 days 6 nights',
       hotelName: 'Grand Medical Hotel',
@@ -472,11 +561,11 @@ function generateDefaultPlans(
       doctorId: selectedDoctor || undefined,
       hospitalId: selectedHospital || undefined,
       consultationDirection: consultationDirection || treatmentType || 'comprehensive_consultation',
-      examinationItems: examinationItems || 'comprehensive_tests',
+      examinationItems: examinationItems || (treatmentType === 'examination' ? 'comprehensive_tests' : 'not_applicable'),
       surgeryTypes: surgeryTypes || (treatmentType === 'surgery' ? 'specialized_surgery' : undefined),
       treatmentDirection: treatmentDirection || (treatmentType === 'therapy' ? 'comprehensive_therapy' : undefined),
       rehabilitationDirection: rehabilitationDirection || (treatmentType === 'rehabilitation' ? 'comprehensive_rehab' : undefined),
-      medicalPlan: 'Comprehensive medical plan including specialist consultation, detailed examinations, and personalized treatment protocols.',
+      medicalPlan: `Comprehensive medical plan for ${treatmentType || 'consultation'}. Specialist consultation, detailed examinations, and personalized treatment.`,
       isPriceValidated: true,
       priceAdjustmentStatus: 'pending' as const,
       priceAdjustmentAmount: 0,
@@ -488,23 +577,23 @@ function generateDefaultPlans(
       hotelFee: 1750 * numberOfPeople,
       flightFee: premiumFlightFee,
       carFee: premiumCarFee,
-      ticketFee: 100 * numberOfPeople,
+      ticketFee: 0, // 医疗旅游不包含门票
       reservationFee: 200,
-      medicalSurgeryFee: medicalSurgeryFeeBase + 3000,
-      medicineFee: medicineFeeBase + 150,
-      nursingFee: nursingFeeBase + 200,
-      nutritionFee: nutritionFeeBase + 100,
-      medicalFee: medicalFeeBase + 3450,
+      medicalSurgeryFee: premiumFees.surgery,
+      medicineFee: premiumFees.medicine,
+      nursingFee: premiumFees.nursing,
+      nutritionFee: premiumFees.nutrition,
+      medicalFee: premiumFees.total,
       totalAmount: 0, // 稍后计算
       highlights: [
         '5-star luxury hotel with wellness center',
         isSameCity ? 'VIP private car service' : 'Business class flights',
-        ...hasMedicalSelection ? ['Specialist consultation & treatment'] : [],
-        'Exclusive tourist experiences',
+        ...hasMedicalSelection ? [`Specialist medical ${treatmentType || 'service'}`] : [],
         'Personal medical assistant',
+        'VIP priority service',
+        'Complete medical coordination',
         isSameCity ? 'Chauffeur service available' : 'VIP airport service',
-        'Full medical insurance included',
-        'VIP appointment booking'
+        'Full medical insurance included'
       ],
       duration: '7 days 6 nights',
       hotelName: 'Royal Wellness Resort',
@@ -545,13 +634,41 @@ function normalizePlan(
   treatmentDirection?: string,
   rehabilitationDirection?: string
 ): PlanOption {
+  // 获取治疗类型，如果没有则默认为consultation
+  const planTreatmentType = treatmentDirection || consultationDirection || 'consultation';
+
+  // 根据治疗类型调整医疗费用
+  let adjustedMedicalSurgeryFee = plan.medicalSurgeryFee || 0;
+  let adjustedMedicineFee = plan.medicineFee || 0;
+  let adjustedNursingFee = plan.nursingFee || 0;
+  let adjustedNutritionFee = plan.nutritionFee || 0;
+
+  // 检查类型：根据治疗类型限制费用
+  if (planTreatmentType === 'consultation' || planTreatmentType === 'examination') {
+    // 咨询和检查类型：不应该有手术费、护理费、营养费
+    adjustedMedicalSurgeryFee = 0;
+    adjustedNursingFee = 0;
+    adjustedNutritionFee = 0;
+    // 检查类型可能有药费（如CT扫描的造影剂），咨询类型药费较少
+    adjustedMedicineFee = Math.min(adjustedMedicineFee, 200);
+  } else if (planTreatmentType === 'surgery') {
+    // 手术类型：保留所有费用
+    // 不做限制
+  } else if (planTreatmentType === 'therapy' || planTreatmentType === 'rehabilitation') {
+    // 治疗/康复类型：不应该有手术费
+    adjustedMedicalSurgeryFee = 0;
+  }
+
+  // 计算医疗总费用
+  const adjustedMedicalFee = adjustedMedicalSurgeryFee + adjustedMedicineFee + adjustedNursingFee + adjustedNutritionFee;
+
   const defaultPlan = {
     name: 'Standard Plan',
     description: 'A comprehensive travel plan',
     hotelFee: 1000 * numberOfPeople,
     flightFee: isSameCity ? 0 : 800 * numberOfPeople,
     carFee: isSameCity ? 100 * numberOfPeople : 60 * numberOfPeople,
-    ticketFee: 50 * numberOfPeople,
+    ticketFee: 0, // 医疗旅游不包含门票
     reservationFee: 100,
     medicalSurgeryFee: hasMedicalSelection ? 3000 : 0,
     medicineFee: hasMedicalSelection ? 200 : 0,
@@ -587,11 +704,13 @@ function normalizePlan(
   if (plan.carFee !== undefined) normalized.carFee = Number(plan.carFee) || defaultPlan.carFee;
   if (plan.ticketFee !== undefined) normalized.ticketFee = Number(plan.ticketFee) || defaultPlan.ticketFee;
   if (plan.reservationFee !== undefined) normalized.reservationFee = Number(plan.reservationFee) || defaultPlan.reservationFee;
-  if (plan.medicalSurgeryFee !== undefined) normalized.medicalSurgeryFee = Number(plan.medicalSurgeryFee) || defaultPlan.medicalSurgeryFee;
-  if (plan.medicineFee !== undefined) normalized.medicineFee = Number(plan.medicineFee) || defaultPlan.medicineFee;
-  if (plan.nursingFee !== undefined) normalized.nursingFee = Number(plan.nursingFee) || defaultPlan.nursingFee;
-  if (plan.nutritionFee !== undefined) normalized.nutritionFee = Number(plan.nutritionFee) || defaultPlan.nutritionFee;
-  if (plan.medicalFee !== undefined) normalized.medicalFee = Number(plan.medicalFee) || defaultPlan.medicalFee;
+
+  // 使用调整后的医疗费用（根据治疗类型限制）
+  normalized.medicalSurgeryFee = adjustedMedicalSurgeryFee;
+  normalized.medicineFee = adjustedMedicineFee;
+  normalized.nursingFee = adjustedNursingFee;
+  normalized.nutritionFee = adjustedNutritionFee;
+  normalized.medicalFee = adjustedMedicalFee;
   if (plan.highlights && Array.isArray(plan.highlights)) normalized.highlights = plan.highlights;
   if (plan.duration) normalized.duration = plan.duration;
   if (plan.hotelName) normalized.hotelName = plan.hotelName;
@@ -617,6 +736,9 @@ function normalizePlan(
     normalized.priceAdjustmentStatus = plan.priceAdjustmentStatus;
   }
   if (typeof plan.priceAdjustmentAmount === 'number') normalized.priceAdjustmentAmount = plan.priceAdjustmentAmount;
+
+  // 强制设置ticketFee为0（医疗旅游不包含门票）
+  normalized.ticketFee = 0;
 
   // 重新计算医疗费用（如果没有医疗服务，则所有医疗费用为0）
   if (!hasMedicalSelection) {

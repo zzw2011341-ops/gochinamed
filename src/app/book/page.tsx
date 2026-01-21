@@ -121,6 +121,13 @@ export default function BookPage() {
     }
   }, [formData.selectedHospital]);
 
+  useEffect(() => {
+    // 当咨询方向变化时，重新过滤医生列表（如果已选择医院）
+    if (formData.selectedHospital && doctors.length > 0) {
+      filterDoctorsByConsultation();
+    }
+  }, [formData.consultationDirection]);
+
   const fetchHospitals = async () => {
     try {
       // 根据城市名称查找城市ID
@@ -141,9 +148,64 @@ export default function BookPage() {
     try {
       const response = await fetch(`/api/doctors/by-hospital/${formData.selectedHospital}`);
       const data = await response.json();
-      setDoctors(data.doctors || []);
+      const allDoctors = data.doctors || [];
+      // 如果已选择咨询方向，则过滤医生
+      if (formData.consultationDirection) {
+        const filtered = filterDoctorsByDirection(allDoctors, formData.consultationDirection);
+        setDoctors(filtered);
+      } else {
+        setDoctors(allDoctors);
+      }
     } catch (error) {
       console.error('Error fetching doctors:', error);
+    }
+  };
+
+  // 根据咨询方向过滤医生
+  const filterDoctorsByDirection = (doctorList: Doctor[], direction: string): Doctor[] => {
+    if (!direction || direction === 'general') {
+      return doctorList; // 一般咨询不限制医生
+    }
+
+    // 根据咨询方向匹配医生的专长
+    return doctorList.filter(doctor => {
+      const specialties = JSON.parse(doctor.specialtiesEn || '[]');
+      // 转换咨询方向到关键词进行匹配
+      const directionKeywords: Record<string, string[]> = {
+        'internal': ['internal', 'medicine', 'general', 'internist'],
+        'surgery': ['surgery', 'surgeon', 'surgical'],
+        'pediatrics': ['pediatric', 'children', 'child'],
+        'obstetrics': ['obstetric', 'gynecology', 'women', 'ob-gyn', 'gyn'],
+        'orthopedics': ['orthopedic', 'bone', 'joint', 'musculoskeletal'],
+        'neurology': ['neurolog', 'brain', 'nervous', 'neural'],
+        'cardiology': ['cardiac', 'heart', 'cardiovascular', 'cardiologist'],
+        'oncology': ['cancer', 'tumor', 'oncologist', 'malignancy'],
+        'dermatology': ['skin', 'dermatologic', 'dermatologist'],
+        'ophthalmology': ['eye', 'ophthalmic', 'vision'],
+        'ent': ['ear', 'nose', 'throat', 'otolaryngology', 'head', 'neck'],
+        'traditional_chinese': ['chinese', 'tcm', 'acupuncture', 'herbal'],
+        'rehabilitation': ['rehab', 'recovery', 'physical therapy', 'therapy'],
+        'nutrition': ['nutrition', 'diet', 'food', 'dietitian'],
+      };
+
+      const keywords = directionKeywords[direction] || [];
+      if (keywords.length === 0) return true;
+
+      // 检查 specialtiesEn 字段是否包含相关关键词
+      const specialtiesLower = doctor.specialtiesEn.toLowerCase();
+      const nameLower = doctor.nameEn.toLowerCase();
+
+      return keywords.some(keyword =>
+        specialtiesLower.includes(keyword) || nameLower.includes(keyword)
+      );
+    });
+  };
+
+  // 在咨询方向变化时过滤现有医生列表
+  const filterDoctorsByConsultation = () => {
+    if (formData.consultationDirection) {
+      // 重新获取医生列表（基于医院）
+      fetchDoctors();
     }
   };
 

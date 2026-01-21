@@ -251,6 +251,9 @@ export async function POST(request: NextRequest) {
     });
 
     // 创建医疗咨询记录
+    const medicalDurationMinutes = 60; // 咨询时间为60分钟
+    const medicalEndDate = new Date(appointmentDate.getTime() + medicalDurationMinutes * 60 * 1000);
+
     await db.insert(itineraries).values({
       id: uuidv4(),
       orderId: order.id,
@@ -258,10 +261,10 @@ export async function POST(request: NextRequest) {
       name: getMedicalServiceName(bookingData.treatmentType),
       description: getMedicalServiceDescription(bookingData.treatmentType, bookingData.consultationDirection, bookingData.examinationItems, bookingData.surgeryTypes, bookingData.treatmentDirection, bookingData.rehabilitationDirection),
       startDate: appointmentDate,
-      endDate: appointmentDate,
+      endDate: medicalEndDate,
       location: bookingData.destinationCity || destinationCity,
       price: adjustedMedicalFee.toString(),
-      durationMinutes: 60, // 咨询时间为60分钟
+      durationMinutes: medicalDurationMinutes,
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
