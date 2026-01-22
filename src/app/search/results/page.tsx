@@ -67,6 +67,19 @@ export default function SearchResultsPage() {
     );
   }
 
+  const getTypeLabel = () => {
+    switch (type) {
+      case "medical":
+        return t.nav.doctors || "Doctors";
+      case "flights":
+        return "Flights";
+      case "hotels":
+        return "Hotels";
+      default:
+        return "Search Results";
+    }
+  };
+
   const renderHospitalCard = (hospital: any) => (
     <div
       key={hospital.id}
@@ -328,14 +341,14 @@ export default function SearchResultsPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Button variant="ghost" onClick={() => router.back()}>
+          <Button variant="ghost" onClick={() => router.push("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            {t.common.back || "Back to Home"}
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">Search Results</h1>
+          <h1 className="text-xl font-semibold text-gray-900">{getTypeLabel()}</h1>
           <Button variant="ghost">
             <Filter className="h-4 w-4 mr-2" />
-            Filters
+            {t.common.filter || "Filters"}
           </Button>
         </div>
       </div>
