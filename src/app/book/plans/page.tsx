@@ -251,22 +251,31 @@ export default function PlanSelectionPage() {
                           <span>${(plan.medicalFee || 0).toLocaleString()}</span>
                         </div>
                         <div className="pl-6 space-y-1 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
-                            <span>${(plan.medicalSurgeryFee || 0).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
-                            <span>${(plan.medicineFee || 0).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
-                            <span>${(plan.nursingFee || 0).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
-                            <span>${(plan.nutritionFee || 0).toLocaleString()}</span>
-                          </div>
+                          {/* 只显示有值的费用项 */}
+                          {(plan.medicalSurgeryFee || 0) > 0 && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
+                              <span>${(plan.medicalSurgeryFee || 0).toLocaleString()}</span>
+                            </div>
+                          )}
+                          {(plan.medicineFee || 0) > 0 && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
+                              <span>${(plan.medicineFee || 0).toLocaleString()}</span>
+                            </div>
+                          )}
+                          {(plan.nursingFee || 0) > 0 && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
+                              <span>${(plan.nursingFee || 0).toLocaleString()}</span>
+                            </div>
+                          )}
+                          {(plan.nutritionFee || 0) > 0 && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
+                              <span>${(plan.nutritionFee || 0).toLocaleString()}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -321,15 +330,8 @@ export default function PlanSelectionPage() {
                         </span>
                       </div>
                     ) : (
-                      <div className="flex justify-between text-sm text-gray-400">
-                        <span className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4" />
-                          {language === 'zh' ? '门票' : 'Tickets'}
-                        </span>
-                        <span className="font-medium">
-                          {language === 'zh' ? '不包含' : 'Not included'}
-                        </span>
-                      </div>
+                      /* 门票费为0时不显示此项，因为医疗旅游默认不包含旅游服务 */
+                      null
                     )}
 
                     <div className="flex justify-between text-sm">
