@@ -350,15 +350,15 @@ export default function ConfirmationPage() {
                     <div className="grid grid-cols-3 gap-4 text-sm text-green-700">
                       <div>
                         <div className="font-medium">{language === 'zh' ? '平均温度' : 'Avg Temp'}</div>
-                        <div>{weatherForecast.summary.averageTemp.toFixed(1)}°C</div>
+                        <div>{weatherForecast.summary?.averageTemp !== null && weatherForecast.summary?.averageTemp !== undefined ? weatherForecast.summary.averageTemp.toFixed(1) + '°C' : '-'}</div>
                       </div>
                       <div>
                         <div className="font-medium">{language === 'zh' ? '雨天' : 'Rainy Days'}</div>
-                        <div>{weatherForecast.summary.rainyDays} {language === 'zh' ? '天' : 'days'}</div>
+                        <div>{weatherForecast.summary?.rainyDays ?? 0} {language === 'zh' ? '天' : 'days'}</div>
                       </div>
                       <div>
                         <div className="font-medium">{language === 'zh' ? '晴天' : 'Sunny Days'}</div>
-                        <div>{weatherForecast.summary.bestDays} {language === 'zh' ? '天' : 'days'}</div>
+                        <div>{weatherForecast.summary?.bestDays ?? 0} {language === 'zh' ? '天' : 'days'}</div>
                       </div>
                     </div>
                   </div>
