@@ -1388,17 +1388,28 @@ export default function ConfirmationPage() {
               </Button>
             </div>
             <div className="space-y-4">
-              {/* 地图区域 */}
-              <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
-                <iframe
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  allowFullScreen
-                  referrerPolicy="no-referrer-when-downgrade"
-                  src={getMapUrl(selectedMapItem, hospital, destinationCity)}
-                />
+              {/* 地图预览区域 - 使用高德地图链接提示 */}
+              <div className="relative w-full h-96 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg overflow-hidden flex items-center justify-center">
+                <div className="text-center">
+                  <MapPin className="h-16 w-16 text-blue-600 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    {language === 'zh' ? '查看地图位置' : 'View Map Location'}
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {language === 'zh' ? '点击下方按钮在高德地图中查看详细位置' : 'Click the button below to view detailed location on Amap'}
+                  </p>
+                  <Button
+                    onClick={() => {
+                      const mapUrl = getMapUrl(selectedMapItem, hospital, destinationCity, true);
+                      window.open(mapUrl, '_blank');
+                    }}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <MapPin className="h-5 w-5 mr-2" />
+                    {language === 'zh' ? '在高德地图中打开' : 'Open in Amap'}
+                  </Button>
+                </div>
               </div>
 
               {/* 地点详情 */}
@@ -1487,12 +1498,6 @@ export default function ConfirmationPage() {
                 <Button variant="outline" onClick={() => setShowMapDialog(false)}>
                   {language === 'zh' ? '关闭' : 'Close'}
                 </Button>
-                <Button onClick={() => {
-                  const mapUrl = getMapUrl(selectedMapItem, hospital, destinationCity, true);
-                  window.open(mapUrl, '_blank');
-                }}>
-                  {language === 'zh' ? '在Google地图中打开' : 'Open in Google Maps'}
-                </Button>
               </div>
             </div>
           </div>
@@ -1535,34 +1540,44 @@ export default function ConfirmationPage() {
   }
 }
 
-// 生成地图URL
+// 生成地图URL（使用高德地图）
 function getMapUrl(item: any, hospital: any, destinationCity: string, openInNewWindow = false) {
   if (!item) return '';
 
-  const baseEmbedUrl = 'https://www.google.com/maps/embed/v1';
-  const baseDirectionsUrl = 'https://www.google.com/maps/dir/?api=1';
+  // 高德地图基础URL
+  const amapBaseUrl = 'https://ditu.amap.com';
 
-  // 使用 OpenStreetMap 的 iframe（不需要API key）
   if (item.type === 'flight' && item.flightSegments) {
-    // 航班路线：显示起点到终点的路径
+    // 航班路线：显示起点到终点的路线
     const origin = item.flightSegments[0]?.origin || '';
     const destination = item.flightSegments[item.flightSegments.length - 1]?.destination || '';
     if (origin && destination) {
-      return `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${encodeURIComponent(destination)}`;
+      // 使用高德地图的路线规划
+      return `${amapBaseUrl}/dir?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
     }
   } else if (item.type === 'ticket' && item.metadata?.medicalType && hospital) {
     // 医疗咨询：显示医院位置
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospital.location + ' ' + hospital.nameEn)}`;
+    const query = encodeURIComponent(hospital.location + ' ' + hospital.nameEn);
+    return `${amapBaseUrl}/search?query=${query}`;
   } else if (item.type === 'ticket' && item.metadata?.attractionType) {
     // 景点游览：显示景点位置
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity + ' ' + item.name)}`;
+    const query = encodeURIComponent(destinationCity + ' ' + item.name + ' 景点');
+    return `${amapBaseUrl}/search?query=${query}`;
   } else if (item.type === 'hotel') {
     // 酒店住宿：显示酒店位置
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity + ' ' + item.name + ' hotel')}`;
+    const query = encodeURIComponent(destinationCity + ' ' + item.name);
+    return `${amapBaseUrl}/search?query=${query}`;
+  } else if (item.type === 'doctor') {
+    // 医生预约：显示医院位置
+    if (hospital) {
+      const query = encodeURIComponent(hospital.location + ' ' + hospital.nameEn);
+      return `${amapBaseUrl}/search?query=${query}`;
+    }
   }
 
   // 默认返回目的地城市地图
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity)}`;
+  const query = encodeURIComponent(destinationCity);
+  return `${amapBaseUrl}/search?query=${query}`;
 }
 
 function getIconByType(type: string) {
