@@ -269,6 +269,10 @@ export async function POST(request: NextRequest) {
     if (!isSameCity) {
       // 获取真实的航班数据
       try {
+        // 设置去程航班的合理起飞时间（上午8-12点，UTC时间0-4点）
+        const outboundDepartureTime = new Date(travelDate);
+        outboundDepartureTime.setUTCHours(0, 0, 0, 0); // UTC时间0点 = 中国时间上午8点 (UTC+8)
+
         // 获取去程航班信息
         const outboundRoute = await searchFlightRoute(originCity, destinationCity);
 
@@ -276,7 +280,7 @@ export async function POST(request: NextRequest) {
         const outboundFlightDetails = generateFlightDetails(
           originCity,
           destinationCity,
-          travelDate,
+          outboundDepartureTime,
           outboundRoute.hasDirectFlight,
           outboundRoute.connectionCities?.[0],
           outboundRoute.typicalPriceUSD
@@ -325,11 +329,15 @@ export async function POST(request: NextRequest) {
         // 创建回程航班
         const returnRoute = await searchFlightRoute(destinationCity, originCity);
 
+        // 设置回程航班的合理起飞时间（下午2-6点，UTC时间6-10点）
+        const returnDepartureTime = new Date(returnDate);
+        returnDepartureTime.setUTCHours(6, 0, 0, 0); // UTC时间6点 = 中国时间下午2点 (UTC+8)
+
         // 生成详细的回程航班信息
         const returnFlightDetails = generateFlightDetails(
           destinationCity,
           originCity,
-          returnDate,
+          returnDepartureTime,
           returnRoute.hasDirectFlight,
           returnRoute.connectionCities?.[0],
           returnRoute.typicalPriceUSD
@@ -376,7 +384,11 @@ export async function POST(request: NextRequest) {
         // 如果航班搜索失败，使用备用方案（但不推荐）
         const outboundFlightNumber = generateRealisticFlightNumber(originCity, destinationCity, 'economy');
         const outboundDurationMinutes = 120; // 默认2小时
-        const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
+        
+        // 设置去程航班的合理起飞时间（上午8点，UTC时间0点）
+        const outboundDepartureTime = new Date(travelDate);
+        outboundDepartureTime.setUTCHours(0, 0, 0, 0); // UTC时间0点 = 中国时间上午8点 (UTC+8)
+        const outboundEndTime = new Date(outboundDepartureTime.getTime() + outboundDurationMinutes * 60 * 1000);
 
         // 记录到达时间
         arrivalDate = outboundEndTime;
@@ -387,7 +399,7 @@ export async function POST(request: NextRequest) {
           type: 'flight',
           name: `Flight ${outboundFlightNumber}`,
           description: `Flight from ${originCity} to ${destinationCity}`,
-          startDate: travelDate,
+          startDate: outboundDepartureTime,
           endDate: arrivalDate,
           location: `${originCity} - ${destinationCity}`,
           price: (plan.flightFee / 2).toString(),
@@ -400,7 +412,11 @@ export async function POST(request: NextRequest) {
         });
 
         const returnFlightNumber = generateRealisticFlightNumber(destinationCity, originCity, 'economy');
-        const returnEndTime = new Date(returnDate.getTime() + outboundDurationMinutes * 60 * 1000);
+        
+        // 设置回程航班的合理起飞时间（下午2点，UTC时间6点）
+        const returnDepartureTime = new Date(returnDate);
+        returnDepartureTime.setUTCHours(6, 0, 0, 0); // UTC时间6点 = 中国时间下午2点 (UTC+8)
+        const returnEndTime = new Date(returnDepartureTime.getTime() + outboundDurationMinutes * 60 * 1000);
 
         await db.insert(itineraries).values({
           id: uuidv4(),
@@ -408,7 +424,7 @@ export async function POST(request: NextRequest) {
           type: 'flight',
           name: `Flight ${returnFlightNumber}`,
           description: `Flight from ${destinationCity} to ${originCity}`,
-          startDate: returnDate,
+          startDate: returnDepartureTime,
           endDate: returnEndTime,
           location: `${destinationCity} - ${originCity}`,
           price: (plan.flightFee / 2).toString(),
@@ -451,12 +467,12 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // 创建医疗咨询记录 - 安排在到达后的第2天（上午10点）
+    // 创建医疗咨询记录 - 安排在到达后的第2天（上午10点，UTC+8）
     // 给患者1天时间调整时差和休息
     const daysAfterArrival = 1;
     let medicalAppointmentDate = new Date(arrivalDate.getTime());
     medicalAppointmentDate.setDate(medicalAppointmentDate.getDate() + daysAfterArrival);
-    medicalAppointmentDate.setHours(10, 0, 0, 0); // 上午10:00开始
+    medicalAppointmentDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点 (UTC+8)
 
     // 确保医疗咨询日期在到达和回程之间
     // 注意：必须确保医疗咨询在arrivalDate之后
@@ -465,11 +481,11 @@ export async function POST(request: NextRequest) {
 
     if (medicalAppointmentDate < minAppointmentDate) {
       medicalAppointmentDate = new Date(minAppointmentDate.getTime());
-      medicalAppointmentDate.setHours(10, 0, 0, 0);
+      medicalAppointmentDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点
     }
     if (medicalAppointmentDate > maxAppointmentDate) {
       medicalAppointmentDate = new Date(maxAppointmentDate.getTime());
-      medicalAppointmentDate.setHours(10, 0, 0, 0);
+      medicalAppointmentDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点
     }
 
     // 最终验证：确保医疗咨询时间合理且在有效范围内
@@ -484,7 +500,7 @@ export async function POST(request: NextRequest) {
       // 在这种情况下，仍然创建医疗咨询记录，但记录到到达后1天
       // 这不是理想情况，但至少能继续流程
       medicalAppointmentDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000);
-      medicalAppointmentDate.setHours(10, 0, 0, 0);
+      medicalAppointmentDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点
     }
 
     const medicalDurationMinutes = 60; // 咨询时间为60分钟
@@ -513,11 +529,11 @@ export async function POST(request: NextRequest) {
     // 创建旅游景点记录（如果用户选择了旅游服务）
     // 景点游览安排在医疗咨询后、回程前
     if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
-      // 智能安排景点日期：优先在医疗咨询后1天（下午2点开始）
-      // 如果时间不够，则在到达后第2天（上午10点开始）
+      // 智能安排景点日期：优先在医疗咨询后1天（下午2点，UTC+8 = UTC 6:00）
+      // 如果时间不够，则在到达后第2天（上午10点，UTC+8 = UTC 2:00）
       let attractionDate = new Date(medicalAppointmentDate.getTime());
       attractionDate.setDate(attractionDate.getDate() + 1);
-      attractionDate.setHours(14, 0, 0, 0);
+      attractionDate.setUTCHours(6, 0, 0, 0); // UTC时间上午6点 = 中国时间下午2点 (UTC+8)
 
       // 确保景点日期在回程之前（至少提前1天）
       const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
@@ -526,7 +542,7 @@ export async function POST(request: NextRequest) {
       if (attractionDate >= returnDateMinusOneDay) {
         attractionDate = new Date(arrivalDate.getTime());
         attractionDate.setDate(attractionDate.getDate() + 2);
-        attractionDate.setHours(10, 0, 0, 0);
+        attractionDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点 (UTC+8)
       }
 
       // 最终验证：确保景点日期有效（必须在到达后至少1天，在回程前至少1天）
