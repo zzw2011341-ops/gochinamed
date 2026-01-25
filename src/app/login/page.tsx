@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/locales";
 
@@ -55,7 +56,17 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 relative">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/")}
+        className="absolute top-4 left-4"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        {translations[language].common.back || "Back to Home"}
+      </Button>
+
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">{t.loginTitle}</CardTitle>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Stethoscope, User, Clock, DollarSign } from "lucide-react";
+import { Search, MapPin, Stethoscope, User, Clock, DollarSign, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +83,14 @@ export default function DoctorsPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/")}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            {t.common?.back || "Back to Home"}
+          </Button>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {t.doctors?.title || "Find a Doctor"}
           </h1>
