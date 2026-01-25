@@ -818,30 +818,84 @@ export default function BookPage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {/* 医疗费用 - 详细分类 */}
+                    {/* 医疗费用 - 根据治疗类型动态显示 */}
                     {formData.selectedHospital || formData.selectedDoctor ? (
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm font-medium text-blue-700">
                           <span>{language === 'zh' ? '医疗费用（总计）' : 'Medical Fee (Total)'}</span>
-                          <span>$2,350 - $4,500</span>
+                          <span>
+                            {formData.treatmentType === 'examination' ? '$500 - $1,500' :
+                             formData.treatmentType === 'consultation' ? '$100 - $300' :
+                             formData.treatmentType === 'surgery' ? '$2,350 - $5,700' :
+                             formData.treatmentType === 'therapy' ? '$800 - $2,000' :
+                             formData.treatmentType === 'rehabilitation' ? '$500 - $1,800' :
+                             '$2,350 - $4,500'}
+                          </span>
                         </div>
                         <div className="pl-4 space-y-1 text-xs text-gray-600">
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
-                            <span>$2,000 - $5,000</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
-                            <span>$100 - $300</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
-                            <span>$200 - $500</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
-                            <span>$50 - $200</span>
-                          </div>
+                          {/* 咨询费用 */}
+                          {(formData.treatmentType === 'consultation' || !formData.treatmentType) && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 咨询费' : '• Consultation'}</span>
+                              <span>$100 - $300</span>
+                            </div>
+                          )}
+
+                          {/* 检查费用 */}
+                          {(formData.treatmentType === 'examination' || !formData.treatmentType) && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 检查费' : '• Examination'}</span>
+                              <span>$500 - $1,500</span>
+                            </div>
+                          )}
+
+                          {/* 手术相关费用 */}
+                          {formData.treatmentType === 'surgery' && (
+                            <>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 手术费' : '• Surgery'}</span>
+                                <span>$2,000 - $5,000</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 药费' : '• Medicine'}</span>
+                                <span>$100 - $300</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
+                                <span>$200 - $500</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 营养费' : '• Nutrition'}</span>
+                                <span>$50 - $200</span>
+                              </div>
+                            </>
+                          )}
+
+                          {/* 治疗费用 */}
+                          {formData.treatmentType === 'therapy' && (
+                            <div className="flex justify-between">
+                              <span>{language === 'zh' ? '• 治疗费' : '• Treatment'}</span>
+                              <span>$800 - $2,000</span>
+                            </div>
+                          )}
+
+                          {/* 康复费用 */}
+                          {formData.treatmentType === 'rehabilitation' && (
+                            <>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 康复费' : '• Rehabilitation'}</span>
+                                <span>$500 - $1,500</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 理疗费' : '• Physical Therapy'}</span>
+                                <span>$300 - $1,000</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>{language === 'zh' ? '• 护理费' : '• Nursing'}</span>
+                                <span>$200 - $500</span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
                     ) : (
@@ -869,12 +923,6 @@ export default function BookPage() {
                         <span className="font-medium">$800 - $1,500 × {formData.numberOfPeople || 1}</span>
                       </div>
                     )}
-
-                    {/* 其他费用 */}
-                    <div className="flex justify-between text-sm">
-                      <span>{language === 'zh' ? '门票' : 'Tickets'}</span>
-                      <span className="font-medium">$30 - $100 × {formData.numberOfPeople || 1}</span>
-                    </div>
 
                     <div className="flex justify-between text-sm">
                       <span>{language === 'zh' ? '预约费用' : 'Reservation Fee'}</span>

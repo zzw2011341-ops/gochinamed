@@ -74,11 +74,13 @@ export default function PaymentPage() {
   const [cardName, setCardName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
+  const [selectedAttractions, setSelectedAttractions] = useState<any[]>([]); // 选中的景点
 
   useEffect(() => {
     // 从sessionStorage获取选中的方案和预订数据
     const savedPlan = sessionStorage.getItem('selectedPlan');
     const savedBookingData = sessionStorage.getItem('bookingPlans');
+    const savedAttractions = sessionStorage.getItem('selectedAttractions');
 
     if (savedPlan) {
       const plan = JSON.parse(savedPlan);
@@ -92,7 +94,7 @@ export default function PaymentPage() {
           appointmentDate: bookingDataFull.requestData?.appointmentDate || '',
           returnDate: bookingDataFull.requestData?.returnDate || '',
           hotelName: plan.hotelName,
-          hospitalName: bookingDataFull.requestData?.selectedHospital || '',
+          selectedHospital: bookingDataFull.requestData?.selectedHospital || '',
           doctorId: bookingDataFull.requestData?.selectedDoctor || '',
           treatmentType: bookingDataFull.requestData?.treatmentType || '',
           consultationDirection: bookingDataFull.requestData?.consultationDirection || '',
@@ -107,6 +109,11 @@ export default function PaymentPage() {
     } else {
       // 如果没有选中的方案，返回方案选择页面
       router.push('/book/plans');
+    }
+
+    // 获取选中的景点
+    if (savedAttractions) {
+      setSelectedAttractions(JSON.parse(savedAttractions));
     }
   }, [router]);
 
@@ -198,7 +205,13 @@ export default function PaymentPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id,
-          plan: selectedPlan,
+          plan: {
+            ...selectedPlan,
+            bookingData: {
+              ...selectedPlan.bookingData,
+              selectedAttractions: selectedAttractions, // 添加选中的景点
+            },
+          },
           payment: {
             cardNumber: cardNumber.replace(/\s/g, ''),
             cardName,

@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
       id: uuidv4(),
       userId,
       doctorId: plan.bookingData?.doctorId || null,
-      hospitalId: null, // 从bookingData中获取hospitalId，如果有的话
+      hospitalId: plan.bookingData?.selectedHospital || null,
       status: 'confirmed',
       doctorAppointmentStatus: plan.bookingData?.doctorId ? 'pending' : 'confirmed',
       doctorAppointmentDate: plan.bookingData?.doctorId ? appointmentDate : null,
@@ -404,6 +404,38 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+
+    // 创建旅游景点记录（如果用户选择了旅游服务）
+    if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
+      for (const attraction of bookingData.selectedAttractions) {
+        // 景点游览时间，默认2小时
+        const attractionDurationMinutes = 120;
+        // 景点游览时间安排在医疗咨询的第二天
+        const attractionDate = new Date(appointmentDate.getTime() + 1 * 24 * 60 * 60 * 1000);
+        const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
+
+        await db.insert(itineraries).values({
+          id: uuidv4(),
+          orderId: order.id,
+          type: 'ticket',
+          name: attraction.nameEn || attraction.nameZh,
+          description: attraction.description,
+          startDate: attractionDate,
+          endDate: attractionEndDate,
+          location: bookingData.destinationCity || destinationCity,
+          price: attraction.price.toString(),
+          durationMinutes: attractionDurationMinutes,
+          metadata: {
+            attractionType: 'tourism',
+            attractionId: attraction.id,
+          },
+          status: 'pending',
+          notificationSent: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
 
     // 更新用户的证件信息
     await db.update(users)
