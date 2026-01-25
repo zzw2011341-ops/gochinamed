@@ -74,6 +74,25 @@ const getTreatmentTypeName = (type: string, lang: string = 'en'): string => {
   return (names[type] as { en: string; zh: string })?.[lang as 'en' | 'zh'] || type;
 };
 
+// 手术类型名称映射
+const getSurgeryTypeName = (surgeryType: string, lang: string = 'en'): string => {
+  const names: Record<string, { en: string; zh: string }> = {
+    'cardiac_surgery': { en: 'Cardiac Surgery', zh: '心脏手术' },
+    'neurosurgery': { en: 'Neurosurgery', zh: '神经外科手术' },
+    'orthopedic_surgery': { en: 'Orthopedic Surgery', zh: '骨科手术' },
+    'cosmetic_surgery': { en: 'Cosmetic Surgery', zh: '整形外科手术' },
+    'ophthalmic_surgery': { en: 'Ophthalmic Surgery', zh: '眼科手术' },
+    'dental_surgery': { en: 'Dental Surgery', zh: '牙科手术' },
+    'general_surgery': { en: 'General Surgery', zh: '普通外科手术' },
+    'gynecologic_surgery': { en: 'Gynecologic Surgery', zh: '妇科手术' },
+    'urology_surgery': { en: 'Urology Surgery', zh: '泌尿外科手术' },
+    'oncology_surgery': { en: 'Oncology Surgery', zh: '肿瘤手术' },
+    'pediatric_surgery': { en: 'Pediatric Surgery', zh: '儿科手术' },
+    'vascular_surgery': { en: 'Vascular Surgery', zh: '血管手术' },
+  };
+  return (names[surgeryType] as { en: string; zh: string })?.[lang as 'en' | 'zh'] || surgeryType;
+};
+
 export default function BookPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -91,6 +110,9 @@ export default function BookPage() {
     treatmentDirections: [],
     rehabilitationDirections: [],
   });
+
+  // 医生专长解析结果
+  const [doctorSpecialties, setDoctorSpecialties] = useState<string[]>([]);
 
   // 表单数据
   const [formData, setFormData] = useState({
@@ -173,6 +195,19 @@ export default function BookPage() {
       fetchDoctors();
     }
   }, [formData.selectedHospital]);
+
+  // 当医生选择变化时，解析医生专长
+  useEffect(() => {
+    if (formData.selectedDoctor && doctors.length > 0) {
+      const selectedDoctorData = doctors.find(d => d.id === formData.selectedDoctor);
+      if (selectedDoctorData) {
+        parseDoctorSpecialties(selectedDoctorData);
+      }
+    } else {
+      // 清除医生专长
+      setDoctorSpecialties([]);
+    }
+  }, [formData.selectedDoctor, doctors]);
 
   useEffect(() => {
     // 当咨询方向变化时，重新过滤医生列表（如果已选择医院）
@@ -348,6 +383,54 @@ export default function BookPage() {
         treatmentDirections: [],
         rehabilitationDirections: [],
       });
+    }
+  };
+
+  // 解析医生专长
+  const parseDoctorSpecialties = (doctor: Doctor) => {
+    try {
+      const specialties = JSON.parse(doctor.specialtiesEn || '[]');
+
+      // 定义手术类型映射
+      const surgeryTypeMap: Record<string, string[]> = {
+        'cardiac_surgery': ['cardiac', 'heart', 'bypass', 'valve', 'cardiovascular'],
+        'neurosurgery': ['neurosurgery', 'neuro', 'brain', 'spine', 'nerve'],
+        'orthopedic_surgery': ['orthopedic', 'bone', 'joint', 'muscle', 'skeletal'],
+        'cosmetic_surgery': ['cosmetic', 'plastic', 'aesthetic', 'beauty', 'reconstructive'],
+        'ophthalmic_surgery': ['ophthalmic', 'eye', 'vision', 'cataract', 'glaucoma'],
+        'dental_surgery': ['dental', 'oral', 'teeth', 'mouth', 'jaw'],
+        'general_surgery': ['general', 'abdominal', 'digestive', 'gastrointestinal'],
+        'gynecologic_surgery': ['gynecologic', 'gyn', 'women', 'uterus', 'ovary'],
+        'urology_surgery': ['urology', 'urinary', 'kidney', 'bladder', 'prostate'],
+        'oncology_surgery': ['oncology', 'cancer', 'tumor', 'malignancy'],
+        'pediatric_surgery': ['pediatric', 'children', 'kids', 'infant'],
+        'vascular_surgery': ['vascular', 'blood vessel', 'artery', 'vein', 'circulation'],
+      };
+
+      // 将医生专长转换为小写
+      const specialtiesLower = specialties.map((s: string) => s.toLowerCase());
+      const specialtiesText = doctor.specialtiesEn.toLowerCase();
+      const nameText = doctor.nameEn.toLowerCase();
+
+      // 匹配并提取支持的手术类型
+      const matchedSurgeryTypes = Object.entries(surgeryTypeMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword)) ||
+          specialtiesText.includes(keyword) ||
+          nameText.includes(keyword)
+        ))
+        .map(([key]) => key);
+
+      setDoctorSpecialties(matchedSurgeryTypes);
+
+      // 如果当前选择的手术类型不在新医生的专长范围内，则清除选择
+      if (formData.surgeryTypes && !matchedSurgeryTypes.includes(formData.surgeryTypes)) {
+        setFormData({ ...formData, surgeryTypes: '' });
+      }
+    } catch (error) {
+      console.error('Error parsing doctor specialties:', error);
+      // 解析失败时，清空医生专长
+      setDoctorSpecialties([]);
     }
   };
 
@@ -1020,104 +1103,208 @@ export default function BookPage() {
                   </Select>
                 </div>
 
-                {/* 手术种类选择 - 根据医院专长标记 */}
+                {/* 手术种类选择 - 根据医生专长过滤 */}
                 {formData.treatmentType === 'surgery' && (
                   <div>
+                    {/* 医生不擅长手术的提示 */}
+                    {formData.selectedDoctor && doctorSpecialties.length === 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-start gap-3">
+                          <svg className="h-5 w-5 text-amber-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-amber-800">
+                              {language === 'zh' ? '医生专长提醒' : 'Doctor Specialty Alert'}
+                            </p>
+                            <p className="text-sm text-amber-700 mt-1">
+                              {language === 'zh'
+                                ? '您选择的医生可能不擅长外科手术。建议咨询医生是否适合进行手术，或选择其他治疗类型。'
+                                : 'The selected doctor may not specialize in surgery. We recommend consulting the doctor about surgical suitability or choosing another treatment type.'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {language === 'zh' ? '手术种类' : 'Surgery Types'}
                       <span className="text-gray-400 font-normal ml-2">
                         ({language === 'zh' ? '可选' : 'Optional'})
                       </span>
                     </label>
+
+                    {/* 如果选择了医生，显示医生专长提示 */}
+                    {formData.selectedDoctor && doctorSpecialties.length > 0 && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                        <div className="flex items-center gap-2">
+                          <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <p className="text-xs text-green-700">
+                            {language === 'zh'
+                              ? `${doctors.find(d => d.id === formData.selectedDoctor)?.nameEn} 擅长以下手术类型`
+                              : `${doctors.find(d => d.id === formData.selectedDoctor)?.nameEn} specializes in the following surgery types`}
+                            : {doctorSpecialties.length}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <Select
                       value={formData.surgeryTypes}
                       onValueChange={(value) => setFormData({ ...formData, surgeryTypes: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder={language === 'zh' ? '选择手术种类' : 'Select surgery type'} />
+                        <SelectValue placeholder={
+                          formData.selectedDoctor && doctorSpecialties.length === 0
+                            ? (language === 'zh' ? '医生不擅长手术' : 'Doctor not specialized in surgery')
+                            : (language === 'zh' ? '选择手术种类' : 'Select surgery type')
+                        } />
                       </SelectTrigger>
                       <SelectContent>
-                      {/* 如果医院有支持的手术类型，显示标记 */}
-                      {hospitalSpecialties.surgeryTypes.length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase flex items-center gap-2">
-                          {language === 'zh' ? '医院支持' : 'Hospital Supported'}
-                          <Badge variant="secondary" className="text-xs">
-                            {hospitalSpecialties.surgeryTypes.length}
-                          </Badge>
-                        </div>
-                      )}
-                      <SelectItem value="cardiac_surgery">
-                        {language === 'zh' ? '心脏手术' : 'Cardiac Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('cardiac_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        {/* 如果选择了医生且有专长，优先显示医生擅长的手术类型 */}
+                        {formData.selectedDoctor && doctorSpecialties.length > 0 && (
+                          <div className="px-2 py-1.5 text-xs font-semibold text-green-600 uppercase flex items-center gap-2">
+                            {language === 'zh' ? '医生擅长' : 'Doctor Specializes'}
+                            <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                              {doctorSpecialties.length}
+                            </Badge>
+                          </div>
                         )}
-                      </SelectItem>
-                      <SelectItem value="neurosurgery">
-                        {language === 'zh' ? '神经外科手术' : 'Neurosurgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('neurosurgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+
+                        {/* 如果医院有支持的手术类型，显示标记 */}
+                        {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.length > 0 && (
+                          <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase flex items-center gap-2">
+                            {language === 'zh' ? '医院支持' : 'Hospital Supported'}
+                            <Badge variant="secondary" className="text-xs">
+                              {hospitalSpecialties.surgeryTypes.length}
+                            </Badge>
+                          </div>
                         )}
-                      </SelectItem>
-                      <SelectItem value="orthopedic_surgery">
-                        {language === 'zh' ? '骨科手术' : 'Orthopedic Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('orthopedic_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+
+                        {/* 手术类型选项列表 */}
+                        {formData.selectedDoctor && doctorSpecialties.length > 0 ? (
+                          // 如果选择了医生且有专长，只显示医生擅长的手术类型
+                          doctorSpecialties.map((surgeryType) => (
+                            <SelectItem key={surgeryType} value={surgeryType}>
+                              {getSurgeryTypeName(surgeryType, language)}
+                              <Badge className="ml-2 bg-green-100 text-green-800 text-xs">★</Badge>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          // 否则显示所有选项（未选择医生，或医生无专长）
+                          <>
+                            <SelectItem value="cardiac_surgery">
+                              {language === 'zh' ? '心脏手术' : 'Cardiac Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('cardiac_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('cardiac_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="neurosurgery">
+                              {language === 'zh' ? '神经外科手术' : 'Neurosurgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('neurosurgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('neurosurgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="orthopedic_surgery">
+                              {language === 'zh' ? '骨科手术' : 'Orthopedic Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('orthopedic_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('orthopedic_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="cosmetic_surgery">
+                              {language === 'zh' ? '整形外科手术' : 'Cosmetic Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('cosmetic_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('cosmetic_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="ophthalmic_surgery">
+                              {language === 'zh' ? '眼科手术' : 'Ophthalmic Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('ophthalmic_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('ophthalmic_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="dental_surgery">
+                              {language === 'zh' ? '牙科手术' : 'Dental Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('dental_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('dental_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="general_surgery">
+                              {language === 'zh' ? '普通外科手术' : 'General Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('general_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('general_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="gynecologic_surgery">
+                              {language === 'zh' ? '妇科手术' : 'Gynecologic Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('gynecologic_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('gynecologic_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="urology_surgery">
+                              {language === 'zh' ? '泌尿外科手术' : 'Urology Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('urology_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('urology_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="oncology_surgery">
+                              {language === 'zh' ? '肿瘤手术' : 'Oncology Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('oncology_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('oncology_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="pediatric_surgery">
+                              {language === 'zh' ? '儿科手术' : 'Pediatric Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('pediatric_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('pediatric_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                            <SelectItem value="vascular_surgery">
+                              {language === 'zh' ? '血管手术' : 'Vascular Surgery'}
+                              {!formData.selectedDoctor && hospitalSpecialties.surgeryTypes.includes('vascular_surgery') && (
+                                <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                              )}
+                              {formData.selectedDoctor && doctorSpecialties.length > 0 && !doctorSpecialties.includes('vascular_surgery') && (
+                                <span className="ml-2 text-xs text-gray-400">{language === 'zh' ? '(不擅长)' : '(Not specialized)'}</span>
+                              )}
+                            </SelectItem>
+                          </>
                         )}
-                      </SelectItem>
-                      <SelectItem value="cosmetic_surgery">
-                        {language === 'zh' ? '整形外科手术' : 'Cosmetic Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('cosmetic_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="ophthalmic_surgery">
-                        {language === 'zh' ? '眼科手术' : 'Ophthalmic Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('ophthalmic_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="dental_surgery">
-                        {language === 'zh' ? '牙科手术' : 'Dental Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('dental_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="general_surgery">
-                        {language === 'zh' ? '普通外科手术' : 'General Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('general_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="gynecologic_surgery">
-                        {language === 'zh' ? '妇科手术' : 'Gynecologic Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('gynecologic_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="urology_surgery">
-                        {language === 'zh' ? '泌尿外科手术' : 'Urology Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('urology_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="oncology_surgery">
-                        {language === 'zh' ? '肿瘤手术' : 'Oncology Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('oncology_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="pediatric_surgery">
-                        {language === 'zh' ? '儿科手术' : 'Pediatric Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('pediatric_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
-                      <SelectItem value="vascular_surgery">
-                        {language === 'zh' ? '血管手术' : 'Vascular Surgery'}
-                        {hospitalSpecialties.surgeryTypes.includes('vascular_surgery') && (
-                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
-                        )}
-                      </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">
