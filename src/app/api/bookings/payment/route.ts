@@ -529,64 +529,155 @@ export async function POST(request: NextRequest) {
     // 创建旅游景点记录（如果用户选择了旅游服务）
     // 景点游览安排在医疗咨询后、回程前
     if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
-      // 智能安排景点日期：优先在医疗咨询后1天（上午9点，UTC+8 = UTC 1:00）
-      // 如果时间不够，则在到达后第2天（上午10点，UTC+8 = UTC 2:00）
-      let attractionDate = new Date(medicalAppointmentDate.getTime());
-      attractionDate.setDate(attractionDate.getDate() + 1);
-      attractionDate.setUTCHours(1, 0, 0, 0); // UTC时间上午1点 = 中国时间上午9点 (UTC+8)
+      // 验证：如果是医疗旅游（有医院选择），景点必须与医院所在城市关联
+      const hasMedicalSelection = !!(plan.doctorId || plan.hospitalId || bookingData.treatmentType);
+      
+      if (hasMedicalSelection) {
+        // 获取医院所在城市
+        const hospitalCity = bookingData.destinationCity || destinationCity;
+        
+        // 过滤掉不在医院所在城市的景点
+        const validAttractions = bookingData.selectedAttractions.filter((attr: any) => {
+          const attractionCity = attr.city || attr.location?.split(',').pop()?.trim() || '';
+          // 模糊匹配：景点城市包含医院城市名，或医院城市包含景点城市名
+          const isMatch = attractionCity.toLowerCase().includes(hospitalCity.toLowerCase()) ||
+                         hospitalCity.toLowerCase().includes(attractionCity.toLowerCase());
+          
+          if (!isMatch) {
+            console.warn(`[Payment API] Filtering out attraction "${attr.nameEn}" - not in hospital city "${hospitalCity}" (attraction city: "${attractionCity}")`);
+          }
+          
+          return isMatch;
+        });
+        
+        if (validAttractions.length === 0) {
+          console.warn(`[Payment API] No valid attractions found for hospital city "${hospitalCity}". Skipping tourist attractions.`);
+        } else if (validAttractions.length < bookingData.selectedAttractions.length) {
+          console.log(`[Payment API] Filtered ${bookingData.selectedAttractions.length - validAttractions.length} attractions not matching hospital city "${hospitalCity}". Keeping ${validAttractions.length} valid attractions.`);
+        }
+        
+        // 只处理与医院所在城市关联的景点
+        const attractionsToProcess = validAttractions;
+        
+        // 智能安排景点日期：优先在医疗咨询后1天（上午9点，UTC+8 = UTC 1:00）
+        // 如果时间不够，则在到达后第2天（上午10点，UTC+8 = UTC 2:00）
+        let attractionDate = new Date(medicalAppointmentDate.getTime());
+        attractionDate.setDate(attractionDate.getDate() + 1);
+        attractionDate.setUTCHours(1, 0, 0, 0); // UTC时间上午1点 = 中国时间上午9点 (UTC+8)
 
-      // 确保景点日期在回程之前（至少提前1天）
-      const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
+        // 确保景点日期在回程之前（至少提前1天）
+        const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
 
-      // 如果景点日期超过了回程前1天，则尝试在到达后第2天安排
-      if (attractionDate >= returnDateMinusOneDay) {
-        attractionDate = new Date(arrivalDate.getTime());
-        attractionDate.setDate(attractionDate.getDate() + 2);
-        attractionDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点 (UTC+8)
-      }
+        // 如果景点日期超过了回程前1天，则尝试在到达后第2天安排
+        if (attractionDate >= returnDateMinusOneDay) {
+          attractionDate = new Date(arrivalDate.getTime());
+          attractionDate.setDate(attractionDate.getDate() + 2);
+          attractionDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点 (UTC+8)
+        }
 
-      // 最终验证：确保景点日期有效（必须在到达后至少1天，在回程前至少1天）
-      const minAttractionDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
-      const maxAttractionDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
+        // 最终验证：确保景点日期有效（必须在到达后至少1天，在回程前至少1天）
+        const minAttractionDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
+        const maxAttractionDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
 
-      if (attractionDate >= minAttractionDate && attractionDate < maxAttractionDate) {
-        for (const attraction of bookingData.selectedAttractions) {
-          // 景点游览时间，默认2小时
-          const attractionDurationMinutes = 120;
-          const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
+        if (attractionDate >= minAttractionDate && attractionDate < maxAttractionDate) {
+          for (const attraction of attractionsToProcess) {
+            // 景点游览时间，默认2小时
+            const attractionDurationMinutes = 120;
+            const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
 
-          await db.insert(itineraries).values({
-            id: uuidv4(),
-            orderId: order.id,
-            type: 'ticket',
-            name: attraction.nameEn || attraction.nameZh,
-            description: attraction.description,
-            startDate: attractionDate,
-            endDate: attractionEndDate,
-            location: bookingData.destinationCity || destinationCity,
-            price: attraction.price.toString(),
-            durationMinutes: attractionDurationMinutes,
-            metadata: {
-              attractionType: 'tourism',
-              attractionId: attraction.id,
-            },
-            status: 'pending',
-            notificationSent: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            await db.insert(itineraries).values({
+              id: uuidv4(),
+              orderId: order.id,
+              type: 'ticket',
+              name: attraction.nameEn || attraction.nameZh,
+              description: attraction.description,
+              startDate: attractionDate,
+              endDate: attractionEndDate,
+              location: bookingData.destinationCity || destinationCity,
+              price: attraction.price.toString(),
+              durationMinutes: attractionDurationMinutes,
+              metadata: {
+                attractionType: 'tourism',
+                attractionId: attraction.id,
+              },
+              status: 'pending',
+              notificationSent: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+          console.log(`Successfully created ${attractionsToProcess.length} attraction itineraries for order ${order.id}`);
+        } else {
+          console.warn('Cannot create attraction itineraries: no available time slot', {
+            attractionDate,
+            arrivalDate,
+            returnDate,
+            minAttractionDate,
+            maxAttractionDate,
+            attractionDateValid: attractionDate >= minAttractionDate,
+            beforeReturn: attractionDate < maxAttractionDate
           });
         }
-        console.log(`Successfully created ${bookingData.selectedAttractions.length} attraction itineraries for order ${order.id}`);
       } else {
-        console.warn('Cannot create attraction itineraries: no available time slot', {
-          attractionDate,
-          arrivalDate,
-          returnDate,
-          minAttractionDate,
-          maxAttractionDate,
-          attractionDateValid: attractionDate >= minAttractionDate,
-          beforeReturn: attractionDate < maxAttractionDate
-        });
+        // 纯旅游（无医疗需求），允许选择任意城市的景点
+        // 智能安排景点日期：优先在到达后第1天（上午9点，UTC+8 = UTC 1:00）
+        let attractionDate = new Date(arrivalDate.getTime());
+        attractionDate.setDate(attractionDate.getDate() + 1);
+        attractionDate.setUTCHours(1, 0, 0, 0); // UTC时间上午1点 = 中国时间上午9点 (UTC+8)
+
+        // 确保景点日期在回程之前（至少提前1天）
+        const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
+
+        // 如果景点日期超过了回程前1天，则尝试在到达后第2天安排
+        if (attractionDate >= returnDateMinusOneDay) {
+          attractionDate = new Date(arrivalDate.getTime());
+          attractionDate.setDate(attractionDate.getDate() + 2);
+          attractionDate.setUTCHours(2, 0, 0, 0); // UTC时间上午2点 = 中国时间上午10点 (UTC+8)
+        }
+
+        // 最终验证：确保景点日期有效（必须在到达后至少1天，在回程前至少1天）
+        const minAttractionDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
+        const maxAttractionDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
+
+        if (attractionDate >= minAttractionDate && attractionDate < maxAttractionDate) {
+          for (const attraction of bookingData.selectedAttractions) {
+            // 景点游览时间，默认2小时
+            const attractionDurationMinutes = 120;
+            const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
+
+            await db.insert(itineraries).values({
+              id: uuidv4(),
+              orderId: order.id,
+              type: 'ticket',
+              name: attraction.nameEn || attraction.nameZh,
+              description: attraction.description,
+              startDate: attractionDate,
+              endDate: attractionEndDate,
+              location: attraction.city || attraction.location || destinationCity,
+              price: attraction.price.toString(),
+              durationMinutes: attractionDurationMinutes,
+              metadata: {
+                attractionType: 'tourism',
+                attractionId: attraction.id,
+              },
+              status: 'pending',
+              notificationSent: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }
+          console.log(`Successfully created ${bookingData.selectedAttractions.length} attraction itineraries for pure tourism order ${order.id}`);
+        } else {
+          console.warn('Cannot create attraction itineraries: no available time slot', {
+            attractionDate,
+            arrivalDate,
+            returnDate,
+            minAttractionDate,
+            maxAttractionDate,
+            attractionDateValid: attractionDate >= minAttractionDate,
+            beforeReturn: attractionDate < maxAttractionDate
+          });
+        }
       }
     } else {
       console.log('No attractions selected or invalid attraction data', {

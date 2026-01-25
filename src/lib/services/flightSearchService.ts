@@ -506,26 +506,49 @@ function shouldRequireConnection(origin: string, destination: string): boolean {
 function estimateFlightDurationByDistance(origin: string, destination: string): number {
   // 简化的距离估算（基于已知城市对的典型飞行时长）
   const distanceTable: Record<string, number> = {
+    // 中国国内航线（1-3小时）
     'Beijing-Changchun': 120,
     'Beijing-Shanghai': 120,
     'Beijing-Guangzhou': 180,
     'Beijing-Chengdu': 150,
     'Shanghai-Guangzhou': 150,
+    
+    // 中美航线（14-16小时）
     'New York-Beijing': 840,
     'New York-Shanghai': 900,
+    'Los Angeles-Beijing': 900,
+    'Los Angeles-Shanghai': 960,
+    'San Francisco-Beijing': 870,
+    'San Francisco-Shanghai': 900,
+    'San Francisco-Chengdu': 870, // CTU-SFO: ~14.5小时
+    
+    // 中欧航线（10-12小时）
     'London-Beijing': 600,
+    'London-Shanghai': 660,
     'Frankfurt-Beijing': 540,
     'Paris-Beijing': 600,
-    'Tokyo-Beijing': 240,
+    
+    // 中日韩航线（2-4小时）
+    'Tokyo-Beijing': 180,
+    'Tokyo-Shanghai': 180,
     'Seoul-Beijing': 120,
-    'Singapore-Beijing': 360,
+    
+    // 中澳航线（12-14小时）
     'Sydney-Beijing': 720,
+    'Sydney-Shanghai': 780,
+    
+    // 中东航线（7-8小时）
+    'Dubai-Beijing': 420,
+    
+    // 东南亚航线（6小时）
+    'Singapore-Beijing': 360,
+    'Singapore-Shanghai': 360,
   };
   
   const routeKey1 = `${origin}-${destination}`;
   const routeKey2 = `${destination}-${origin}`;
   
-  return distanceTable[routeKey1] || distanceTable[routeKey2] || 240; // 默认4小时
+  return distanceTable[routeKey1] || distanceTable[routeKey2] || 480; // 默认8小时（国际航线）
 }
 
 /**

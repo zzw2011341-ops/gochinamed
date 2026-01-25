@@ -82,6 +82,7 @@ function getAirlineName(airlineCode: string): string {
  */
 function estimateSingleSegmentDuration(origin: string, destination: string): number {
   const durationTable: Record<string, number> = {
+    // 中国国内航线
     'Beijing-Shanghai': 120,
     'Beijing-Guangzhou': 180,
     'Beijing-Chengdu': 150,
@@ -90,22 +91,54 @@ function estimateSingleSegmentDuration(origin: string, destination: string): num
     'Shanghai-Chengdu': 150,
     'Beijing-Changchun': 120,
     'Shanghai-Changchun': 150,
+    
+    // 中美航线（实际飞行时间14-16小时）
     'Beijing-New York': 840,
     'Shanghai-New York': 900,
+    'Beijing-Los Angeles': 900,
+    'Shanghai-Los Angeles': 960,
+    'Beijing-San Francisco': 870,
+    'Shanghai-San Francisco': 900,
+    'Chengdu-San Francisco': 870, // CTU-SFO: ~14.5小时
+    'Chengdu-New York': 930,
+    'Chengdu-Los Angeles': 960,
+    
+    // 中欧航线（实际飞行时间10-12小时）
     'Beijing-London': 600,
     'Shanghai-London': 660,
     'Beijing-Paris': 600,
     'Shanghai-Paris': 660,
+    'Beijing-Frankfurt': 540,
+    'Shanghai-Frankfurt': 600,
+    'Chengdu-London': 660,
+    
+    // 中日韩航线
     'Beijing-Tokyo': 180,
     'Shanghai-Tokyo': 180,
     'Beijing-Seoul': 120,
     'Shanghai-Seoul': 150,
+    'Chengdu-Tokyo': 240,
+    'Chengdu-Seoul': 180,
+    
+    // 中澳航线（实际飞行时间12-14小时）
+    'Beijing-Sydney': 720,
+    'Shanghai-Sydney': 780,
+    'Chengdu-Sydney': 750,
+    
+    // 中东航线
+    'Beijing-Dubai': 420,
+    'Shanghai-Dubai': 480,
+    
+    // 东南亚航线
+    'Beijing-Singapore': 360,
+    'Shanghai-Singapore': 360,
+    'Chengdu-Singapore': 300,
   };
 
   const key1 = `${origin}-${destination}`;
   const key2 = `${destination}-${origin}`;
 
-  return durationTable[key1] || durationTable[key2] || 240;
+  return durationTable[key1] || durationTable[key2] || 480; // 默认8小时（国际航线）
 }
 
 /**
