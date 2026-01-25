@@ -413,6 +413,7 @@ export async function POST(request: NextRequest) {
     medicalAppointmentDate.setHours(9, 17, 0, 0); // 上午9:17开始
 
     // 确保医疗咨询日期在到达和回程之间
+    // 注意：必须确保医疗咨询在arrivalDate之后
     const minAppointmentDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
     const maxAppointmentDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
 
@@ -449,32 +450,18 @@ export async function POST(request: NextRequest) {
     });
 
     // 创建旅游景点记录（如果用户选择了旅游服务）
-    // 景点游览可以安排在到达后、医疗咨询前 或 医疗咨询后、回程前
+    // 景点游览安排在医疗咨询后、回程前
     if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
-      // 尝试在医疗咨询后1天安排景点
-      const attractionDateAfterMedical = new Date(medicalAppointmentDate.getTime());
-      attractionDateAfterMedical.setDate(attractionDateAfterMedical.getDate() + 1);
-      attractionDateAfterMedical.setHours(14, 0, 0, 0); // 下午2点开始
+      // 尝试在医疗咨询后1天安排景点（下午2点开始）
+      const attractionDate = new Date(medicalAppointmentDate.getTime());
+      attractionDate.setDate(attractionDate.getDate() + 1);
+      attractionDate.setHours(14, 0, 0, 0);
 
       // 确保景点日期在回程之前（至少提前1天）
       const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
 
-      let attractionDate = attractionDateAfterMedical;
-
-      // 如果医疗咨询后没有足够时间，尝试在到达后、医疗咨询前安排
-      if (attractionDate > returnDateMinusOneDay) {
-        const attractionDateBeforeMedical = new Date(arrivalDate.getTime());
-        attractionDateBeforeMedical.setDate(attractionDateBeforeMedical.getDate() + 2); // 到达后2天
-        attractionDateBeforeMedical.setHours(14, 0, 0, 0); // 下午2点开始
-
-        // 确保在医疗咨询前至少1天
-        if (attractionDateBeforeMedical < new Date(medicalAppointmentDate.getTime() - 24 * 60 * 60 * 1000)) {
-          attractionDate = attractionDateBeforeMedical;
-        }
-      }
-
-      // 最终验证：确保景点日期有效
-      if (attractionDate > arrivalDate && attractionDate < returnDateMinusOneDay) {
+      // 最终验证：确保景点日期有效（必须在医疗咨询后，在回程前至少1天）
+      if (attractionDate > medicalAppointmentDate && attractionDate < returnDateMinusOneDay) {
         for (const attraction of bookingData.selectedAttractions) {
           // 景点游览时间，默认2小时
           const attractionDurationMinutes = 120;
@@ -501,8 +488,15 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date(),
           });
         }
+        console.log(`Successfully created ${bookingData.selectedAttractions.length} attraction itineraries for order ${order.id}`);
       } else {
-        console.warn('Cannot create attraction itineraries: no available time slot between arrival and return date');
+        console.warn('Cannot create attraction itineraries: no available time slot', {
+          attractionDate,
+          medicalAppointmentDate,
+          returnDateMinusOneDay,
+          attractionDateValid: attractionDate > medicalAppointmentDate,
+          beforeReturn: attractionDate < returnDateMinusOneDay
+        });
       }
     }
 

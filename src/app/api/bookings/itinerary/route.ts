@@ -362,6 +362,16 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
       if (item.durationMinutes) {
         details.duration = `${item.durationMinutes} minutes`;
       }
+      // 添加位置信息
+      if (item.location) {
+        details.route = item.location;
+      }
+      // 区分医疗咨询和景点
+      if (item.metadata && item.metadata.attractionType === 'tourism') {
+        details.isAttraction = true;
+      } else if (item.metadata && item.metadata.medicalType === 'consultation') {
+        details.isMedicalConsultation = true;
+      }
     }
 
     // 添加天气信息
