@@ -82,11 +82,20 @@ export default function PaymentPage() {
     const savedBookingData = sessionStorage.getItem('bookingPlans');
     const savedAttractions = sessionStorage.getItem('selectedAttractions');
 
+    console.log('[Payment Page] savedPlan:', savedPlan ? 'exists' : 'missing');
+    console.log('[Payment Page] savedBookingData:', savedBookingData ? 'exists' : 'missing');
+
     if (savedPlan) {
       const plan = JSON.parse(savedPlan);
+      console.log('[Payment Page] Initial plan keys:', Object.keys(plan));
+      console.log('[Payment Page] Initial plan.bookingData:', plan.bookingData);
+
       // 将bookingData附加到plan对象中
       if (savedBookingData) {
         const bookingDataFull = JSON.parse(savedBookingData);
+        console.log('[Payment Page] bookingDataFull.requestData:', bookingDataFull.requestData);
+        console.log('[Payment Page] bookingDataFull.requestData.travelDate:', bookingDataFull.requestData?.travelDate);
+
         plan.bookingData = {
           originCity: bookingDataFull.requestData?.originCity || '',
           destinationCity: bookingDataFull.requestData?.destinationCity || '',
@@ -103,6 +112,8 @@ export default function PaymentPage() {
           treatmentDirection: bookingDataFull.requestData?.treatmentDirection || '',
           rehabilitationDirection: bookingDataFull.requestData?.rehabilitationDirection || '',
         };
+
+        console.log('[Payment Page] Final plan.bookingData:', plan.bookingData);
       }
       setSelectedPlan(plan);
       setLoading(false);

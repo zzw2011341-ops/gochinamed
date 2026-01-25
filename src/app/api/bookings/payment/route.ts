@@ -42,6 +42,11 @@ export async function POST(request: NextRequest) {
       documents: { passportNumber, passportCountry },
     } = body;
 
+    // 添加详细调试日志
+    console.log('[Payment API] Full request body received');
+    console.log('[Payment API] plan object keys:', Object.keys(plan));
+    console.log('[Payment API] plan.bookingData:', JSON.stringify(plan.bookingData, null, 2));
+    
     // 验证必需字段
     if (!userId || !plan || !payment || !passportNumber) {
       return NextResponse.json(
@@ -115,10 +120,20 @@ export async function POST(request: NextRequest) {
 
     // 获取用户的预订信息（从plan.bookingData）
     const bookingData = plan.bookingData || {};
+    
+    // 添加调试日志
+    console.log('[Payment API] bookingData.travelDate:', bookingData.travelDate);
+    console.log('[Payment API] bookingData.returnDate:', bookingData.returnDate);
+    console.log('[Payment API] bookingData keys:', Object.keys(bookingData));
+    
     const travelDate = new Date(bookingData.travelDate || Date.now() + 7 * 24 * 60 * 60 * 1000);
     const appointmentDate = new Date(bookingData.appointmentDate || Date.now() + 10 * 24 * 60 * 60 * 1000);
     const returnDate = new Date(bookingData.returnDate || Date.now() + 14 * 24 * 60 * 60 * 1000);
 
+    // 添加调试日志
+    console.log('[Payment API] Calculated travelDate:', travelDate.toISOString());
+    console.log('[Payment API] Calculated returnDate:', returnDate.toISOString());
+    
     // 确保起降城市存在（如果缺失，使用默认值）
     const originCity = bookingData.originCity || 'Origin';
     const destinationCity = bookingData.destinationCity || 'Destination';
