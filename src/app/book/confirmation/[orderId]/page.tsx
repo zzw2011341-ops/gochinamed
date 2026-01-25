@@ -36,6 +36,8 @@ export default function ConfirmationPage() {
   const [itineraryData, setItineraryData] = useState<any>(null);
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showMapDialog, setShowMapDialog] = useState(false);
+  const [selectedMapItem, setSelectedMapItem] = useState<any>(null);
 
   useEffect(() => {
     if (params.orderId) {
@@ -74,6 +76,11 @@ export default function ConfirmationPage() {
   }
 
   const { order, user, doctor, hospital, itinerary, reservations, costs, weatherForecast, travelTips, timeline } = itineraryData;
+
+  // 获取目的地城市（从医院位置或第一个目的地行程项中提取）
+  const destinationCity = hospital?.location?.split(',').pop()?.trim() ||
+                          itinerary.find((item: any) => item.location)?.location?.split('-').pop()?.trim() ||
+                          'Beijing';
 
   // 判断是否有医疗服务（检查是否有type='ticket'的行程项或医疗费用>0）
   const hasMedicalServices = itinerary.some((item: any) => item.type === 'ticket') || (costs.medicalFee && costs.medicalFee > 0);
@@ -458,9 +465,23 @@ export default function ConfirmationPage() {
                               </div>
                             )}
                           </div>
-                          <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'} className="ml-4">
-                            {item.status}
-                          </Badge>
+                          <div className="flex items-center gap-2 ml-4 no-print">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedMapItem(item);
+                                setShowMapDialog(true);
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <MapPin className="h-3 w-3" />
+                              {language === 'zh' ? '地图' : 'Map'}
+                            </Button>
+                            <Badge variant={item.status === 'confirmed' ? 'default' : 'secondary'}>
+                              {item.status}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1350,6 +1371,133 @@ export default function ConfirmationPage() {
           </div>
         </div>
       )}
+
+      {/* 地图对话框 */}
+      {showMapDialog && selectedMapItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowMapDialog(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {selectedMapItem.name} - {language === 'zh' ? '地图' : 'Map'}
+                </h3>
+                <p className="text-sm text-gray-600">{selectedMapItem.route || selectedMapItem.subtitle}</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowMapDialog(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {/* 地图区域 */}
+              <div className="relative w-full h-96 bg-gray-100 rounded-lg overflow-hidden">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  allowFullScreen
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={getMapUrl(selectedMapItem, hospital, destinationCity)}
+                />
+              </div>
+
+              {/* 地点详情 */}
+              <div className="space-y-3">
+                {selectedMapItem.type === 'flight' && selectedMapItem.flightSegments && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Plane className="h-4 w-4 text-blue-600" />
+                      {language === 'zh' ? '航班路线' : 'Flight Route'}
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {selectedMapItem.flightSegments.map((segment: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="font-medium">{segment.origin}</span>
+                          <ArrowLeft className="h-3 w-3 text-gray-400 rotate-180" />
+                          <span className="font-medium">{segment.destination}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedMapItem.type === 'ticket' && selectedMapItem.metadata?.medicalType && hospital && (
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Stethoscope className="h-4 w-4 text-green-600" />
+                      {language === 'zh' ? '医院信息' : 'Hospital Information'}
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '医院' : 'Hospital'}: </span>
+                        <span className="font-medium">{hospital.nameEn}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '地址' : 'Address'}: </span>
+                        <span className="font-medium">{hospital.location}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '楼层' : 'Floor'}: </span>
+                        <span className="font-medium">{language === 'zh' ? '门诊楼 3F' : 'Outpatient Building 3F'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedMapItem.type === 'ticket' && selectedMapItem.metadata?.attractionType && (
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-purple-600" />
+                      {language === 'zh' ? '景点信息' : 'Attraction Information'}
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '景点' : 'Attraction'}: </span>
+                        <span className="font-medium">{selectedMapItem.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '位置' : 'Location'}: </span>
+                        <span className="font-medium">{destinationCity}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedMapItem.type === 'hotel' && (
+                  <div className="p-4 bg-orange-50 rounded-lg">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Hotel className="h-4 w-4 text-orange-600" />
+                      {language === 'zh' ? '酒店信息' : 'Hotel Information'}
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '酒店' : 'Hotel'}: </span>
+                        <span className="font-medium">{selectedMapItem.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">{language === 'zh' ? '房间号' : 'Room'}: </span>
+                        <span className="font-medium">{selectedMapItem.roomNumber}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowMapDialog(false)}>
+                  {language === 'zh' ? '关闭' : 'Close'}
+                </Button>
+                <Button onClick={() => {
+                  const mapUrl = getMapUrl(selectedMapItem, hospital, destinationCity, true);
+                  window.open(mapUrl, '_blank');
+                }}>
+                  {language === 'zh' ? '在Google地图中打开' : 'Open in Google Maps'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -1385,6 +1533,36 @@ export default function ConfirmationPage() {
     }
     setShowShareDialog(false);
   }
+}
+
+// 生成地图URL
+function getMapUrl(item: any, hospital: any, destinationCity: string, openInNewWindow = false) {
+  if (!item) return '';
+
+  const baseEmbedUrl = 'https://www.google.com/maps/embed/v1';
+  const baseDirectionsUrl = 'https://www.google.com/maps/dir/?api=1';
+
+  // 使用 OpenStreetMap 的 iframe（不需要API key）
+  if (item.type === 'flight' && item.flightSegments) {
+    // 航班路线：显示起点到终点的路径
+    const origin = item.flightSegments[0]?.origin || '';
+    const destination = item.flightSegments[item.flightSegments.length - 1]?.destination || '';
+    if (origin && destination) {
+      return `https://www.google.com/maps/dir/${encodeURIComponent(origin)}/${encodeURIComponent(destination)}`;
+    }
+  } else if (item.type === 'ticket' && item.metadata?.medicalType && hospital) {
+    // 医疗咨询：显示医院位置
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hospital.location + ' ' + hospital.nameEn)}`;
+  } else if (item.type === 'ticket' && item.metadata?.attractionType) {
+    // 景点游览：显示景点位置
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity + ' ' + item.name)}`;
+  } else if (item.type === 'hotel') {
+    // 酒店住宿：显示酒店位置
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity + ' ' + item.name + ' hotel')}`;
+  }
+
+  // 默认返回目的地城市地图
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinationCity)}`;
 }
 
 function getIconByType(type: string) {

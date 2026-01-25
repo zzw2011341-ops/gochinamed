@@ -217,6 +217,9 @@ export async function POST(request: NextRequest) {
     // 判断是否同城旅行（同城无需机票）
     const isSameCity = originCity === destinationCity;
 
+    // 记录到达时间（用于安排后续医疗和景点活动）
+    let arrivalDate = travelDate; // 默认使用出发时间（同城情况）
+
     if (!isSameCity) {
       // 获取真实的航班数据
       try {
@@ -244,6 +247,9 @@ export async function POST(request: NextRequest) {
           outboundDescription = `${first.flightNumber} + ${second.flightNumber} (Via ${outboundFlightDetails.connectionCity})`;
         }
 
+        // 记录到达时间（去程航段的最后一个到达时间）
+        arrivalDate = outboundFlightDetails.segments[outboundFlightDetails.segments.length - 1].arrivalTime;
+
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
@@ -253,7 +259,7 @@ export async function POST(request: NextRequest) {
             : `Connecting Flight ${outboundFlightDetails.segments[0].flightNumber} + ${outboundFlightDetails.segments[1].flightNumber}`,
           description: outboundDescription,
           startDate: outboundFlightDetails.segments[0].departureTime,
-          endDate: outboundFlightDetails.segments[outboundFlightDetails.segments.length - 1].arrivalTime,
+          endDate: arrivalDate,
           location: `${originCity} - ${destinationCity}`,
           price: (plan.flightFee / 2).toString(), // 往返机票费用平分
           flightNumber: outboundFlightDetails.segments[0].flightNumber, // 使用第一段航班号
@@ -326,6 +332,9 @@ export async function POST(request: NextRequest) {
         const outboundDurationMinutes = 120; // 默认2小时
         const outboundEndTime = new Date(travelDate.getTime() + outboundDurationMinutes * 60 * 1000);
 
+        // 记录到达时间
+        arrivalDate = outboundEndTime;
+
         await db.insert(itineraries).values({
           id: uuidv4(),
           orderId: order.id,
@@ -333,7 +342,7 @@ export async function POST(request: NextRequest) {
           name: `Flight ${outboundFlightNumber}`,
           description: `Flight from ${originCity} to ${destinationCity}`,
           startDate: travelDate,
-          endDate: outboundEndTime,
+          endDate: arrivalDate,
           location: `${originCity} - ${destinationCity}`,
           price: (plan.flightFee / 2).toString(),
           flightNumber: outboundFlightNumber,
@@ -367,10 +376,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 确保酒店时间正确：从到达后开始，到回程前结束
+    // 给到达后预留半天时间调整
+    const hotelStartDate = new Date(arrivalDate.getTime() + 6 * 60 * 60 * 1000); // 到达后6小时开始住宿
+    // 确保hotelStartDate不晚于returnDate
+    const safeHotelStartDate = hotelStartDate < returnDate ? hotelStartDate : new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
+
     // 生成酒店房间号和详细信息
     const hotelName = bookingData.hotelName || 'Grand Hotel';
     const roomNumber = generateRoomNumber();
-    const nights = Math.ceil((returnDate.getTime() - travelDate.getTime()) / (24 * 60 * 60 * 1000));
+    const nights = Math.ceil((returnDate.getTime() - safeHotelStartDate.getTime()) / (24 * 60 * 60 * 1000));
 
     await db.insert(itineraries).values({
       id: uuidv4(),
@@ -378,7 +393,7 @@ export async function POST(request: NextRequest) {
       type: 'hotel',
       name: hotelName,
       description: `${nights} nights accommodation`,
-      startDate: travelDate,
+      startDate: safeHotelStartDate,
       endDate: returnDate,
       location: bookingData.destinationCity || 'Destination',
       price: plan.hotelFee.toString(),
@@ -390,9 +405,15 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // 创建医疗咨询记录
+    // 创建医疗咨询记录 - 安排在到达后的第1-2天（上午9点）
+    // 给患者1天时间调整时差和休息
+    const daysAfterArrival = 1;
+    const medicalAppointmentDate = new Date(arrivalDate.getTime());
+    medicalAppointmentDate.setDate(medicalAppointmentDate.getDate() + daysAfterArrival);
+    medicalAppointmentDate.setHours(9, 17, 0, 0); // 上午9:17开始
+
     const medicalDurationMinutes = 60; // 咨询时间为60分钟
-    const medicalEndDate = new Date(appointmentDate.getTime() + medicalDurationMinutes * 60 * 1000);
+    const medicalEndDate = new Date(medicalAppointmentDate.getTime() + medicalDurationMinutes * 60 * 1000);
 
     await db.insert(itineraries).values({
       id: uuidv4(),
@@ -400,11 +421,14 @@ export async function POST(request: NextRequest) {
       type: 'ticket',
       name: getMedicalServiceName(bookingData.treatmentType),
       description: getMedicalServiceDescription(bookingData.treatmentType, bookingData.consultationDirection, bookingData.examinationItems, bookingData.surgeryTypes, bookingData.treatmentDirection, bookingData.rehabilitationDirection),
-      startDate: appointmentDate,
+      startDate: medicalAppointmentDate,
       endDate: medicalEndDate,
       location: bookingData.destinationCity || destinationCity,
       price: adjustedMedicalFee.toString(),
       durationMinutes: medicalDurationMinutes,
+      metadata: {
+        medicalType: 'consultation',
+      },
       status: 'pending',
       notificationSent: false,
       createdAt: new Date(),
@@ -412,34 +436,42 @@ export async function POST(request: NextRequest) {
     });
 
     // 创建旅游景点记录（如果用户选择了旅游服务）
+    // 景点游览安排在医疗咨询的后一天（确保在回程之前）
     if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
-      for (const attraction of bookingData.selectedAttractions) {
-        // 景点游览时间，默认2小时
-        const attractionDurationMinutes = 120;
-        // 景点游览时间安排在医疗咨询的第二天
-        const attractionDate = new Date(appointmentDate.getTime() + 1 * 24 * 60 * 60 * 1000);
-        const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
+      // 计算景点游览日期 - 在医疗咨询后1天
+      const attractionDate = new Date(medicalAppointmentDate.getTime());
+      attractionDate.setDate(attractionDate.getDate() + 1);
+      attractionDate.setHours(9, 0, 0, 0); // 上午9点开始
 
-        await db.insert(itineraries).values({
-          id: uuidv4(),
-          orderId: order.id,
-          type: 'ticket',
-          name: attraction.nameEn || attraction.nameZh,
-          description: attraction.description,
-          startDate: attractionDate,
-          endDate: attractionEndDate,
-          location: bookingData.destinationCity || destinationCity,
-          price: attraction.price.toString(),
-          durationMinutes: attractionDurationMinutes,
-          metadata: {
-            attractionType: 'tourism',
-            attractionId: attraction.id,
-          },
-          status: 'pending',
-          notificationSent: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
+      // 确保景点日期在回程之前
+      const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
+      if (attractionDate < returnDateMinusOneDay) {
+        for (const attraction of bookingData.selectedAttractions) {
+          // 景点游览时间，默认2小时
+          const attractionDurationMinutes = 120;
+          const attractionEndDate = new Date(attractionDate.getTime() + attractionDurationMinutes * 60 * 1000);
+
+          await db.insert(itineraries).values({
+            id: uuidv4(),
+            orderId: order.id,
+            type: 'ticket',
+            name: attraction.nameEn || attraction.nameZh,
+            description: attraction.description,
+            startDate: attractionDate,
+            endDate: attractionEndDate,
+            location: bookingData.destinationCity || destinationCity,
+            price: attraction.price.toString(),
+            durationMinutes: attractionDurationMinutes,
+            metadata: {
+              attractionType: 'tourism',
+              attractionId: attraction.id,
+            },
+            status: 'pending',
+            notificationSent: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
       }
     }
 
