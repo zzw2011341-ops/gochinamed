@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Check, Star, Plane, Hotel, Stethoscope, DollarSign, Calendar, MapPin, Info } from 'lucide-react';
 
 interface PlanOption {
@@ -44,6 +46,297 @@ interface BookingData {
   treatmentType: string;
 }
 
+interface Attraction {
+  id: string;
+  nameEn: string;
+  nameZh: string;
+  description: string;
+  duration: string; // 预计游览时间
+  price: number; // 门票费用
+  category: string; // 类别：cultural, natural, modern, etc.
+}
+
+// 不同城市的景点数据
+const cityAttractions: Record<string, Attraction[]> = {
+  'Beijing': [
+    {
+      id: 'bj-1',
+      nameEn: 'Forbidden City',
+      nameZh: '故宫',
+      description: 'Largest ancient imperial palace complex in the world',
+      duration: '3-4 hours',
+      price: 60,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-2',
+      nameEn: 'Great Wall',
+      nameZh: '长城',
+      description: 'One of the greatest wonders of the world',
+      duration: '4-5 hours',
+      price: 45,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-3',
+      nameEn: 'Temple of Heaven',
+      nameZh: '天坛',
+      description: 'Imperial sacrificial altar complex',
+      duration: '2-3 hours',
+      price: 35,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-4',
+      nameEn: 'Summer Palace',
+      nameZh: '颐和园',
+      description: 'Largest and most well-preserved royal garden',
+      duration: '3-4 hours',
+      price: 30,
+      category: 'natural'
+    },
+    {
+      id: 'bj-5',
+      nameEn: 'Tiananmen Square',
+      nameZh: '天安门广场',
+      description: 'One of the largest city squares in the world',
+      duration: '1-2 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-6',
+      nameEn: 'Beihai Park',
+      nameZh: '北海公园',
+      description: 'Imperial garden with a history of over 1,000 years',
+      duration: '2-3 hours',
+      price: 10,
+      category: 'natural'
+    },
+    {
+      id: 'bj-7',
+      nameEn: 'Hutong Tour',
+      nameZh: '胡同游',
+      description: 'Traditional Beijing alleyways and courtyard homes',
+      duration: '2-3 hours',
+      price: 50,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-8',
+      nameEn: 'National Museum of China',
+      nameZh: '中国国家博物馆',
+      description: 'China\'s supreme museum of history and art',
+      duration: '3-4 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'bj-9',
+      nameEn: '798 Art Zone',
+      nameZh: '798艺术区',
+      description: 'Contemporary art gallery complex in old factory buildings',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'bj-10',
+      nameEn: 'Olympic Park',
+      nameZh: '奥林匹克公园',
+      description: 'Home to Bird\'s Nest and Water Cube',
+      duration: '2-3 hours',
+      price: 50,
+      category: 'modern'
+    }
+  ],
+  'Shanghai': [
+    {
+      id: 'sh-1',
+      nameEn: 'The Bund',
+      nameZh: '外滩',
+      description: 'Historic waterfront area with colonial architecture',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'sh-2',
+      nameEn: 'Yu Garden',
+      nameZh: '豫园',
+      description: 'Classical Chinese garden in the old city',
+      duration: '2-3 hours',
+      price: 40,
+      category: 'cultural'
+    },
+    {
+      id: 'sh-3',
+      nameEn: 'Shanghai Tower',
+      nameZh: '上海中心大厦',
+      description: 'Tallest building in China with observation deck',
+      duration: '2-3 hours',
+      price: 180,
+      category: 'modern'
+    },
+    {
+      id: 'sh-4',
+      nameEn: 'Nanjing Road',
+      nameZh: '南京路',
+      description: 'Famous shopping street and pedestrian mall',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'sh-5',
+      nameEn: 'Oriental Pearl Tower',
+      nameZh: '东方明珠塔',
+      description: 'Iconic TV tower and observation deck',
+      duration: '2-3 hours',
+      price: 220,
+      category: 'modern'
+    },
+    {
+      id: 'sh-6',
+      nameEn: 'Shanghai Museum',
+      nameZh: '上海博物馆',
+      description: 'Museum of ancient Chinese art',
+      duration: '3-4 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'sh-7',
+      nameEn: 'Jade Buddha Temple',
+      nameZh: '玉佛寺',
+      description: 'Buddhist temple with two jade Buddha statues',
+      duration: '1-2 hours',
+      price: 20,
+      category: 'cultural'
+    },
+    {
+      id: 'sh-8',
+      nameEn: 'Former French Concession',
+      nameZh: '法租界',
+      description: 'Historic area with tree-lined streets and cafes',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'sh-9',
+      nameEn: 'Disneyland Shanghai',
+      nameZh: '上海迪士尼乐园',
+      description: 'World-famous theme park',
+      duration: 'Full day',
+      price: 499,
+      category: 'modern'
+    },
+    {
+      id: 'sh-10',
+      nameEn: 'Zhujiajiao Water Town',
+      nameZh: '朱家角古镇',
+      description: 'Ancient water town with canals and traditional houses',
+      duration: '3-4 hours',
+      price: 60,
+      category: 'cultural'
+    }
+  ],
+  // 默认景点列表（用于其他城市）
+  'default': [
+    {
+      id: 'default-1',
+      nameEn: 'City Museum',
+      nameZh: '市博物馆',
+      description: 'Learn about local history and culture',
+      duration: '2-3 hours',
+      price: 30,
+      category: 'cultural'
+    },
+    {
+      id: 'default-2',
+      nameEn: 'Central Park',
+      nameZh: '中心公园',
+      description: 'Relax in the city\'s green space',
+      duration: '1-2 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'default-3',
+      nameEn: 'Historic Old Town',
+      nameZh: '老城区',
+      description: 'Explore traditional architecture and streets',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'default-4',
+      nameEn: 'Art Gallery',
+      nameZh: '美术馆',
+      description: 'Contemporary and traditional art exhibitions',
+      duration: '2-3 hours',
+      price: 20,
+      category: 'modern'
+    },
+    {
+      id: 'default-5',
+      nameEn: 'Pagoda Tower',
+      nameZh: '古塔',
+      description: 'Historic pagoda with city views',
+      duration: '1-2 hours',
+      price: 25,
+      category: 'cultural'
+    },
+    {
+      id: 'default-6',
+      nameEn: 'Botanical Garden',
+      nameZh: '植物园',
+      description: 'Beautiful gardens with local flora',
+      duration: '2-3 hours',
+      price: 15,
+      category: 'natural'
+    },
+    {
+      id: 'default-7',
+      nameEn: 'Night Market',
+      nameZh: '夜市',
+      description: 'Experience local food and culture',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'default-8',
+      nameEn: 'Modern Shopping District',
+      nameZh: '现代商业区',
+      description: 'Latest fashion and entertainment',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'default-9',
+      nameEn: 'Riverside Walk',
+      nameZh: '江边步道',
+      description: 'Scenic walk along the river',
+      duration: '1-2 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'default-10',
+      nameEn: 'Temple of Local Religion',
+      nameZh: '本地寺庙',
+      description: 'Traditional religious site',
+      duration: '1-2 hours',
+      price: 10,
+      category: 'cultural'
+    }
+  ]
+};
+
 export default function PlanSelectionPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -54,6 +347,9 @@ export default function PlanSelectionPage() {
   const [loading, setLoading] = useState(true);
   const [includeTourism, setIncludeTourism] = useState(false); // 是否包含旅游服务
   const [tourismFee, setTourismFee] = useState(0); // 旅游服务费用
+  const [showAttractionDialog, setShowAttractionDialog] = useState(false); // 景点选择对话框
+  const [selectedAttractions, setSelectedAttractions] = useState<string[]>([]); // 选中的景点ID列表
+  const [attractions, setAttractions] = useState<Attraction[]>([]); // 当前城市的景点列表
 
   // 判断是否同城旅行
   const isSameCity = bookingData?.originCity === bookingData?.destinationCity;
@@ -91,6 +387,13 @@ export default function PlanSelectionPage() {
     // 保存选中的方案
     sessionStorage.setItem('selectedPlan', JSON.stringify(finalPlan));
     sessionStorage.setItem('includeTourism', JSON.stringify(includeTourism));
+    
+    // 如果选择了旅游服务，保存选中的景点信息
+    if (includeTourism && selectedAttractions.length > 0) {
+      const selectedAttractionDetails = attractions.filter(a => selectedAttractions.includes(a.id));
+      sessionStorage.setItem('selectedAttractions', JSON.stringify(selectedAttractionDetails));
+    }
+    
     // 跳转到支付页面
     router.push('/book/payment');
   };
@@ -98,13 +401,50 @@ export default function PlanSelectionPage() {
   // 计算旅游服务费用（基于基础估算）
   useEffect(() => {
     if (includeTourism && bookingData) {
-      // 根据城市估算旅游费用（每人每天50-100美元，7天）
-      const baseTourismFee = 7 * 80; // 7天，每天80美元
-      setTourismFee(baseTourismFee);
+      // 加载当前城市的景点列表
+      const cityAttractionList = cityAttractions[bookingData.destinationCity] || cityAttractions['default'];
+      setAttractions(cityAttractionList);
+      // 默认选中前3个热门景点
+      setSelectedAttractions(cityAttractionList.slice(0, 3).map(a => a.id));
+    } else {
+      setAttractions([]);
+      setSelectedAttractions([]);
+    }
+  }, [includeTourism, bookingData]);
+
+  // 当用户选择的景点变化时，更新门票费用
+  useEffect(() => {
+    if (includeTourism && selectedAttractions.length > 0) {
+      const totalFee = selectedAttractions.reduce((sum, attractionId) => {
+        const attraction = attractions.find(a => a.id === attractionId);
+        return sum + (attraction?.price || 0);
+      }, 0);
+      setTourismFee(totalFee);
+    } else if (includeTourism) {
+      // 如果用户开启旅游服务但没有选择景点，使用默认费用
+      setTourismFee(7 * 80);
     } else {
       setTourismFee(0);
     }
-  }, [includeTourism, bookingData]);
+  }, [selectedAttractions, attractions, includeTourism]);
+
+  // 处理旅游服务开关变化
+  const handleTourismToggle = (checked: boolean) => {
+    setIncludeTourism(checked);
+    if (checked) {
+      // 打开景点选择对话框
+      setShowAttractionDialog(true);
+    }
+  };
+
+  // 处理景点选择变化
+  const handleAttractionToggle = (attractionId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAttractions([...selectedAttractions, attractionId]);
+    } else {
+      setSelectedAttractions(selectedAttractions.filter(id => id !== attractionId));
+    }
+  };
 
   // 计算实际总价
   const getTotalPrice = (plan: PlanOption) => {
@@ -162,22 +502,49 @@ export default function PlanSelectionPage() {
               </div>
               <Switch
                 checked={includeTourism}
-                onCheckedChange={setIncludeTourism}
+                onCheckedChange={handleTourismToggle}
                 className="mt-2"
               />
             </div>
           </CardHeader>
           {includeTourism && (
             <CardContent>
-              <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-100 rounded-lg p-3">
-                <MapPin className="h-4 w-4" />
-                <span>
-                  {language === 'zh'
-                    ? `已添加旅游服务（门票费：$${tourismFee.toLocaleString()}）`
-                    : `Tourism services added (Ticket fee: $${tourismFee.toLocaleString()})`
-                  }
-                </span>
+              <div className="flex items-center justify-between text-sm text-blue-700 bg-blue-100 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    {language === 'zh'
+                      ? `已添加旅游服务（门票费：$${tourismFee.toLocaleString()}）`
+                      : `Tourism services added (Ticket fee: $${tourismFee.toLocaleString()})`
+                    }
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAttractionDialog(true)}
+                  className="h-8"
+                >
+                  {language === 'zh' ? '选择景点' : 'Select Attractions'}
+                </Button>
               </div>
+              {selectedAttractions.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <div className="text-xs text-gray-600">
+                    {language === 'zh' ? '已选景点：' : 'Selected attractions:'}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedAttractions.map((id) => {
+                      const attraction = attractions.find(a => a.id === id);
+                      return (
+                        <Badge key={id} variant="secondary" className="text-xs">
+                          {language === 'zh' ? attraction?.nameZh : attraction?.nameEn}
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
@@ -422,6 +789,101 @@ export default function PlanSelectionPage() {
           </div>
         )}
       </div>
+
+      {/* 景点选择对话框 */}
+      <Dialog open={showAttractionDialog} onOpenChange={setShowAttractionDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'zh'
+                ? `选择 ${bookingData?.destinationCity} 的景点`
+                : `Select Attractions in ${bookingData?.destinationCity}`}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'zh'
+                ? '选择您想要游览的当地景点，门票费用将计入您的总费用中'
+                : 'Select local attractions you want to visit. Ticket fees will be added to your total cost'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {attractions.map((attraction) => {
+              const isSelected = selectedAttractions.includes(attraction.id);
+              return (
+                <Card
+                  key={attraction.id}
+                  className={`cursor-pointer transition-all ${
+                    isSelected
+                      ? 'ring-2 ring-blue-500 bg-blue-50/50'
+                      : 'hover:shadow-md'
+                  }`}
+                  onClick={() => handleAttractionToggle(attraction.id, !isSelected)}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <CardTitle className="text-base">
+                          {language === 'zh' ? attraction.nameZh : attraction.nameEn}
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          {attraction.description}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {language === 'zh' ? '游览时间' : 'Duration'}: {attraction.duration}
+                        </span>
+                      </div>
+                      <Badge
+                        variant={attraction.price === 0 ? 'secondary' : 'default'}
+                        className="text-xs"
+                      >
+                        {attraction.price === 0
+                          ? language === 'zh'
+                            ? '免费'
+                            : 'Free'
+                          : `$${attraction.price}`}
+                      </Badge>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {language === 'zh'
+                        ? attraction.category === 'cultural'
+                          ? '文化'
+                          : attraction.category === 'natural'
+                          ? '自然'
+                          : attraction.category === 'modern'
+                          ? '现代'
+                          : attraction.category
+                        : attraction.category}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <DialogFooter className="flex items-center justify-between border-t pt-4">
+            <div className="text-sm text-gray-600">
+              {language === 'zh'
+                ? `已选 ${selectedAttractions.length} 个景点，门票总计：$${tourismFee}`
+                : `${selectedAttractions.length} attractions selected, Total tickets: $${tourismFee}`}
+            </div>
+            <Button onClick={() => setShowAttractionDialog(false)}>
+              {language === 'zh' ? '确定' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
