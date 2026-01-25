@@ -427,6 +427,21 @@ export async function POST(request: NextRequest) {
       medicalAppointmentDate.setHours(10, 0, 0, 0);
     }
 
+    // 最终验证：确保医疗咨询时间合理且在有效范围内
+    // 如果最小日期已经大于最大日期，说明到达和回程时间太近，无法安排医疗咨询
+    if (minAppointmentDate >= maxAppointmentDate) {
+      console.error('Cannot schedule medical appointment: arrival date and return date are too close', {
+        arrivalDate: arrivalDate.toISOString(),
+        returnDate: returnDate.toISOString(),
+        minAppointmentDate: minAppointmentDate.toISOString(),
+        maxAppointmentDate: maxAppointmentDate.toISOString(),
+      });
+      // 在这种情况下，仍然创建医疗咨询记录，但记录到到达后1天
+      // 这不是理想情况，但至少能继续流程
+      medicalAppointmentDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000);
+      medicalAppointmentDate.setHours(10, 0, 0, 0);
+    }
+
     const medicalDurationMinutes = 60; // 咨询时间为60分钟
     const medicalEndDate = new Date(medicalAppointmentDate.getTime() + medicalDurationMinutes * 60 * 1000);
 
@@ -512,6 +527,12 @@ export async function POST(request: NextRequest) {
           beforeReturn: attractionDate < maxAttractionDate
         });
       }
+    } else {
+      console.log('No attractions selected or invalid attraction data', {
+        hasSelectedAttractions: !!bookingData.selectedAttractions,
+        isArray: Array.isArray(bookingData.selectedAttractions),
+        length: bookingData.selectedAttractions?.length || 0,
+      });
     }
 
     // 更新用户的证件信息
