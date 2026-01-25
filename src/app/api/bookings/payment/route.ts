@@ -192,7 +192,8 @@ export async function POST(request: NextRequest) {
       hospitalId: plan.bookingData?.selectedHospital || null,
       status: 'confirmed',
       doctorAppointmentStatus: plan.bookingData?.doctorId ? 'pending' : 'confirmed',
-      doctorAppointmentDate: plan.bookingData?.doctorId ? appointmentDate : null,
+      // 注意：医生预约日期将在航班创建后重新计算，确保在到达之后
+      doctorAppointmentDate: null,
       serviceReservationStatus: 'pending',
       medicalFee: adjustedMedicalFee.toString(),
       hotelFee: plan.hotelFee.toString(),
@@ -376,9 +377,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 确保酒店时间正确：从到达后开始，到回程前结束
-    // 给到达后预留半天时间调整
-    const hotelStartDate = new Date(arrivalDate.getTime() + 6 * 60 * 60 * 1000); // 到达后6小时开始住宿
+    // 确保酒店时间正确：从到达当天下午开始，到回程当天上午结束
+    // 到达后预留4小时办理入住手续
+    const hotelStartDate = new Date(arrivalDate.getTime() + 4 * 60 * 60 * 1000); // 到达后4小时开始住宿
     // 确保hotelStartDate不晚于returnDate
     const safeHotelStartDate = hotelStartDate < returnDate ? hotelStartDate : new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
 
@@ -395,7 +396,7 @@ export async function POST(request: NextRequest) {
       description: `${nights} nights accommodation`,
       startDate: safeHotelStartDate,
       endDate: returnDate,
-      location: bookingData.destinationCity || 'Destination',
+      location: destinationCity,
       price: plan.hotelFee.toString(),
       hotelName: hotelName,
       roomNumber: roomNumber,
@@ -405,25 +406,25 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // 创建医疗咨询记录 - 安排在到达后的第1-2天（上午9点）
+    // 创建医疗咨询记录 - 安排在到达后的第2天（上午10点）
     // 给患者1天时间调整时差和休息
     const daysAfterArrival = 1;
     let medicalAppointmentDate = new Date(arrivalDate.getTime());
     medicalAppointmentDate.setDate(medicalAppointmentDate.getDate() + daysAfterArrival);
-    medicalAppointmentDate.setHours(9, 17, 0, 0); // 上午9:17开始
+    medicalAppointmentDate.setHours(10, 0, 0, 0); // 上午10:00开始
 
     // 确保医疗咨询日期在到达和回程之间
     // 注意：必须确保医疗咨询在arrivalDate之后
-    const minAppointmentDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
+    const minAppointmentDate = new Date(arrivalDate.getTime() + 20 * 60 * 60 * 1000); // 到达后至少20小时
     const maxAppointmentDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
 
     if (medicalAppointmentDate < minAppointmentDate) {
-      medicalAppointmentDate = minAppointmentDate;
-      medicalAppointmentDate.setHours(9, 0, 0, 0);
+      medicalAppointmentDate = new Date(minAppointmentDate.getTime());
+      medicalAppointmentDate.setHours(10, 0, 0, 0);
     }
     if (medicalAppointmentDate > maxAppointmentDate) {
-      medicalAppointmentDate = maxAppointmentDate;
-      medicalAppointmentDate.setHours(9, 0, 0, 0);
+      medicalAppointmentDate = new Date(maxAppointmentDate.getTime());
+      medicalAppointmentDate.setHours(10, 0, 0, 0);
     }
 
     const medicalDurationMinutes = 60; // 咨询时间为60分钟
@@ -510,8 +511,9 @@ export async function POST(request: NextRequest) {
       .where(eq(users.id, userId));
 
     // 后台任务：预约医生（如果有医生ID）
-    if (plan.doctorId) {
-      bookDoctorAppointment(db, order.id, plan.doctorId, appointmentDate, bookingData.notes).catch(err => {
+    // 注意：医生预约日期必须在arrivalDate之后，使用medicalAppointmentDate
+    if (plan.doctorId && medicalAppointmentDate) {
+      bookDoctorAppointment(db, order.id, plan.doctorId, medicalAppointmentDate, bookingData.notes).catch(err => {
         console.error('Failed to book doctor appointment:', err);
       });
     }
