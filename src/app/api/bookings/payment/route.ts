@@ -169,12 +169,18 @@ export async function POST(request: NextRequest) {
       adjustedMedicalFee = adjustedMedicineFee + adjustedNursingFee + adjustedNutritionFee;
     }
 
+    // 计算门票总费用（如果用户选择了景点）
+    let ticketFee = 0;
+    if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
+      ticketFee = bookingData.selectedAttractions.reduce((sum: number, attr: any) => sum + (attr.price || 0), 0);
+    }
+
     // 计算各项服务费用
     const medicalServiceFee = Math.max(adjustedMedicalFee * medicalRate, medicalMinFee);
     const flightServiceFee = Math.max(plan.flightFee * flightRate, flightMinFee);
     const hotelServiceFee = Math.max(plan.hotelFee * hotelRate, hotelMinFee);
 
-    const subtotal = adjustedMedicalFee + plan.hotelFee + plan.flightFee;
+    const subtotal = adjustedMedicalFee + plan.hotelFee + plan.flightFee + ticketFee;
     const totalServiceFee = medicalServiceFee + flightServiceFee + hotelServiceFee;
     const totalAmount = subtotal + totalServiceFee;
 
@@ -191,7 +197,7 @@ export async function POST(request: NextRequest) {
       medicalFee: adjustedMedicalFee.toString(),
       hotelFee: plan.hotelFee.toString(),
       flightFee: plan.flightFee.toString(),
-      ticketFee: '0', // 医疗旅游不需要门票费用
+      ticketFee: ticketFee.toString(), // 根据用户选择的景点计算门票费用
       subtotal: subtotal.toString(),
       serviceFeeRate: medicalRate.toString(),
       serviceFeeAmount: totalServiceFee.toString(),
