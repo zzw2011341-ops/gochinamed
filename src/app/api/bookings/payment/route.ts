@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // 添加详细调试日志
-    console.log('[Payment API] Full request body received');
+    console.log('='.repeat(80));
+    console.log('[Payment API] ==========================================');
+    console.log('[Payment API] Full request body:');
+    console.log(JSON.stringify(body, null, 2));
+    console.log('[Payment API] ==========================================');
     console.log('[Payment API] plan object keys:', Object.keys(plan));
     console.log('[Payment API] plan.bookingData:', JSON.stringify(plan.bookingData, null, 2));
     
@@ -126,9 +130,35 @@ export async function POST(request: NextRequest) {
     console.log('[Payment API] bookingData.returnDate:', bookingData.returnDate);
     console.log('[Payment API] bookingData keys:', Object.keys(bookingData));
     
-    const travelDate = new Date(bookingData.travelDate || Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const appointmentDate = new Date(bookingData.appointmentDate || Date.now() + 10 * 24 * 60 * 60 * 1000);
-    const returnDate = new Date(bookingData.returnDate || Date.now() + 14 * 24 * 60 * 60 * 1000);
+    // 强制验证travelDate必须存在且有效
+    if (!bookingData.travelDate || bookingData.travelDate === '') {
+      console.error('[Payment API] ERROR: travelDate is missing or empty!');
+      console.error('[Payment API] Full bookingData:', JSON.stringify(bookingData, null, 2));
+      return NextResponse.json(
+        { 
+          error: 'Travel date is missing. Please go back and select your travel date.',
+          debug: { bookingData }
+        },
+        { status: 400 }
+      );
+    }
+
+    const travelDate = new Date(bookingData.travelDate);
+    
+    // 验证travelDate是否是有效日期
+    if (isNaN(travelDate.getTime())) {
+      console.error('[Payment API] ERROR: travelDate is invalid:', bookingData.travelDate);
+      return NextResponse.json(
+        { 
+          error: 'Travel date is invalid. Please select a valid date.',
+          debug: { providedTravelDate: bookingData.travelDate }
+        },
+        { status: 400 }
+      );
+    }
+
+    const appointmentDate = bookingData.appointmentDate ? new Date(bookingData.appointmentDate) : null;
+    const returnDate = new Date(bookingData.returnDate || new Date(travelDate.getTime() + 7 * 24 * 60 * 60 * 1000));
 
     // 添加调试日志
     console.log('[Payment API] Calculated travelDate:', travelDate.toISOString());

@@ -83,13 +83,39 @@ export async function POST(request: NextRequest) {
       budget,
     } = body;
 
+    // 添加调试日志
+    console.log('='.repeat(80));
+    console.log('[Create API] ==========================================');
+    console.log('[Create API] Received travelDate:', travelDate);
+    console.log('[Create API] Request body keys:', Object.keys(body));
+    console.log('[Create API] Full request body:', JSON.stringify(body, null, 2));
+    console.log('[Create API] ==========================================');
+
     // 验证必需字段
     if (!userId || !originCity || !destinationCity || !travelDate) {
+      console.error('[Create API] Missing required fields:', {
+        hasUserId: !!userId,
+        hasOriginCity: !!originCity,
+        hasDestinationCity: !!destinationCity,
+        hasTravelDate: !!travelDate
+      });
       return NextResponse.json(
         { error: 'Missing required fields: userId, originCity, destinationCity, travelDate' },
         { status: 400 }
       );
     }
+
+    // 验证travelDate格式
+    const parsedTravelDate = new Date(travelDate);
+    if (isNaN(parsedTravelDate.getTime())) {
+      console.error('[Create API] Invalid travelDate format:', travelDate);
+      return NextResponse.json(
+        { error: 'Invalid travelDate format. Expected YYYY-MM-DD', details: { provided: travelDate } },
+        { status: 400 }
+      );
+    }
+
+    console.log('[Create API] Parsed travelDate:', parsedTravelDate.toISOString());
 
     const db = await getDb();
 
