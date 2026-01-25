@@ -453,16 +453,27 @@ export async function POST(request: NextRequest) {
     // 创建旅游景点记录（如果用户选择了旅游服务）
     // 景点游览安排在医疗咨询后、回程前
     if (bookingData.selectedAttractions && Array.isArray(bookingData.selectedAttractions) && bookingData.selectedAttractions.length > 0) {
-      // 尝试在医疗咨询后1天安排景点（下午2点开始）
-      const attractionDate = new Date(medicalAppointmentDate.getTime());
+      // 智能安排景点日期：优先在医疗咨询后1天（下午2点开始）
+      // 如果时间不够，则在到达后第2天（上午10点开始）
+      let attractionDate = new Date(medicalAppointmentDate.getTime());
       attractionDate.setDate(attractionDate.getDate() + 1);
       attractionDate.setHours(14, 0, 0, 0);
 
       // 确保景点日期在回程之前（至少提前1天）
       const returnDateMinusOneDay = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000);
 
-      // 最终验证：确保景点日期有效（必须在医疗咨询后，在回程前至少1天）
-      if (attractionDate > medicalAppointmentDate && attractionDate < returnDateMinusOneDay) {
+      // 如果景点日期超过了回程前1天，则尝试在到达后第2天安排
+      if (attractionDate >= returnDateMinusOneDay) {
+        attractionDate = new Date(arrivalDate.getTime());
+        attractionDate.setDate(attractionDate.getDate() + 2);
+        attractionDate.setHours(10, 0, 0, 0);
+      }
+
+      // 最终验证：确保景点日期有效（必须在到达后至少1天，在回程前至少1天）
+      const minAttractionDate = new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000); // 到达后至少1天
+      const maxAttractionDate = new Date(returnDate.getTime() - 24 * 60 * 60 * 1000); // 回程前至少1天
+
+      if (attractionDate >= minAttractionDate && attractionDate < maxAttractionDate) {
         for (const attraction of bookingData.selectedAttractions) {
           // 景点游览时间，默认2小时
           const attractionDurationMinutes = 120;
@@ -493,10 +504,12 @@ export async function POST(request: NextRequest) {
       } else {
         console.warn('Cannot create attraction itineraries: no available time slot', {
           attractionDate,
-          medicalAppointmentDate,
-          returnDateMinusOneDay,
-          attractionDateValid: attractionDate > medicalAppointmentDate,
-          beforeReturn: attractionDate < returnDateMinusOneDay
+          arrivalDate,
+          returnDate,
+          minAttractionDate,
+          maxAttractionDate,
+          attractionDateValid: attractionDate >= minAttractionDate,
+          beforeReturn: attractionDate < maxAttractionDate
         });
       }
     }
