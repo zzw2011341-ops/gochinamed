@@ -31,6 +31,49 @@ interface Doctor {
   hospitalName?: string;
 }
 
+interface HospitalSpecialties {
+  consultationDirections: string[]; // 医院支持的咨询方向
+  examinationItems: string[]; // 医院支持的检查项目
+  treatmentTypes: string[]; // 医院支持的治疗类型
+  surgeryTypes: string[]; // 医院支持的手术类型
+  treatmentDirections: string[]; // 医院支持的治疗方向
+  rehabilitationDirections: string[]; // 医院支持的康复方向
+}
+
+// 咨询方向名称映射
+const getConsultationDirectionName = (direction: string, lang: string = 'en'): string => {
+  const names: Record<string, { en: string; zh: string }> = {
+    'general': { en: 'General Health', zh: '一般健康咨询' },
+    'internal': { en: 'Internal Medicine', zh: '内科咨询' },
+    'surgery': { en: 'Surgery', zh: '外科咨询' },
+    'pediatrics': { en: 'Pediatrics', zh: '儿科咨询' },
+    'obstetrics': { en: 'Obstetrics', zh: '妇产科咨询' },
+    'orthopedics': { en: 'Orthopedics', zh: '骨科咨询' },
+    'neurology': { en: 'Neurology', zh: '神经科咨询' },
+    'cardiology': { en: 'Cardiology', zh: '心血管科咨询' },
+    'oncology': { en: 'Oncology', zh: '肿瘤科咨询' },
+    'dermatology': { en: 'Dermatology', zh: '皮肤科咨询' },
+    'ophthalmology': { en: 'Ophthalmology', zh: '眼科咨询' },
+    'ent': { en: 'ENT', zh: '耳鼻喉科咨询' },
+    'traditional_chinese': { en: 'Traditional Chinese Medicine', zh: '中医咨询' },
+    'rehabilitation': { en: 'Rehabilitation', zh: '康复咨询' },
+    'nutrition': { en: 'Nutrition', zh: '营养咨询' },
+  };
+  return (names[direction] as { en: string; zh: string })?.[lang as 'en' | 'zh'] || direction;
+};
+
+// 治疗类型名称映射
+const getTreatmentTypeName = (type: string, lang: string = 'en'): string => {
+  const names: Record<string, { en: string; zh: string }> = {
+    'consultation': { en: 'Consultation', zh: '咨询' },
+    'examination': { en: 'Examination', zh: '检查' },
+    'surgery': { en: 'Surgery', zh: '手术' },
+    'therapy': { en: 'Therapy', zh: '治疗' },
+    'rehabilitation': { en: 'Rehabilitation', zh: '康复' },
+  };
+  return (names[type] as { en: string; zh: string })?.[lang as 'en' | 'zh'] || type;
+};
+
 export default function BookPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -38,6 +81,16 @@ export default function BookPage() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  // 医院专长解析结果
+  const [hospitalSpecialties, setHospitalSpecialties] = useState<HospitalSpecialties>({
+    consultationDirections: [],
+    examinationItems: [],
+    treatmentTypes: [],
+    surgeryTypes: [],
+    treatmentDirections: [],
+    rehabilitationDirections: [],
+  });
 
   // 表单数据
   const [formData, setFormData] = useState({
@@ -127,6 +180,176 @@ export default function BookPage() {
       filterDoctorsByConsultation();
     }
   }, [formData.consultationDirection]);
+
+  // 当医院选择变化时，解析医院专长
+  useEffect(() => {
+    if (formData.selectedHospital && hospitals.length > 0) {
+      const selectedHospitalData = hospitals.find(h => h.id === formData.selectedHospital);
+      if (selectedHospitalData) {
+        parseHospitalSpecialties(selectedHospitalData);
+      }
+    } else {
+      // 清除医院专长
+      setHospitalSpecialties({
+        consultationDirections: [],
+        examinationItems: [],
+        treatmentTypes: [],
+        surgeryTypes: [],
+        treatmentDirections: [],
+        rehabilitationDirections: [],
+      });
+    }
+  }, [formData.selectedHospital, hospitals]);
+
+  // 解析医院专长
+  const parseHospitalSpecialties = (hospital: Hospital) => {
+    try {
+      const specialties = hospital.level ? JSON.parse(hospital.level) : [];
+
+      // 定义映射关系
+      const consultationDirectionMap: Record<string, string[]> = {
+        'general': ['general', 'general practice', 'health', 'wellness'],
+        'internal': ['internal', 'internal medicine', 'internist', 'medicine'],
+        'surgery': ['surgery', 'surgeon', 'surgical', 'operation'],
+        'pediatrics': ['pediatric', 'pediatrics', 'children', 'child', 'kids'],
+        'obstetrics': ['obstetric', 'gynecology', 'women', 'ob-gyn', 'gyn', 'maternity'],
+        'orthopedics': ['orthopedic', 'bone', 'joint', 'musculoskeletal', 'sports'],
+        'neurology': ['neurolog', 'brain', 'nervous', 'neural', 'spine'],
+        'cardiology': ['cardiac', 'heart', 'cardiovascular', 'cardiologist'],
+        'oncology': ['cancer', 'tumor', 'oncologist', 'malignancy'],
+        'dermatology': ['skin', 'dermatologic', 'dermatologist'],
+        'ophthalmology': ['eye', 'ophthalmic', 'vision', 'sight'],
+        'ent': ['ear', 'nose', 'throat', 'otolaryngology', 'head', 'neck'],
+        'traditional_chinese': ['chinese', 'tcm', 'acupuncture', 'herbal', 'traditional'],
+        'rehabilitation': ['rehab', 'recovery', 'physical therapy', 'therapy', 'restoration'],
+        'nutrition': ['nutrition', 'diet', 'food', 'dietitian', 'eating'],
+      };
+
+      const examinationItemMap: Record<string, string[]> = {
+        'blood_test': ['blood', 'lab', 'laboratory', 'test'],
+        'urine_test': ['urine', 'urinalysis'],
+        'ct_scan': ['ct', 'scan', 'tomography'],
+        'mri': ['mri', 'magnetic', 'resonance'],
+        'ultrasound': ['ultrasound', 'sonography', 'ultrasonic'],
+        'x_ray': ['x-ray', 'xray', 'radiograph'],
+        'ecg': ['ecg', 'ekg', 'electrocardiogram', 'heart rhythm'],
+        'endoscopy': ['endoscopy', 'endoscope', 'gastroscopy', 'colonoscopy'],
+        'biopsy': ['biopsy', 'tissue', 'sample'],
+        'pet_scan': ['pet', 'positron', 'emission'],
+        'bone_density': ['bone density', 'dexa', 'osteoporosis'],
+        'colonoscopy': ['colonoscopy', 'colon', 'large intestine'],
+      };
+
+      const treatmentTypeMap: Record<string, string[]> = {
+        'consultation': ['consultation', 'advice', 'medical advice', 'checkup'],
+        'examination': ['examination', 'exam', 'check', 'diagnostic', 'test'],
+        'surgery': ['surgery', 'surgical', 'operation', 'procedure'],
+        'therapy': ['therapy', 'treatment', 'cure'],
+        'rehabilitation': ['rehabilitation', 'rehab', 'recovery', 'restore'],
+      };
+
+      const surgeryTypeMap: Record<string, string[]> = {
+        'cardiac_surgery': ['cardiac', 'heart', 'bypass', 'valve'],
+        'neurosurgery': ['neurosurgery', 'brain', 'spine', 'nerve'],
+        'orthopedic_surgery': ['orthopedic', 'bone', 'joint', 'muscle'],
+        'cosmetic_surgery': ['cosmetic', 'plastic', 'aesthetic', 'beauty'],
+        'ophthalmic_surgery': ['ophthalmic', 'eye', 'vision', 'cataract'],
+        'dental_surgery': ['dental', 'teeth', 'oral', 'mouth'],
+        'general_surgery': ['general', 'abdominal', 'digestive'],
+        'gynecologic_surgery': ['gynecologic', 'gyn', 'women', 'uterus'],
+        'urology_surgery': ['urology', 'urinary', 'kidney', 'bladder'],
+        'oncology_surgery': ['oncology', 'cancer', 'tumor', 'malignancy'],
+        'pediatric_surgery': ['pediatric', 'children', 'kids'],
+        'vascular_surgery': ['vascular', 'blood vessel', 'artery', 'vein'],
+      };
+
+      const treatmentDirectionMap: Record<string, string[]> = {
+        'physical_therapy': ['physical', 'physiotherapy', 'rehab'],
+        'medication': ['medication', 'drug', 'medicine', 'pharmaceutical'],
+        'radiation': ['radiation', 'radiotherapy'],
+        'chemotherapy': ['chemotherapy', 'chemo', 'drug therapy'],
+        'immunotherapy': ['immunotherapy', 'immune', 'biological'],
+        'targeted_therapy': ['targeted', 'precision'],
+        'hormone_therapy': ['hormone', 'endocrine'],
+        'laser_therapy': ['laser', 'light'],
+        'acupuncture': ['acupuncture', 'needle'],
+        'massage': ['massage', 'manual'],
+      };
+
+      const rehabilitationDirectionMap: Record<string, string[]> = {
+        'post_surgery': ['post surgery', 'postoperative', 'after surgery'],
+        'stroke': ['stroke', 'cerebrovascular'],
+        'orthopedic_rehab': ['orthopedic', 'bone', 'joint'],
+        'cardiac_rehab': ['cardiac', 'heart'],
+        'neurological_rehab': ['neurological', 'nerve', 'brain'],
+        'sports_rehab': ['sports', 'athlete'],
+        'pediatric_rehab': ['pediatric', 'children'],
+        'pulmonary_rehab': ['pulmonary', 'lung', 'respiratory'],
+        'pain_management': ['pain', 'relief'],
+        'cognitive_rehab': ['cognitive', 'memory', 'thinking'],
+      };
+
+      // 将医院专长转换为小写并匹配
+      const specialtiesLower = specialties.map((s: string) => s.toLowerCase());
+
+      // 匹配并提取支持的选项
+      const matchedConsultationDirections = Object.entries(consultationDirectionMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      const matchedExaminationItems = Object.entries(examinationItemMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      const matchedTreatmentTypes = Object.entries(treatmentTypeMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      const matchedSurgeryTypes = Object.entries(surgeryTypeMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      const matchedTreatmentDirections = Object.entries(treatmentDirectionMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      const matchedRehabilitationDirections = Object.entries(rehabilitationDirectionMap)
+        .filter(([_, keywords]) => keywords.some(keyword =>
+          specialtiesLower.some((s: string) => s.includes(keyword))
+        ))
+        .map(([key]) => key);
+
+      setHospitalSpecialties({
+        consultationDirections: matchedConsultationDirections,
+        examinationItems: matchedExaminationItems,
+        treatmentTypes: matchedTreatmentTypes,
+        surgeryTypes: matchedSurgeryTypes,
+        treatmentDirections: matchedTreatmentDirections,
+        rehabilitationDirections: matchedRehabilitationDirections,
+      });
+    } catch (error) {
+      console.error('Error parsing hospital specialties:', error);
+      // 解析失败时，允许所有选项
+      setHospitalSpecialties({
+        consultationDirections: [],
+        examinationItems: [],
+        treatmentTypes: [],
+        surgeryTypes: [],
+        treatmentDirections: [],
+        rehabilitationDirections: [],
+      });
+    }
+  };
 
   const fetchHospitals = async () => {
     try {
@@ -526,15 +749,20 @@ export default function BookPage() {
 
                 {formData.selectedHospital && (
                   <Card>
-                    <CardContent className="pt-4">
+                    <CardContent className="pt-4 space-y-2">
                       <p className="text-sm text-gray-600">
                         {language === 'zh' ? '位置' : 'Location'}: {hospitals.find(h => h.id === formData.selectedHospital)?.location}
                       </p>
+                      {hospitalSpecialties.consultationDirections.length > 0 && (
+                        <p className="text-xs text-blue-600">
+                          {language === 'zh' ? '医院专长' : 'Hospital Specialties'}: {hospitalSpecialties.consultationDirections.length} {language === 'zh' ? '个专科' : 'specialties'}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 )}
 
-                {/* 咨询方向选择 */}
+                {/* 咨询方向选择 - 根据医院专长过滤 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {language === 'zh' ? '咨询方向' : 'Consultation Direction'}
@@ -550,6 +778,21 @@ export default function BookPage() {
                       <SelectValue placeholder={language === 'zh' ? '选择咨询方向' : 'Select consultation direction'} />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* 如果医院有专长，显示推荐的咨询方向 */}
+                      {hospitalSpecialties.consultationDirections.length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase">
+                          {language === 'zh' ? '医院推荐' : 'Recommended'}
+                        </div>
+                      )}
+                      {hospitalSpecialties.consultationDirections.length > 0 && hospitalSpecialties.consultationDirections.map((direction) => (
+                        <SelectItem key={direction} value={direction}>
+                          {getConsultationDirectionName(direction, language)}
+                        </SelectItem>
+                      ))}
+                      {/* 显示所有选项 */}
+                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                        {language === 'zh' ? '全部' : 'All'}
+                      </div>
                       <SelectItem value="general">{language === 'zh' ? '一般健康咨询' : 'General Health'}</SelectItem>
                       <SelectItem value="internal">{language === 'zh' ? '内科咨询' : 'Internal Medicine'}</SelectItem>
                       <SelectItem value="surgery">{language === 'zh' ? '外科咨询' : 'Surgery'}</SelectItem>
@@ -616,7 +859,7 @@ export default function BookPage() {
                   </Card>
                 )}
 
-                {/* 检查项目选择 */}
+                {/* 检查项目选择 - 根据医院专长标记 */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {language === 'zh' ? '检查项目' : 'Examination Items'}
@@ -632,19 +875,93 @@ export default function BookPage() {
                       <SelectValue placeholder={language === 'zh' ? '选择检查项目' : 'Select examination items'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="blood_test">{language === 'zh' ? '血液检查' : 'Blood Test'}</SelectItem>
-                      <SelectItem value="urine_test">{language === 'zh' ? '尿液检查' : 'Urine Test'}</SelectItem>
-                      <SelectItem value="ct_scan">{language === 'zh' ? 'CT扫描' : 'CT Scan'}</SelectItem>
-                      <SelectItem value="mri">{language === 'zh' ? '核磁共振' : 'MRI'}</SelectItem>
-                      <SelectItem value="ultrasound">{language === 'zh' ? '超声波检查' : 'Ultrasound'}</SelectItem>
-                      <SelectItem value="x_ray">{language === 'zh' ? 'X光检查' : 'X-Ray'}</SelectItem>
-                      <SelectItem value="ecg">{language === 'zh' ? '心电图' : 'ECG'}</SelectItem>
-                      <SelectItem value="endoscopy">{language === 'zh' ? '内窥镜检查' : 'Endoscopy'}</SelectItem>
-                      <SelectItem value="biopsy">{language === 'zh' ? '活检' : 'Biopsy'}</SelectItem>
-                      <SelectItem value="pet_scan">{language === 'zh' ? 'PET扫描' : 'PET Scan'}</SelectItem>
-                      <SelectItem value="bone_density">{language === 'zh' ? '骨密度检查' : 'Bone Density'}</SelectItem>
-                      <SelectItem value="colonoscopy">{language === 'zh' ? '结肠镜检查' : 'Colonoscopy'}</SelectItem>
-                      <SelectItem value="comprehensive">{language === 'zh' ? '综合体检套餐' : 'Comprehensive Checkup'}</SelectItem>
+                      {/* 如果医院有支持的检查项目，显示标记 */}
+                      {hospitalSpecialties.examinationItems.length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase flex items-center gap-2">
+                          {language === 'zh' ? '医院支持' : 'Hospital Supported'}
+                          <Badge variant="secondary" className="text-xs">
+                            {hospitalSpecialties.examinationItems.length}
+                          </Badge>
+                        </div>
+                      )}
+                      <SelectItem value="blood_test">
+                        {language === 'zh' ? '血液检查' : 'Blood Test'}
+                        {hospitalSpecialties.examinationItems.includes('blood_test') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="urine_test">
+                        {language === 'zh' ? '尿液检查' : 'Urine Test'}
+                        {hospitalSpecialties.examinationItems.includes('urine_test') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="ct_scan">
+                        {language === 'zh' ? 'CT扫描' : 'CT Scan'}
+                        {hospitalSpecialties.examinationItems.includes('ct_scan') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="mri">
+                        {language === 'zh' ? '核磁共振' : 'MRI'}
+                        {hospitalSpecialties.examinationItems.includes('mri') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="ultrasound">
+                        {language === 'zh' ? '超声波检查' : 'Ultrasound'}
+                        {hospitalSpecialties.examinationItems.includes('ultrasound') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="x_ray">
+                        {language === 'zh' ? 'X光检查' : 'X-Ray'}
+                        {hospitalSpecialties.examinationItems.includes('x_ray') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="ecg">
+                        {language === 'zh' ? '心电图' : 'ECG'}
+                        {hospitalSpecialties.examinationItems.includes('ecg') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="endoscopy">
+                        {language === 'zh' ? '内窥镜检查' : 'Endoscopy'}
+                        {hospitalSpecialties.examinationItems.includes('endoscopy') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="biopsy">
+                        {language === 'zh' ? '活检' : 'Biopsy'}
+                        {hospitalSpecialties.examinationItems.includes('biopsy') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="pet_scan">
+                        {language === 'zh' ? 'PET扫描' : 'PET Scan'}
+                        {hospitalSpecialties.examinationItems.includes('pet_scan') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="bone_density">
+                        {language === 'zh' ? '骨密度检查' : 'Bone Density'}
+                        {hospitalSpecialties.examinationItems.includes('bone_density') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="colonoscopy">
+                        {language === 'zh' ? '结肠镜检查' : 'Colonoscopy'}
+                        {hospitalSpecialties.examinationItems.includes('colonoscopy') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="comprehensive">
+                        {language === 'zh' ? '综合体检套餐' : 'Comprehensive Checkup'}
+                        {hospitalSpecialties.examinationItems.includes('comprehensive') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500 mt-1">
@@ -654,9 +971,18 @@ export default function BookPage() {
               </div>
             )}
 
-            {/* 步骤4: 医疗选项 */}
+            {/* 步骤4: 医疗选项 - 根据医院专长过滤 */}
             {currentStep === 4 && (
               <div className="space-y-4">
+                {/* 医院专长提示 */}
+                {hospitalSpecialties.treatmentTypes.length > 0 && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-700">
+                      {language === 'zh' ? '医院支持的治疗服务' : 'Hospital Supported Services'}: {hospitalSpecialties.treatmentTypes.join(', ')}
+                    </p>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {language === 'zh' ? '治疗类型' : 'Treatment Type'}
@@ -669,6 +995,22 @@ export default function BookPage() {
                       <SelectValue placeholder={language === 'zh' ? '选择治疗类型' : 'Select treatment type'} />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* 如果医院有支持的治疗类型，优先显示 */}
+                      {hospitalSpecialties.treatmentTypes.length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase">
+                          {language === 'zh' ? '医院支持' : 'Hospital Supported'}
+                        </div>
+                      )}
+                      {hospitalSpecialties.treatmentTypes.length > 0 && hospitalSpecialties.treatmentTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {getTreatmentTypeName(type, language)}
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        </SelectItem>
+                      ))}
+                      {/* 显示所有选项 */}
+                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase">
+                        {language === 'zh' ? '全部' : 'All'}
+                      </div>
                       <SelectItem value="consultation">{language === 'zh' ? '咨询' : 'Consultation'}</SelectItem>
                       <SelectItem value="examination">{language === 'zh' ? '检查' : 'Examination'}</SelectItem>
                       <SelectItem value="surgery">{language === 'zh' ? '手术' : 'Surgery'}</SelectItem>
@@ -678,7 +1020,7 @@ export default function BookPage() {
                   </Select>
                 </div>
 
-                {/* 手术种类选择 */}
+                {/* 手术种类选择 - 根据医院专长标记 */}
                 {formData.treatmentType === 'surgery' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -695,18 +1037,87 @@ export default function BookPage() {
                         <SelectValue placeholder={language === 'zh' ? '选择手术种类' : 'Select surgery type'} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cardiac_surgery">{language === 'zh' ? '心脏手术' : 'Cardiac Surgery'}</SelectItem>
-                        <SelectItem value="neurosurgery">{language === 'zh' ? '神经外科手术' : 'Neurosurgery'}</SelectItem>
-                        <SelectItem value="orthopedic_surgery">{language === 'zh' ? '骨科手术' : 'Orthopedic Surgery'}</SelectItem>
-                        <SelectItem value="cosmetic_surgery">{language === 'zh' ? '整形外科手术' : 'Cosmetic Surgery'}</SelectItem>
-                        <SelectItem value="ophthalmic_surgery">{language === 'zh' ? '眼科手术' : 'Ophthalmic Surgery'}</SelectItem>
-                        <SelectItem value="dental_surgery">{language === 'zh' ? '牙科手术' : 'Dental Surgery'}</SelectItem>
-                        <SelectItem value="general_surgery">{language === 'zh' ? '普通外科手术' : 'General Surgery'}</SelectItem>
-                        <SelectItem value="gynecologic_surgery">{language === 'zh' ? '妇科手术' : 'Gynecologic Surgery'}</SelectItem>
-                        <SelectItem value="urology_surgery">{language === 'zh' ? '泌尿外科手术' : 'Urology Surgery'}</SelectItem>
-                        <SelectItem value="oncology_surgery">{language === 'zh' ? '肿瘤手术' : 'Oncology Surgery'}</SelectItem>
-                        <SelectItem value="pediatric_surgery">{language === 'zh' ? '儿科手术' : 'Pediatric Surgery'}</SelectItem>
-                        <SelectItem value="vascular_surgery">{language === 'zh' ? '血管手术' : 'Vascular Surgery'}</SelectItem>
+                      {/* 如果医院有支持的手术类型，显示标记 */}
+                      {hospitalSpecialties.surgeryTypes.length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-semibold text-blue-600 uppercase flex items-center gap-2">
+                          {language === 'zh' ? '医院支持' : 'Hospital Supported'}
+                          <Badge variant="secondary" className="text-xs">
+                            {hospitalSpecialties.surgeryTypes.length}
+                          </Badge>
+                        </div>
+                      )}
+                      <SelectItem value="cardiac_surgery">
+                        {language === 'zh' ? '心脏手术' : 'Cardiac Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('cardiac_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="neurosurgery">
+                        {language === 'zh' ? '神经外科手术' : 'Neurosurgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('neurosurgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="orthopedic_surgery">
+                        {language === 'zh' ? '骨科手术' : 'Orthopedic Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('orthopedic_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="cosmetic_surgery">
+                        {language === 'zh' ? '整形外科手术' : 'Cosmetic Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('cosmetic_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="ophthalmic_surgery">
+                        {language === 'zh' ? '眼科手术' : 'Ophthalmic Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('ophthalmic_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="dental_surgery">
+                        {language === 'zh' ? '牙科手术' : 'Dental Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('dental_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="general_surgery">
+                        {language === 'zh' ? '普通外科手术' : 'General Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('general_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="gynecologic_surgery">
+                        {language === 'zh' ? '妇科手术' : 'Gynecologic Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('gynecologic_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="urology_surgery">
+                        {language === 'zh' ? '泌尿外科手术' : 'Urology Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('urology_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="oncology_surgery">
+                        {language === 'zh' ? '肿瘤手术' : 'Oncology Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('oncology_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="pediatric_surgery">
+                        {language === 'zh' ? '儿科手术' : 'Pediatric Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('pediatric_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
+                      <SelectItem value="vascular_surgery">
+                        {language === 'zh' ? '血管手术' : 'Vascular Surgery'}
+                        {hospitalSpecialties.surgeryTypes.includes('vascular_surgery') && (
+                          <Badge className="ml-2 bg-blue-100 text-blue-800 text-xs">✓</Badge>
+                        )}
+                      </SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">
