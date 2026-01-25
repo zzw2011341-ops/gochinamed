@@ -30,16 +30,82 @@ export function generateRealisticFlightNumber(
   classType: 'economy' | 'business' | 'first' = 'economy'
 ): string {
   const airlines: Record<string, string[]> = {
+    // 中国主要城市
     'Beijing': ['CA', 'CZ', 'MU', 'HU'],
     'Shanghai': ['MU', 'FM', 'HO', 'CA'],
     'Guangzhou': ['CZ', 'ZH', 'CA'],
     'Shenzhen': ['ZH', 'CZ', 'CA'],
+    'Chengdu': ['CA', 'CZ', 'MU', '3U'],
+    'Chongqing': ['CA', 'CZ', 'MU', 'OQ'],
+    'Kunming': ['CA', 'CZ', 'MU', '8L'],
+    'Xi\'an': ['CA', 'CZ', 'MU', '9H'],
+    'Hangzhou': ['CA', 'CZ', 'MU', 'HO'],
+    'Nanjing': ['CA', 'CZ', 'MU', 'ZH'],
+    'Wuhan': ['CA', 'CZ', 'MU', 'ZH'],
+    'Tianjin': ['CA', 'CZ', 'MU', 'GS'],
+    'Qingdao': ['CA', 'CZ', 'MU', 'ZH'],
+    'Dalian': ['CA', 'CZ', 'MU', 'ZH'],
+    'Xiamen': ['CA', 'CZ', 'MU', 'MF'],
+    'Changsha': ['CA', 'CZ', 'MU', 'ZH'],
+    'Harbin': ['CA', 'CZ', 'MU', 'ZH'],
+    'Changchun': ['CA', 'CZ', 'MU', 'ZH'],
+    'Shenyang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Jinan': ['CA', 'CZ', 'MU', 'ZH', 'SC'],
+    'Zhengzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Taiyuan': ['CA', 'CZ', 'MU', 'ZH'],
+    'Urumqi': ['CA', 'CZ', 'MU', 'ZH'],
+    'Lhasa': ['CA', 'CZ', 'MU', 'TV'],
+    'Sanya': ['CA', 'CZ', 'MU', 'ZH'],
+    'Guiyang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Nanning': ['CA', 'CZ', 'MU', 'ZH'],
+    'Hefei': ['CA', 'CZ', 'MU', 'ZH'],
+    'Fuzhou': ['CA', 'CZ', 'MU', 'MF'],
+    'Lanzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Shijiazhuang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Nanchang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Ningbo': ['CA', 'CZ', 'MU', 'ZH'],
+    'Wuxi': ['CA', 'CZ', 'MU', 'ZH'],
+    'Suzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Changzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Wenzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Weifang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Yantai': ['CA', 'CZ', 'MU', 'ZH'],
+    'Jining': ['CA', 'CZ', 'MU', 'ZH'],
+    'Zibo': ['CA', 'CZ', 'MU', 'ZH'],
+    'Dezhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Linyi': ['CA', 'CZ', 'MU', 'ZH'],
+    'Heze': ['CA', 'CZ', 'MU', 'ZH'],
+    'Liaocheng': ['CA', 'CZ', 'MU', 'ZH'],
+    'Binzhou': ['CA', 'CZ', 'MU', 'ZH'],
+    'Dongying': ['CA', 'CZ', 'MU', 'ZH'],
+    'Weihai': ['CA', 'CZ', 'MU', 'ZH'],
+    'Rizhao': ['CA', 'CZ', 'MU', 'ZH'],
+    'Zaozhuang': ['CA', 'CZ', 'MU', 'ZH'],
+    'Tai\'an': ['CA', 'CZ', 'MU', 'ZH'],
+
+    // 国际城市
     'New York': ['UA', 'DL', 'AA', 'CA'],
+    'Los Angeles': ['UA', 'DL', 'AA', 'CA'],
+    'San Francisco': ['UA', 'DL', 'AA', 'CA'],
+    'Chicago': ['UA', 'DL', 'AA', 'CA'],
+    'Miami': ['UA', 'DL', 'AA', 'CA'],
     'London': ['BA', 'VS', 'CA'],
     'Paris': ['AF', 'CA', 'MU'],
     'Frankfurt': ['LH', 'CA'],
+    'Rome': ['AZ', 'CA', 'MU'],
+    'Madrid': ['IB', 'CA', 'MU'],
+    'Amsterdam': ['KL', 'CA', 'MU'],
+    'Vienna': ['OS', 'CA', 'MU'],
+    'Budapest': ['MA', 'CA', 'MU'],
+    'Prague': ['OK', 'CA', 'MU'],
+    'Warsaw': ['LO', 'CA', 'MU'],
     'Tokyo': ['JL', 'NH', 'CA', 'CZ'],
     'Seoul': ['KE', 'OZ', 'CA', 'CZ'],
+    'Singapore': ['SQ', 'CA', 'CZ'],
+    'Bangkok': ['TG', 'CA', 'CZ'],
+    'Dubai': ['EK', 'CA', 'CZ'],
+    'Sydney': ['QF', 'CA', 'CZ'],
+    'Hong Kong': ['CX', 'CA', 'CZ'],
   };
 
   // 根据城市选择航空公司
@@ -91,7 +157,15 @@ function estimateSingleSegmentDuration(origin: string, destination: string): num
     'Shanghai-Chengdu': 150,
     'Beijing-Changchun': 120,
     'Shanghai-Changchun': 150,
-    
+    'Beijing-Jinan': 90, // 北京到济南约1.5小时
+    'Shanghai-Jinan': 100,
+    'Jinan-Beijing': 90,
+    'Jinan-Shanghai': 100,
+    'Jinan-Guangzhou': 150,
+    'Jinan-Chengdu': 150,
+    'Jinan-Xi\'an': 110,
+    'Jinan-Harbin': 120,
+
     // 中美航线（实际飞行时间14-16小时）
     'Beijing-New York': 840,
     'Shanghai-New York': 900,
@@ -102,7 +176,7 @@ function estimateSingleSegmentDuration(origin: string, destination: string): num
     'Chengdu-San Francisco': 870, // CTU-SFO: ~14.5小时
     'Chengdu-New York': 930,
     'Chengdu-Los Angeles': 960,
-    
+
     // 中欧航线（实际飞行时间10-12小时）
     'Beijing-London': 600,
     'Shanghai-London': 660,
@@ -111,7 +185,11 @@ function estimateSingleSegmentDuration(origin: string, destination: string): num
     'Beijing-Frankfurt': 540,
     'Shanghai-Frankfurt': 600,
     'Chengdu-London': 660,
-    
+    'Beijing-Budapest': 600, // 北京到布达佩斯约10小时
+    'Shanghai-Budapest': 660, // 上海到布达佩斯约11小时
+    'Budapest-Beijing': 600,
+    'Budapest-Shanghai': 660,
+
     // 中日韩航线
     'Beijing-Tokyo': 180,
     'Shanghai-Tokyo': 180,
@@ -119,20 +197,28 @@ function estimateSingleSegmentDuration(origin: string, destination: string): num
     'Shanghai-Seoul': 150,
     'Chengdu-Tokyo': 240,
     'Chengdu-Seoul': 180,
-    
+
     // 中澳航线（实际飞行时间12-14小时）
     'Beijing-Sydney': 720,
     'Shanghai-Sydney': 780,
     'Chengdu-Sydney': 750,
-    
+
     // 中东航线
     'Beijing-Dubai': 420,
     'Shanghai-Dubai': 480,
-    
+
     // 东南亚航线
     'Beijing-Singapore': 360,
     'Shanghai-Singapore': 360,
     'Chengdu-Singapore': 300,
+
+    // 欧洲内部航线（可能的中转段）
+    'Frankfurt-Budapest': 90,
+    'Budapest-Frankfurt': 90,
+    'Paris-Budapest': 120,
+    'Budapest-Paris': 120,
+    'London-Budapest': 150,
+    'Budapest-London': 150,
   };
 
   const key1 = `${origin}-${destination}`;

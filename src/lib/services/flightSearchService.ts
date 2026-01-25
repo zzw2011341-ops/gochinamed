@@ -243,7 +243,14 @@ const PREDEFINED_ROUTES: Record<string, Omit<FlightRoute, 'lastUpdated'>> = {
 };
 
 // 中国城市列表（用于判断航线类型）
-const CHINA_CITIES = ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Chongqing', 'Hangzhou', 'Nanjing', 'Wuhan', 'Xi\'an', 'Tianjin', 'Qingdao', 'Dalian', 'Xiamen', 'Kunming', 'Changsha', 'Harbin', 'Changchun', 'Shenyang', 'Urumqi', 'Lhasa', 'Sanya', 'Guiyang', 'Nanning'];
+const CHINA_CITIES = [
+  'Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu', 'Chongqing',
+  'Hangzhou', 'Nanjing', 'Wuhan', 'Xi\'an', 'Tianjin', 'Qingdao', 'Dalian',
+  'Xiamen', 'Kunming', 'Changsha', 'Harbin', 'Changchun', 'Shenyang',
+  'Urumqi', 'Lhasa', 'Sanya', 'Guiyang', 'Nanning', 'Jinan', 'Zhengzhou',
+  'Taiyuan', 'Hefei', 'Fuzhou', 'Lanzhou', 'Shijiazhuang', 'Nanchang',
+  'Ningbo', 'Wuxi', 'Suzhou', 'Changzhou', 'Wenzhou', 'Weifang', 'Yantai'
+];
 
 /**
  * 获取城市对应的机场代码
@@ -512,7 +519,11 @@ function estimateFlightDurationByDistance(origin: string, destination: string): 
     'Beijing-Guangzhou': 180,
     'Beijing-Chengdu': 150,
     'Shanghai-Guangzhou': 150,
-    
+    'Beijing-Jinan': 90, // 北京到济南约1.5小时
+    'Shanghai-Jinan': 100,
+    'Jinan-Beijing': 90,
+    'Jinan-Shanghai': 100,
+
     // 中美航线（14-16小时）
     'New York-Beijing': 840,
     'New York-Shanghai': 900,
@@ -521,33 +532,37 @@ function estimateFlightDurationByDistance(origin: string, destination: string): 
     'San Francisco-Beijing': 870,
     'San Francisco-Shanghai': 900,
     'San Francisco-Chengdu': 870, // CTU-SFO: ~14.5小时
-    
+
     // 中欧航线（10-12小时）
     'London-Beijing': 600,
     'London-Shanghai': 660,
     'Frankfurt-Beijing': 540,
     'Paris-Beijing': 600,
-    
+    'Budapest-Beijing': 600, // 布达佩斯到北京约10小时
+    'Budapest-Shanghai': 660, // 布达佩斯到上海约11小时
+    'Beijing-Budapest': 600,
+    'Shanghai-Budapest': 660,
+
     // 中日韩航线（2-4小时）
     'Tokyo-Beijing': 180,
     'Tokyo-Shanghai': 180,
     'Seoul-Beijing': 120,
-    
+
     // 中澳航线（12-14小时）
     'Sydney-Beijing': 720,
     'Sydney-Shanghai': 780,
-    
+
     // 中东航线（7-8小时）
     'Dubai-Beijing': 420,
-    
+
     // 东南亚航线（6小时）
     'Singapore-Beijing': 360,
     'Singapore-Shanghai': 360,
   };
-  
+
   const routeKey1 = `${origin}-${destination}`;
   const routeKey2 = `${destination}-${origin}`;
-  
+
   return distanceTable[routeKey1] || distanceTable[routeKey2] || 480; // 默认8小时（国际航线）
 }
 

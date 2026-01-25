@@ -456,6 +456,129 @@ Return ONLY the JSON array with 3 options, no additional text.`;
   }
 }
 
+/**
+ * 根据城市和星级获取真实的酒店名称
+ */
+function getRealHotelName(city: string, stars: number): string {
+  const hotels: Record<string, { budget: string[]; standard: string[]; premium: string[] }> = {
+    'Beijing': {
+      budget: ['Hanting Hotel', 'Jinjiang Inn', '7 Days Inn', 'Home Inn'],
+      standard: ['Holiday Inn Beijing', 'Crowne Plaza Beijing', 'Grand Hyatt Beijing', 'Sheraton Beijing'],
+      premium: ['The Peninsula Beijing', 'Four Seasons Beijing', 'Waldorf Astoria Beijing', 'Shangri-La Beijing']
+    },
+    'Shanghai': {
+      budget: ['Hanting Hotel', 'Jinjiang Inn', 'Home Inn', 'Motel 168'],
+      standard: ['Renaissance Shanghai', 'Grand Hyatt Shanghai', 'Sheraton Shanghai', 'Okura Garden Hotel'],
+      premium: ['The Peninsula Shanghai', 'Four Seasons Shanghai', 'Waldorf Astoria Shanghai', 'Grand Hyatt on the Bund']
+    },
+    'Guangzhou': {
+      budget: ['7 Days Inn', 'Home Inn', 'Jinjiang Inn', 'Hanting Hotel'],
+      standard: ['White Swan Hotel', 'Garden Hotel Guangzhou', 'China Hotel', 'Sheraton Guangzhou'],
+      premium: ['Four Seasons Guangzhou', 'W Guangzhou', 'Shangri-La Guangzhou', 'The Ritz-Carlton Guangzhou']
+    },
+    'Shenzhen': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Shenzhen', 'Grand Hyatt Shenzhen', 'Renaissance Shenzhen', 'Crowne Plaza Shenzhen'],
+      premium: ['Four Seasons Shenzhen', 'The St. Regis Shenzhen', 'The Ritz-Carlton Shenzhen', 'Shangri-La Shenzhen']
+    },
+    'Chengdu': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Chengdu', 'Crowne Plaza Chengdu', 'Grand Hyatt Chengdu', 'Hilton Chengdu'],
+      premium: ['The Ritz-Carlton Chengdu', 'Shangri-La Chengdu', 'W Chengdu', 'Four Seasons Chengdu']
+    },
+    'Chongqing': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Chongqing', 'Hilton Chongqing', 'Crowne Plaza Chongqing', 'Radisson Chongqing'],
+      premium: ['InterContinental Chongqing', 'The Ritz-Carlton Chongqing', 'Shangri-La Chongqing', 'W Chongqing']
+    },
+    'Hangzhou': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Hangzhou', 'Grand Hyatt Hangzhou', 'Crowne Plaza Hangzhou', 'Hilton Hangzhou'],
+      premium: ['Four Seasons Hangzhou', 'The Ritz-Carlton Hangzhou', 'Shangri-La Hangzhou', 'W Hangzhou']
+    },
+    'Nanjing': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Nanjing', 'Hilton Nanjing', 'Crowne Plaza Nanjing', 'Grand Hyatt Nanjing'],
+      premium: ['The Ritz-Carlton Nanjing', 'InterContinental Nanjing', 'Shangri-La Nanjing', 'W Nanjing']
+    },
+    'Wuhan': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Wuhan', 'Hilton Wuhan', 'Crowne Plaza Wuhan', 'Grand Hyatt Wuhan'],
+      premium: ['The Ritz-Carlton Wuhan', 'InterContinental Wuhan', 'Shangri-La Wuhan', 'Wuhan Renaissance']
+    },
+    'Xi\'an': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Xi\'an', 'Hilton Xi\'an', 'Grand Hyatt Xi\'an', 'Crowne Plaza Xi\'an'],
+      premium: ['The Ritz-Carlton Xi\'an', 'Shangri-La Xi\'an', 'W Xi\'an', 'InterContinental Xi\'an']
+    },
+    'Tianjin': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Tianjin', 'Hilton Tianjin', 'Renaissance Tianjin', 'Crowne Plaza Tianjin'],
+      premium: ['The Ritz-Carlton Tianjin', 'Shangri-La Tianjin', 'W Tianjin', 'InterContinental Tianjin']
+    },
+    'Qingdao': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Qingdao', 'Hilton Qingdao', 'Crowne Plaza Qingdao', 'Grand Hyatt Qingdao'],
+      premium: ['The Ritz-Carlton Qingdao', 'Shangri-La Qingdao', 'W Qingdao', 'InterContinental Qingdao']
+    },
+    'Dalian': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Dalian', 'Hilton Dalian', 'Crowne Plaza Dalian', 'Grand Hyatt Dalian'],
+      premium: ['The Ritz-Carlton Dalian', 'Shangri-La Dalian', 'W Dalian', 'InterContinental Dalian']
+    },
+    'Xiamen': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Xiamen', 'Hilton Xiamen', 'Crowne Plaza Xiamen', 'Grand Hyatt Xiamen'],
+      premium: ['The Ritz-Carlton Xiamen', 'Shangri-La Xiamen', 'W Xiamen', 'InterContinental Xiamen']
+    },
+    'Changsha': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Changsha', 'Hilton Changsha', 'Crowne Plaza Changsha', 'Grand Hyatt Changsha'],
+      premium: ['The Ritz-Carlton Changsha', 'Shangri-La Changsha', 'W Changsha', 'InterContinental Changsha']
+    },
+    'Harbin': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Harbin', 'Hilton Harbin', 'Crowne Plaza Harbin', 'Grand Hyatt Harbin'],
+      premium: ['The Ritz-Carlton Harbin', 'Shangri-La Harbin', 'W Harbin', 'InterContinental Harbin']
+    },
+    'Changchun': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Changchun', 'Hilton Changchun', 'Crowne Plaza Changchun', 'Grand Hyatt Changchun'],
+      premium: ['The Ritz-Carlton Changchun', 'Shangri-La Changchun', 'W Changchun', 'InterContinental Changchun']
+    },
+    'Shenyang': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Shenyang', 'Hilton Shenyang', 'Crowne Plaza Shenyang', 'Grand Hyatt Shenyang'],
+      premium: ['The Ritz-Carlton Shenyang', 'Shangri-La Shenyang', 'W Shenyang', 'InterContinental Shenyang']
+    },
+    'Jinan': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Jinan', 'Hilton Jinan', 'Crowne Plaza Jinan', 'Grand Hyatt Jinan'],
+      premium: ['The Ritz-Carlton Jinan', 'Shangri-La Jinan', 'W Jinan', 'InterContinental Jinan']
+    },
+    'Zhengzhou': {
+      budget: ['Home Inn', '7 Days Inn', 'Hanting Hotel', 'Jinjiang Inn'],
+      standard: ['Sheraton Zhengzhou', 'Hilton Zhengzhou', 'Crowne Plaza Zhengzhou', 'Grand Hyatt Zhengzhou'],
+      premium: ['The Ritz-Carlton Zhengzhou', 'Shangri-La Zhengzhou', 'W Zhengzhou', 'InterContinental Zhengzhou']
+    },
+  };
+
+  const cityHotels = hotels[city];
+  if (!cityHotels) {
+    // 默认酒店（如果城市不在列表中）
+    const defaultHotels = {
+      3: ['Hanting Hotel', 'Home Inn', '7 Days Inn'],
+      4: ['Sheraton Hotel', 'Hilton Hotel', 'Crowne Plaza'],
+      5: ['The Ritz-Carlton', 'Shangri-La Hotel', 'Four Seasons Hotel']
+    };
+    const hotelList = defaultHotels[stars as 3 | 4 | 5] || defaultHotels[4];
+    return hotelList[Math.floor(Math.random() * hotelList.length)];
+  }
+
+  const hotelList = stars === 3 ? cityHotels.budget : stars === 4 ? cityHotels.standard : cityHotels.premium;
+  return hotelList[Math.floor(Math.random() * hotelList.length)];
+}
+
 // 生成默认方案（当AI不可用时）
 async function generateDefaultPlans(
   budget: string,
@@ -570,6 +693,11 @@ async function generateDefaultPlans(
   const standardCarFee = isSameCity ? 120 * numberOfPeople : 80 * numberOfPeople;
   const premiumCarFee = isSameCity ? 180 * numberOfPeople : 100 * numberOfPeople;
 
+  // 获取真实的酒店名称
+  const budgetHotelName = getRealHotelName(destinationCity, 3);
+  const standardHotelName = getRealHotelName(destinationCity, 4);
+  const premiumHotelName = getRealHotelName(destinationCity, 5);
+
   const plans = [
     {
       id: 'budget',
@@ -594,7 +722,7 @@ async function generateDefaultPlans(
         'Basic translation support'
       ],
       duration: '7 days 6 nights',
-      hotelName: 'City Comfort Hotel',
+      hotelName: budgetHotelName,
       hotelStars: 3,
       flightClass: isSameCity ? 'local-transportation' : 'economy',
       doctorId: selectedDoctor || undefined,
@@ -633,7 +761,7 @@ async function generateDefaultPlans(
         'Medical coordination assistance'
       ],
       duration: '7 days 6 nights',
-      hotelName: 'Grand Medical Hotel',
+      hotelName: standardHotelName,
       hotelStars: 4,
       flightClass: isSameCity ? 'premium-transport' : 'standard',
       doctorId: selectedDoctor || undefined,
@@ -674,7 +802,7 @@ async function generateDefaultPlans(
         'Full medical insurance included'
       ],
       duration: '7 days 6 nights',
-      hotelName: 'Royal Wellness Resort',
+      hotelName: premiumHotelName,
       hotelStars: 5,
       flightClass: isSameCity ? 'vip-transport' : 'business',
       doctorId: selectedDoctor || undefined,
