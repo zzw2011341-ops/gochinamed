@@ -87,10 +87,6 @@ export function Navbar() {
             <Link href="/ai-assistant" className="text-gray-700 hover:text-blue-600 font-medium">
               {t('nav.aiAssistant')}
             </Link>
-            <Link href="/app-download" className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-              <Download className="h-4 w-4" />
-              {language === 'zh' ? '下载APP' : 'Download App'}
-            </Link>
           </div>
 
           {/* Right side actions */}
@@ -240,14 +236,6 @@ export function Navbar() {
               onClick={() => setIsMenuOpen(false)}
             >
               {t('nav.aiAssistant')}
-            </Link>
-            <Link
-              href="/app-download"
-              className="block text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Download className="h-4 w-4" />
-              {language === 'zh' ? '下载APP' : 'Download App'}
             </Link>
             <div className="pt-4 border-t border-gray-200">
               <Select value={language} onValueChange={(value: any) => setLanguage(value)}>

@@ -540,6 +540,37 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
+
+            {/* App Download Banner */}
+            <div className="mt-10 max-w-2xl mx-auto">
+              <Card className="bg-white/10 backdrop-blur-sm border-white/30">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-6">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Download className="h-5 w-5" />
+                        <h3 className="text-lg font-semibold text-white">
+                          {language === 'zh' ? '移动应用即将上线' : 'Mobile App Coming Soon'}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-blue-100 mb-3">
+                        {language === 'zh'
+                          ? '下载 GoChinaMed APP，随时随地享受便捷的医疗服务'
+                          : 'Download GoChinaMed App to enjoy convenient medical services anytime, anywhere'}
+                      </p>
+                      <Badge className="bg-orange-500 hover:bg-orange-600">
+                        {language === 'zh' ? '测试中' : 'Testing'}
+                      </Badge>
+                    </div>
+                    <Link href="/app-download">
+                      <Button className="bg-white text-blue-600 hover:bg-blue-50 whitespace-nowrap">
+                        {language === 'zh' ? '了解更多' : 'Learn More'}
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
