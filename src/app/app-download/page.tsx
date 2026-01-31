@@ -35,6 +35,7 @@ export default function AppDownloadPage() {
   const appInfo = {
     name: 'GoChinaMed',
     version: '1.0.0',
+    status: language === 'zh' ? '测试中' : 'Testing',
     size: {
       android: '45.2 MB',
       ios: '52.8 MB',
@@ -108,7 +109,12 @@ export default function AppDownloadPage() {
                 <Stethoscope className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{appInfo.name}</h1>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-3xl font-bold text-gray-900">{appInfo.name}</h1>
+                  <Badge className="bg-orange-500 hover:bg-orange-600">
+                    {appInfo.status}
+                  </Badge>
+                </div>
                 <p className="text-sm text-gray-600">
                   {language === 'zh' ? '智能医疗旅游平台' : 'Smart Medical Tourism Platform'}
                 </p>
@@ -201,29 +207,48 @@ export default function AppDownloadPage() {
 
                     <Button
                       size="lg"
-                      className="w-full h-14 text-lg"
-                      onClick={() => handleDownload('android')}
-                      disabled={isDownloading}
+                      className="w-full h-14 text-lg bg-gray-400 hover:bg-gray-500 cursor-not-allowed"
+                      disabled={true}
                     >
-                      {isDownloading && selectedPlatform === 'android' ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          {downloadProgress}%
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-5 h-5 mr-2" />
-                          {language === 'zh' ? '下载 APK' : 'Download APK'}
-                        </>
-                      )}
+                      <Download className="w-5 h-5 mr-2" />
+                      {language === 'zh' ? '即将推出' : 'Coming Soon'}
                     </Button>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                      <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-yellow-800">
-                        {language === 'zh'
-                          ? '首次安装需要允许"未知来源"应用安装'
-                          : 'First-time installation requires "Unknown Sources" permission'}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-900">
+                          <p className="font-medium mb-1">
+                            {language === 'zh' ? '应用正在开发中' : 'App Under Development'}
+                          </p>
+                          <p className="text-blue-700">
+                            {language === 'zh'
+                              ? 'Android 和 iOS 版本正在测试中，即将正式发布。敬请期待！'
+                              : 'Android and iOS versions are under testing and will be released soon. Stay tuned!'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-blue-200">
+                        <p className="text-sm text-blue-800 font-medium">
+                          {language === 'zh' ? '如何获取应用？' : 'How to get the app?'}
+                        </p>
+                        <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                          <li>
+                            {language === 'zh'
+                              ? '• 关注我们的官方公告'
+                              : '• Follow our official announcements'}
+                          </li>
+                          <li>
+                            {language === 'zh'
+                              ? '• 注册账号，应用上线后第一时间通知您'
+                              : '• Register to get notified when the app is released'}
+                          </li>
+                          <li>
+                            {language === 'zh'
+                              ? '• 联系客服获取测试版资格'
+                              : '• Contact customer service for beta access'}
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </TabsContent>
@@ -263,29 +288,48 @@ export default function AppDownloadPage() {
 
                     <Button
                       size="lg"
-                      className="w-full h-14 text-lg bg-black hover:bg-gray-900"
-                      onClick={() => handleDownload('ios')}
-                      disabled={isDownloading}
+                      className="w-full h-14 text-lg bg-gray-400 hover:bg-gray-500 cursor-not-allowed"
+                      disabled={true}
                     >
-                      {isDownloading && selectedPlatform === 'ios' ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          {downloadProgress}%
-                        </>
-                      ) : (
-                        <>
-                          <Download className="w-5 h-5 mr-2" />
-                          {language === 'zh' ? '下载 IPA' : 'Download IPA'}
-                        </>
-                      )}
+                      <Download className="w-5 h-5 mr-2" />
+                      {language === 'zh' ? '即将推出' : 'Coming Soon'}
                     </Button>
 
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start gap-2">
-                      <Info className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                      <div className="text-sm text-yellow-800">
-                        {language === 'zh'
-                          ? 'iOS 版本需要企业证书签名或越狱设备安装'
-                          : 'iOS version requires enterprise certificate or jailbroken device'}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Info className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm text-blue-900">
+                          <p className="font-medium mb-1">
+                            {language === 'zh' ? '应用正在开发中' : 'App Under Development'}
+                          </p>
+                          <p className="text-blue-700">
+                            {language === 'zh'
+                              ? 'Android 和 iOS 版本正在测试中，即将正式发布。敬请期待！'
+                              : 'Android and iOS versions are under testing and will be released soon. Stay tuned!'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-blue-200">
+                        <p className="text-sm text-blue-800 font-medium">
+                          {language === 'zh' ? '如何获取应用？' : 'How to get the app?'}
+                        </p>
+                        <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                          <li>
+                            {language === 'zh'
+                              ? '• 关注我们的官方公告'
+                              : '• Follow our official announcements'}
+                          </li>
+                          <li>
+                            {language === 'zh'
+                              ? '• 注册账号，应用上线后第一时间通知您'
+                              : '• Register to get notified when the app is released'}
+                          </li>
+                          <li>
+                            {language === 'zh'
+                              ? '• 联系客服获取测试版资格'
+                              : '• Contact customer service for beta access'}
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   </TabsContent>
@@ -294,15 +338,15 @@ export default function AppDownloadPage() {
                 {/* QR Code Section */}
                 <div className="border-t pt-6">
                   <h3 className="font-medium mb-3 flex items-center gap-2">
-                    <QrCode className="w-5 h-5" />
+                    <QrCode className="w-5 h-5 text-gray-400" />
                     {language === 'zh' ? '扫码下载' : 'Scan to Download'}
                   </h3>
-                  <div className="bg-white rounded-lg p-4 border-2 border-dashed border-gray-300">
-                    <div className="aspect-square max-w-[200px] mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                      <QrCode className="w-32 h-32 text-gray-400" />
+                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
+                    <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center opacity-50">
+                      <QrCode className="w-24 h-24 text-gray-300" />
                     </div>
-                    <p className="text-center text-sm text-gray-600 mt-3">
-                      {language === 'zh' ? '扫描二维码下载应用' : 'Scan QR code to download'}
+                    <p className="text-center text-sm text-gray-500 mt-3">
+                      {language === 'zh' ? '二维码将在应用发布后提供' : 'QR code will be available after app release'}
                     </p>
                   </div>
                 </div>
