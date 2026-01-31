@@ -1,0 +1,20 @@
+GoChinaMed Android App - Version 1.0.0
+
+This is a placeholder file. For the actual APK file, please build the Android project using:
+- Android Studio
+- Gradle build system
+- Target SDK: Android 14 (API 34)
+- Min SDK: Android 5.0 (API 21)
+
+Build Command:
+./gradlew assembleRelease
+
+Output: app/build/outputs/apk/release/app-release.apk
+
+App Information:
+- Package Name: com.gochinamed.app
+- Version Code: 1
+- Version Name: 1.0.0
+- Signature: Production Release
+
+Note: This placeholder file is for demonstration purposes only.

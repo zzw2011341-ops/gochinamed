@@ -1,0 +1,34 @@
+GoChinaMed iOS App - Version 1.0.0
+
+This is a placeholder file. For the actual IPA file, please build the iOS project using:
+- Xcode 15.0 or later
+- iOS Deployment Target: 12.0
+- Architectures: arm64
+
+Build Command:
+xcodebuild -workspace GoChinaMed.xcworkspace \
+           -scheme GoChinaMed \
+           -configuration Release \
+           -archivePath build/GoChinaMed.xcarchive \
+           archive
+
+Package Command:
+xcodebuild -exportArchive \
+           -archivePath build/GoChinaMed.xcarchive \
+           -exportPath build/export \
+           -exportOptionsPlist ExportOptions.plist
+
+Output: build/export/GoChinaMed-1.0.0.ipa
+
+App Information:
+- Bundle ID: com.gochinemed.app
+- Version: 1.0.0 (1)
+- Build: 1
+- Minimum iOS: 12.0
+- Devices: iPhone, iPad (Universal)
+
+Distribution:
+- Requires Apple Developer Enterprise Program for distribution outside App Store
+- Or use ad-hoc distribution with registered UDIDs
+
+Note: This placeholder file is for demonstration purposes only.
