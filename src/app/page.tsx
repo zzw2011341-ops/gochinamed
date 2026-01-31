@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot, Mic, MicOff } from 'lucide-react';
+import { Stethoscope, Building2, MapPin, Star, Search, Brain, DollarSign, Plane, Sparkles, MessageSquare, Send, User, Bot, Mic, MicOff, Download } from 'lucide-react';
 import Link from 'next/link';
 
 interface Doctor {

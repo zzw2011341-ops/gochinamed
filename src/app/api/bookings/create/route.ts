@@ -221,6 +221,59 @@ export async function POST(request: NextRequest) {
       return feeRules[treatmentType || 'consultation'] || feeRules['consultation'];
     };
 
+    // 获取真实航班价格（用于生成准确的方案）
+    const USD_TO_CNY = 7.2;
+    let flightPricing = {
+      economy: { minCNY: 4000, maxCNY: 6000, typicalCNY: 5000 },
+      business: { minCNY: 8000, maxCNY: 12000, typicalCNY: 10000 },
+      first: { minCNY: 15000, maxCNY: 25000, typicalCNY: 20000 },
+      currency: 'CNY'
+    };
+
+    if (!isSameCity) {
+      try {
+        const economyPrice = await calculateFlightCostUSD(originCity, destinationCity, 'economy', numberOfPeople);
+        const businessPrice = await calculateFlightCostUSD(originCity, destinationCity, 'business', numberOfPeople);
+        const firstPrice = await calculateFlightCostUSD(originCity, destinationCity, 'first', numberOfPeople);
+
+        flightPricing = {
+          economy: {
+            minCNY: Math.round(economyPrice.minPrice * USD_TO_CNY),
+            maxCNY: Math.round(economyPrice.maxPrice * USD_TO_CNY),
+            typicalCNY: Math.round(economyPrice.typicalPrice * USD_TO_CNY)
+          },
+          business: {
+            minCNY: Math.round(businessPrice.minPrice * USD_TO_CNY),
+            maxCNY: Math.round(businessPrice.maxPrice * USD_TO_CNY),
+            typicalCNY: Math.round(businessPrice.typicalPrice * USD_TO_CNY)
+          },
+          first: {
+            minCNY: Math.round(firstPrice.minPrice * USD_TO_CNY),
+            maxCNY: Math.round(firstPrice.maxPrice * USD_TO_CNY),
+            typicalCNY: Math.round(firstPrice.typicalPrice * USD_TO_CNY)
+          },
+          currency: 'CNY'
+        };
+
+        console.log('[Flight Pricing] Real flight costs calculated:', {
+          route: `${originCity} -> ${destinationCity}`,
+          passengers: numberOfPeople,
+          economy: flightPricing.economy,
+          business: flightPricing.business,
+          first: flightPricing.first
+        });
+      } catch (error) {
+        console.error('[Flight Pricing] Error calculating flight costs, using default values:', error);
+      }
+    } else {
+      flightPricing = {
+        economy: { minCNY: 0, maxCNY: 0, typicalCNY: 0 },
+        business: { minCNY: 0, maxCNY: 0, typicalCNY: 0 },
+        first: { minCNY: 0, maxCNY: 0, typicalCNY: 0 },
+        currency: 'CNY'
+      };
+    }
+
     const prompt = `You are a medical tourism consultant. Generate 3 different travel plan options for a patient.
 
 User Details:
@@ -252,7 +305,7 @@ For each option, provide a JSON object with this structure:
   "name": "Option Name (e.g., Budget-Friendly Plan)",
   "description": "Brief description of what this plan offers",
   "hotelFee": number (100-500 per night * 7 days * ${numberOfPeople} travelers),
-  "flightFee": number (${isSameCity ? '0 for same-city travel' : '4000-20000 * ${numberOfPeople} travelers based on actual flight costs: economy class for budget (4000-6000 CNY), business class for standard (8000-15000 CNY), first class for premium (15000-25000 CNY). For international flights like New York to Beijing, use realistic prices: $800-$2500 USD (5760-18000 CNY)'}),
+  "flightFee": number (${isSameCity ? '0 for same-city travel' : `MUST use real flight costs: ${flightPricing.economy.typicalCNY} CNY for economy class (budget), ${flightPricing.business.typicalCNY} CNY for business class (standard), ${flightPricing.first.typicalCNY} CNY for first class (premium). Route: ${originCity} to ${destinationCity}, ${numberOfPeople} traveler(s). Price range per class: economy ${flightPricing.economy.minCNY}-${flightPricing.economy.maxCNY} CNY, business ${flightPricing.business.minCNY}-${flightPricing.business.maxCNY} CNY, first ${flightPricing.first.minCNY}-${flightPricing.first.maxCNY} CNY.`}),
   "carFee": number (${isSameCity ? '50-200 for local transportation' : '30-100 for local airport-hotel transfers'}),
   "ticketFee": 0 (MEDICAL TOURISM: No tourist attractions, this is for medical treatment),
   "reservationFee": number (50-200 for appointment booking),
@@ -286,6 +339,8 @@ IMPORTANT: Flight costs must be realistic based on the route from ${originCity} 
 Use the exchange rate of 7.2 CNY per USD for price calculations.
 
 Return ONLY the JSON array with 3 options, no additional text.`;
+
+    console.log('[AI Prompt] Flight pricing info included in prompt:', flightPricing);
 
     try {
       const response = await llmClient.stream([
