@@ -344,7 +344,7 @@ export default function AppDownloadPage() {
                   <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
                     <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center">
                       <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:5000/app-download"
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://9.129.38.181:5000/app-download"
                         alt={language === 'zh' ? '扫码下载' : 'Scan to download'}
                         className="w-full h-full object-contain"
                       />
@@ -353,7 +353,7 @@ export default function AppDownloadPage() {
                       {language === 'zh' ? '扫描二维码访问下载页面' : 'Scan QR code to visit download page'}
                     </p>
                     <p className="text-center text-xs text-gray-400 mt-1">
-                      http://localhost:5000/app-download
+                      http://9.129.38.181:5000/app-download
                     </p>
                   </div>
                 </div>
