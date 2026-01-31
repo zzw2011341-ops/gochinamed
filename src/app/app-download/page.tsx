@@ -338,15 +338,22 @@ export default function AppDownloadPage() {
                 {/* QR Code Section */}
                 <div className="border-t pt-6">
                   <h3 className="font-medium mb-3 flex items-center gap-2">
-                    <QrCode className="w-5 h-5 text-gray-400" />
-                    {language === 'zh' ? '扫码下载' : 'Scan to Download'}
+                    <QrCode className="w-5 h-5 text-gray-700" />
+                    {language === 'zh' ? '扫码访问下载页面' : 'Scan to visit download page'}
                   </h3>
-                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-dashed border-gray-300">
-                    <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center opacity-50">
-                      <QrCode className="w-24 h-24 text-gray-300" />
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                    <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center">
+                      <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:5000/app-download"
+                        alt={language === 'zh' ? '扫码下载' : 'Scan to download'}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
-                    <p className="text-center text-sm text-gray-500 mt-3">
-                      {language === 'zh' ? '二维码将在应用发布后提供' : 'QR code will be available after app release'}
+                    <p className="text-center text-sm text-gray-600 mt-3">
+                      {language === 'zh' ? '扫描二维码访问下载页面' : 'Scan QR code to visit download page'}
+                    </p>
+                    <p className="text-center text-xs text-gray-400 mt-1">
+                      http://localhost:5000/app-download
                     </p>
                   </div>
                 </div>

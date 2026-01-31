@@ -1,0 +1,13 @@
+GoChinaMed APP Download QR Code
+
+Download URL: http://localhost:5000/app-download
+
+Instructions for testing:
+1. Use any QR code generator (e.g., https://qrserver.com)
+2. Enter the URL: http://localhost:5000/app-download
+3. Generate and download the QR code
+4. Save as: public/qrcodes/app-download-qr.png
+5. Update the download page to use this image
+
+For quick testing, you can use this online QR code:
+https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://localhost:5000/app-download
