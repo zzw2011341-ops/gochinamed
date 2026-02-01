@@ -339,21 +339,35 @@ export default function AppDownloadPage() {
                 <div className="border-t pt-6">
                   <h3 className="font-medium mb-3 flex items-center gap-2">
                     <QrCode className="w-5 h-5 text-gray-700" />
-                    {language === 'zh' ? '扫码访问下载页面' : 'Scan to visit download page'}
+                    {language === 'zh' ? '访问下载页面' : 'Access Download Page'}
                   </h3>
+
+                  {/* Manual URL - Most Reliable */}
+                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mb-4">
+                    <p className="text-sm font-medium text-blue-900 mb-2">
+                      {language === 'zh' ? '📱 手机访问方式：' : '📱 Mobile Access:'}
+                    </p>
+                    <div className="bg-white rounded p-2 border border-blue-300">
+                      <p className="text-center text-sm font-mono text-blue-700 break-all">
+                        http://9.128.80.82:5000/app-download
+                      </p>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-2">
+                      {language === 'zh' ? '请直接在手机浏览器输入上述地址' : 'Enter the URL above in your mobile browser'}
+                    </p>
+                  </div>
+
+                  {/* QR Code */}
                   <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
                     <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center">
                       <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://9.128.80.82:5000/app-download"
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://9.128.80.82:5000/app-download&v=${Date.now()}`}
                         alt={language === 'zh' ? '扫码下载' : 'Scan to download'}
                         className="w-full h-full object-contain"
                       />
                     </div>
                     <p className="text-center text-sm text-gray-600 mt-3">
-                      {language === 'zh' ? '扫描二维码访问下载页面' : 'Scan QR code to visit download page'}
-                    </p>
-                    <p className="text-center text-xs text-gray-400 mt-1">
-                      http://9.128.80.82:5000/app-download
+                      {language === 'zh' ? '或扫描二维码（如无法访问请使用上方URL）' : 'Or scan QR code (use URL above if QR fails)'}
                     </p>
                   </div>
                 </div>
