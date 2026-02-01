@@ -343,94 +343,69 @@ export default function AppDownloadPage() {
                   </h3>
 
                   {/* Manual URL - Most Reliable */}
-                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mb-4">
-                    <p className="text-sm font-medium text-blue-900 mb-2">
-                      {language === 'zh' ? '📱 手机访问方式（必须用 http://）' : '📱 Mobile Access (must use http://)'}
+                  <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 mb-4">
+                    <p className="text-sm font-medium text-red-900 mb-2">
+                      ⚠️ {language === 'zh' ? '⚠️ 当前环境限制' : '⚠️ Environment Limitation'}
                     </p>
-                    
-                    {/* Option 1 */}
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-blue-800 mb-1">
-                        {language === 'zh' ? '选项 1（推荐）' : 'Option 1 (Recommended)'}
+                    <div className="bg-white rounded p-3 border border-red-300">
+                      <p className="text-sm text-red-800 leading-relaxed">
+                        {language === 'zh'
+                          ? '当前开发环境没有WiFi接口，手机无法直接访问此页面。'
+                          : 'Current development environment has no WiFi interface, mobile devices cannot access this page directly.'}
                       </p>
-                      <div className="bg-white rounded p-2 border border-blue-300">
-                        <p className="text-center text-xs font-mono text-blue-700 break-all">
-                          http://9.128.80.82:5000/app-download
-                        </p>
-                      </div>
                     </div>
 
-                    {/* Option 2 */}
-                    <div className="mb-3">
-                      <p className="text-xs font-medium text-blue-800 mb-1">
-                        {language === 'zh' ? '选项 2（如果选项1失败）' : 'Option 2 (if Option 1 fails)'}
+                    <div className="mt-3 bg-white rounded p-3 border border-blue-300">
+                      <p className="text-xs font-medium text-blue-900 mb-2">
+                        {language === 'zh' ? '💡 如何在手机上测试：' : '💡 How to test on mobile:'}
                       </p>
-                      <div className="bg-white rounded p-2 border border-blue-300">
-                        <p className="text-center text-xs font-mono text-blue-700 break-all">
-                          http://169.254.97.193:5000/app-download
-                        </p>
-                      </div>
+                      <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside">
+                        <li>
+                          {language === 'zh'
+                            ? '在您本地电脑上运行项目（同一WiFi网络）'
+                            : 'Run the project on your local computer (same WiFi network)'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '找到电脑的局域网IP地址（如 192.168.1.x）'
+                            : 'Find your computer\'s local IP address (e.g., 192.168.1.x)'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '使用局域网IP访问：http://192.168.1.x:5000/app-download'
+                            : 'Access with local IP: http://192.168.1.x:5000/app-download'}
+                        </li>
+                      </ol>
                     </div>
 
-                    {/* Important Note */}
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mt-3">
-                      <p className="text-xs text-yellow-800 font-medium">
-                        ⚠️ {language === 'zh' ? '重要：如果浏览器提示"危险"或"证书错误"，请：' : 'Important: If browser warns "Danger" or "Certificate Error", please:'}
+                    <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-2">
+                      <p className="text-xs text-yellow-800">
+                        <strong>{language === 'zh' ? '提示：' : 'Tip:'}</strong>
+                        {language === 'zh'
+                          ? ' 此页面展示了应用的功能和界面。实际部署时，应用会发布到应用商店，您可以通过商店下载。'
+                          : ' This page demonstrates the app\'s features and UI. For actual deployment, the app will be published to app stores.'}
                       </p>
-                      <ul className="text-xs text-yellow-700 mt-1 space-y-1 list-disc list-inside">
-                        <li>{language === 'zh' ? '确认地址以 http:// 开头（不是 https://）' : 'Confirm URL starts with http:// (not https://)'}</li>
-                        <li>{language === 'zh' ? '点击"继续访问"或"接受风险"按钮' : 'Click "Continue" or "Accept Risk" button'}</li>
-                        <li>{language === 'zh' ? '或尝试另一个 IP 地址选项' : 'Or try the other IP address option'}</li>
-                      </ul>
                     </div>
                   </div>
 
                   {/* QR Codes */}
-                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200 opacity-60">
                     <p className="text-sm font-medium text-gray-700 mb-3">
-                      {language === 'zh' ? '📷 扫描二维码（推荐手动输入URL更可靠）' : '📷 Scan QR Code (Manual URL recommended for reliability)'}
+                      {language === 'zh' ? '📷 二维码功能' : '📷 QR Code Feature'}
                     </p>
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* QR Code 1 */}
-                      <div>
-                        <p className="text-xs text-gray-600 mb-2 text-center">
-                          {language === 'zh' ? '选项 1' : 'Option 1'}
-                        </p>
-                        <div className="aspect-square bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://9.128.80.82:5000/app-download&v=${Date.now()}`}
-                            alt={language === 'zh' ? '选项1' : 'Option 1'}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1 text-center break-all">
-                          9.128.80.82
-                        </p>
-                      </div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {language === 'zh' 
+                        ? '由于当前开发环境没有WiFi，二维码功能暂时不可用。' 
+                        : 'QR code feature is temporarily unavailable as the current development environment has no WiFi.'}
+                    </p>
 
-                      {/* QR Code 2 */}
-                      <div>
-                        <p className="text-xs text-gray-600 mb-2 text-center">
-                          {language === 'zh' ? '选项 2' : 'Option 2'}
-                        </p>
-                        <div className="aspect-square bg-white rounded-lg flex items-center justify-center border border-gray-200">
-                          <img
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://169.254.97.193:5000/app-download&v=${Date.now()}`}
-                            alt={language === 'zh' ? '选项2' : 'Option 2'}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-1 text-center break-all">
-                          169.254.97.193
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 bg-red-50 border border-red-200 rounded p-2">
-                      <p className="text-xs text-red-800">
-                        <strong>⚠️ {language === 'zh' ? '注意：' : 'Note:'}</strong>
-                        {language === 'zh' ? ' 如果浏览器提示"危险"或"证书错误"，请点击"继续访问"。这只是因为没有 HTTPS 证书，是正常的。' : ' If browser warns "Danger" or "Certificate Error", click "Continue". This is normal due to no HTTPS certificate.'}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                      <p className="text-xs text-yellow-800">
+                        <strong>{language === 'zh' ? '部署后使用：' : 'After deployment:'}</strong>
+                        {language === 'zh'
+                          ? ' 当应用部署到生产环境并配置域名后，扫描二维码即可下载应用。'
+                          : ' After the app is deployed to production with a domain name configured, you can scan the QR code to download.'}
                       </p>
                     </div>
                   </div>
