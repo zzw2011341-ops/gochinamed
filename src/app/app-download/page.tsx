@@ -342,71 +342,122 @@ export default function AppDownloadPage() {
                     {language === 'zh' ? '访问下载页面' : 'Access Download Page'}
                   </h3>
 
-                  {/* Manual URL - Most Reliable */}
-                  <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 mb-4">
-                    <p className="text-sm font-medium text-red-900 mb-2">
-                      ⚠️ {language === 'zh' ? '⚠️ 当前环境限制' : '⚠️ Environment Limitation'}
+                  {/* Deployment Options */}
+                  <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 mb-4">
+                    <p className="text-sm font-medium text-green-900 mb-2">
+                      🚀 {language === 'zh' ? '🚀 推荐部署方式' : '🚀 Recommended Deployment'}
                     </p>
-                    <div className="bg-white rounded p-3 border border-red-300">
-                      <p className="text-sm text-red-800 leading-relaxed">
+                    
+                    <div className="bg-white rounded p-3 border border-green-300 mb-3">
+                      <p className="text-sm font-medium text-green-800 mb-2">
+                        {language === 'zh' ? '🌟 使用 Railway 部署' : '🌟 Deploy with Railway'}
+                      </p>
+                      <p className="text-xs text-green-700 mb-2 leading-relaxed">
                         {language === 'zh'
-                          ? '当前开发环境没有WiFi接口，手机无法直接访问此页面。'
-                          : 'Current development environment has no WiFi interface, mobile devices cannot access this page directly.'}
+                          ? 'Railway 是一个快速的云平台，支持一键部署 Next.js 应用。部署后可以通过公网域名访问，手机可直接扫码下载。'
+                          : 'Railway is a fast cloud platform that supports one-click Next.js deployment. After deployment, you can access via public domain and scan QR code directly on mobile.'}
                       </p>
-                    </div>
-
-                    <div className="mt-3 bg-white rounded p-3 border border-blue-300">
-                      <p className="text-xs font-medium text-blue-900 mb-2">
-                        {language === 'zh' ? '💡 如何在手机上测试：' : '💡 How to test on mobile:'}
-                      </p>
-                      <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside">
+                      
+                      <ol className="text-xs text-green-700 space-y-1 list-decimal list-inside">
                         <li>
                           {language === 'zh'
-                            ? '在您本地电脑上运行项目（同一WiFi网络）'
-                            : 'Run the project on your local computer (same WiFi network)'}
+                            ? '登录 Railway.app 并创建新项目'
+                            : 'Login to Railway.app and create a new project'}
                         </li>
                         <li>
                           {language === 'zh'
-                            ? '找到电脑的局域网IP地址（如 192.168.1.x）'
-                            : 'Find your computer\'s local IP address (e.g., 192.168.1.x)'}
+                            ? '连接 GitHub 仓库（或从当前项目部署）'
+                            : 'Connect GitHub repository (or deploy from current project)'}
                         </li>
                         <li>
                           {language === 'zh'
-                            ? '使用局域网IP访问：http://192.168.1.x:5000/app-download'
-                            : 'Access with local IP: http://192.168.1.x:5000/app-download'}
+                            ? 'Railway 会自动检测 Next.js 并部署'
+                            : 'Railway will automatically detect Next.js and deploy'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '获取部署后的 URL（如：https://your-app.railway.app）'
+                            : 'Get the deployed URL (e.g., https://your-app.railway.app)'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '使用 URL/app-download 在手机上访问'
+                            : 'Access on mobile with URL/app-download'}
                         </li>
                       </ol>
                     </div>
 
-                    <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-2">
-                      <p className="text-xs text-yellow-800">
-                        <strong>{language === 'zh' ? '提示：' : 'Tip:'}</strong>
+                    <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                      <p className="text-xs text-blue-800">
+                        <strong>{language === 'zh' ? '✅ 优势：' : '✅ Benefits:'}</strong>
                         {language === 'zh'
-                          ? ' 此页面展示了应用的功能和界面。实际部署时，应用会发布到应用商店，您可以通过商店下载。'
-                          : ' This page demonstrates the app\'s features and UI. For actual deployment, the app will be published to app stores.'}
+                          ? ' 公网访问、HTTPS 支持、自动域名、免费额度、手机可直接访问'
+                          : ' Public access, HTTPS support, auto domain, free tier, mobile friendly'}
                       </p>
                     </div>
                   </div>
 
-                  {/* QR Codes */}
-                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200 opacity-60">
+                  {/* Local Development */}
+                  <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mb-4">
+                    <p className="text-sm font-medium text-blue-900 mb-2">
+                      💻 {language === 'zh' ? '💻 本地开发' : '💻 Local Development'}
+                    </p>
+                    <div className="bg-white rounded p-3 border border-blue-300">
+                      <p className="text-xs text-blue-800 mb-2 leading-relaxed">
+                        {language === 'zh'
+                          ? '如果您想在本地测试（需要电脑和手机在同一 WiFi 网络）：'
+                          : 'If you want to test locally (requires computer and mobile on same WiFi):'}
+                      </p>
+                      <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
+                        <li>
+                          {language === 'zh'
+                            ? '在您的本地电脑上运行项目'
+                            : 'Run the project on your local computer'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '找到电脑的局域网 IP（如 192.168.1.x）'
+                            : 'Find your computer\'s local IP (e.g., 192.168.1.x)'}
+                        </li>
+                        <li>
+                          {language === 'zh'
+                            ? '手机访问：http://192.168.1.x:5000/app-download'
+                            : 'Access on mobile: http://192.168.1.x:5000/app-download'}
+                        </li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* QR Code Section - Placeholder */}
+                  <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
                     <p className="text-sm font-medium text-gray-700 mb-3">
-                      {language === 'zh' ? '📷 二维码功能' : '📷 QR Code Feature'}
+                      {language === 'zh' ? '📷 二维码下载' : '📷 QR Code Download'}
                     </p>
                     
-                    <p className="text-sm text-gray-600 mb-3">
-                      {language === 'zh' 
-                        ? '由于当前开发环境没有WiFi，二维码功能暂时不可用。' 
-                        : 'QR code feature is temporarily unavailable as the current development environment has no WiFi.'}
-                    </p>
-
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                      <p className="text-xs text-yellow-800">
-                        <strong>{language === 'zh' ? '部署后使用：' : 'After deployment:'}</strong>
-                        {language === 'zh'
-                          ? ' 当应用部署到生产环境并配置域名后，扫描二维码即可下载应用。'
-                          : ' After the app is deployed to production with a domain name configured, you can scan the QR code to download.'}
+                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <p className="text-sm text-gray-600 text-center mb-3">
+                        {language === 'zh' 
+                          ? '部署后二维码将显示在这里' 
+                          : 'QR code will appear here after deployment'}
                       </p>
+                      
+                      <div className="aspect-square max-w-[200px] mx-auto bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                        <div className="text-center">
+                          <QrCode className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs text-gray-500">
+                            {language === 'zh' ? '部署后生成' : 'Generate after deployment'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 bg-yellow-50 border border-yellow-200 rounded p-2">
+                        <p className="text-xs text-yellow-800">
+                          <strong>{language === 'zh' ? '提示：' : 'Tip:'}</strong>
+                          {language === 'zh'
+                            ? ' 使用 Railway 部署后，输入您的域名即可生成可扫描的二维码。'
+                            : ' After Railway deployment, enter your domain to generate a scannable QR code.'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

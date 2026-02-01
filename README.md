@@ -187,12 +187,34 @@ coze-coding-ai db upgrade
 
 ## 部署
 
+### 本地部署
+
 项目使用 Coze CLI 进行部署：
 
 ```bash
 coze build
 coze start
 ```
+
+### Railway 云部署（推荐用于手机访问）
+
+Railway 提供一键部署，支持 HTTPS 和公网访问，适合需要手机访问的场景。
+
+**快速部署：**
+
+1. 登录 [Railway.app](https://railway.app)
+2. 创建新项目并连接 GitHub 仓库
+3. Railway 会自动检测并部署 Next.js 应用
+4. 部署完成后，访问 `https://your-project.railway.app/app-download`
+
+**详细指南：** 请查看 [docs/RAILWAY_DEPLOYMENT.md](./docs/RAILWAY_DEPLOYMENT.md)
+
+**优势：**
+- ✅ 公网访问，手机可直接访问
+- ✅ 自动 HTTPS 支持
+- ✅ 免费额度（$5/月）
+- ✅ 一键部署，自动 CI/CD
+- ✅ 自定义域名支持
 
 ## 贡献指南
 
