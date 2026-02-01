@@ -48,9 +48,12 @@ export async function GET(request: NextRequest) {
 
     // 1. 检查航班顺序
     if (flights.length >= 2) {
+      // 过滤出有开始日期的航班
+      const flightsWithDates = flights.filter(f => f.startDate !== null);
+      
       // 按开始日期排序
-      const sortedFlights = [...flights].sort((a, b) =>
-        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      const sortedFlights = flightsWithDates.sort((a, b) =>
+        new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime()
       );
 
       const firstFlight = sortedFlights[0];
@@ -90,14 +93,19 @@ export async function GET(request: NextRequest) {
     let firstDest = '';
 
     if (flights.length > 0) {
-      const outboundFlight = flights.reduce((earliest, current) =>
-        new Date(current.startDate) < new Date(earliest.startDate) ? current : earliest
-      );
-      arrivalDate = new Date(outboundFlight.endDate);
-      firstRoute = outboundFlight.location || '';
-      const routeParts = firstRoute.split(' - ');
-      firstOrigin = routeParts[0]?.trim() || '';
-      firstDest = routeParts[1]?.trim() || '';
+      // 过滤出有开始和结束日期的航班
+      const validFlights = flights.filter(f => f.startDate !== null && f.endDate !== null);
+      
+      if (validFlights.length > 0) {
+        const outboundFlight = validFlights.reduce((earliest, current) =>
+          new Date(current.startDate!) < new Date(earliest.startDate!) ? current : earliest
+        );
+        arrivalDate = new Date(outboundFlight.endDate!);
+        firstRoute = outboundFlight.location || '';
+        const routeParts = firstRoute.split(' - ');
+        firstOrigin = routeParts[0]?.trim() || '';
+        firstDest = routeParts[1]?.trim() || '';
+      }
     }
 
     // 3. 检查医生预约时间
@@ -121,10 +129,10 @@ export async function GET(request: NextRequest) {
 
     // 4. 检查医疗咨询时间
     const medicalConsultation = tickets.find(
-      item => item.metadata && item.metadata.medicalType === 'consultation'
+      item => item.metadata && (item.metadata as any).medicalType === 'consultation' && item.startDate !== null
     );
     if (medicalConsultation && arrivalDate) {
-      const medicalDate = new Date(medicalConsultation.startDate);
+      const medicalDate = new Date(medicalConsultation.startDate!);
       if (medicalDate < arrivalDate) {
         issues.push({
           type: 'medical_consultation',
@@ -138,34 +146,38 @@ export async function GET(request: NextRequest) {
     // 5. 检查酒店时间
     if (hotels.length > 0 && arrivalDate) {
       const hotel = hotels[0];
-      const hotelStart = new Date(hotel.startDate);
-      const hotelEnd = new Date(hotel.endDate);
+      if (hotel.startDate && hotel.endDate) {
+        const hotelStart = new Date(hotel.startDate);
+        const hotelEnd = new Date(hotel.endDate);
 
-      if (hotelStart < arrivalDate) {
-        issues.push({
-          type: 'hotel_time',
-          severity: 'medium',
-          message: `酒店入住时间 ${hotelStart.toISOString()} 在航班到达之前`,
-          suggestion: `酒店入住应该在航班到达当天下午开始`,
-        });
+        if (hotelStart < arrivalDate) {
+          issues.push({
+            type: 'hotel_time',
+            severity: 'medium',
+            message: `酒店入住时间 ${hotelStart.toISOString()} 在航班到达之前`,
+            suggestion: `酒店入住应该在航班到达当天下午开始`,
+          });
+        }
       }
     }
 
     // 6. 检查景点时间
     const attractions = tickets.filter(
-      item => item.metadata && item.metadata.attractionType === 'tourism'
+      item => item.metadata && (item.metadata as any).attractionType === 'tourism'
     );
-    if (attractions.length > 0 && medicalConsultation) {
+    if (attractions.length > 0 && medicalConsultation && medicalConsultation.startDate) {
       const medicalDate = new Date(medicalConsultation.startDate);
       attractions.forEach(attraction => {
-        const attractionDate = new Date(attraction.startDate);
-        if (attractionDate < medicalDate) {
-          issues.push({
-            type: 'attraction_time',
-            severity: 'medium',
-            message: `景点游览 ${attraction.name} 时间 ${attractionDate.toISOString()} 在医疗咨询之前`,
-            suggestion: `建议景点安排在医疗咨询之后的空闲时间`,
-          });
+        if (attraction.startDate) {
+          const attractionDate = new Date(attraction.startDate);
+          if (attractionDate < medicalDate) {
+            issues.push({
+              type: 'attraction_time',
+              severity: 'medium',
+              message: `景点游览 ${attraction.name} 时间 ${attractionDate.toISOString()} 在医疗咨询之前`,
+              suggestion: `建议景点安排在医疗咨询之后的空闲时间`,
+            });
+          }
         }
       });
     }
@@ -183,7 +195,7 @@ export async function GET(request: NextRequest) {
       });
 
       // 第2天：医疗咨询
-      const medicalDate = medicalConsultation
+      const medicalDate = medicalConsultation && medicalConsultation.startDate
         ? new Date(medicalConsultation.startDate)
         : new Date(arrivalDate.getTime() + 24 * 60 * 60 * 1000);
       timelineSuggestions.push({
@@ -206,9 +218,13 @@ export async function GET(request: NextRequest) {
 
       // 返程日
       const returnDate = flights.length > 1
-        ? new Date(flights.reduce((latest, current) =>
-            new Date(current.startDate) > new Date(latest.startDate) ? current : latest
-          ).startDate)
+        ? new Date(
+            flights
+              .filter(f => f.startDate !== null)
+              .reduce((latest, current) =>
+                new Date(current.startDate!) > new Date(latest.startDate!) ? current : latest
+              ).startDate!
+          )
         : null;
       if (returnDate) {
         timelineSuggestions.push({

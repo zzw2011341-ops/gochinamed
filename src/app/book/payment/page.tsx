@@ -211,6 +211,10 @@ export default function PaymentPage() {
 
     try {
       // 调用支付API
+      if (!selectedPlan) {
+        throw new Error('No plan selected');
+      }
+      
       const response = await fetch('/api/bookings/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +223,7 @@ export default function PaymentPage() {
           plan: {
             ...selectedPlan,
             bookingData: {
-              ...selectedPlan.bookingData,
+              ...(selectedPlan.bookingData || {}),
               selectedAttractions: selectedAttractions, // 添加选中的景点
             },
           },

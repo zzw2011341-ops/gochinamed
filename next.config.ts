@@ -2,7 +2,12 @@ import type { NextConfig } from 'next';
 import path from 'path';
 
 const nextConfig: NextConfig = {
-  // outputFileTracingRoot: path.resolve(__dirname, '../../'),
+  // Output mode for Railway deployment
+  output: 'standalone',
+  
+  // Enable strict mode
+  reactStrictMode: true,
+  
   /* config options here */
   allowedDevOrigins: ['*.dev.coze.site'],
   images: {

@@ -33,13 +33,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 确定去程和返程（按时间排序）
-    flightItems.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    const outboundFlight = flightItems[0];
-    const returnFlight = flightItems[1];
+    const validFlightItems = flightItems.filter(item => item.startDate !== null);
+    if (validFlightItems.length !== 2) {
+      return NextResponse.json(
+        { success: false, error: 'Both flights must have start dates' },
+        { status: 400 }
+      );
+    }
+    validFlightItems.sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime());
+    const outboundFlight = validFlightItems[0];
+    const returnFlight = validFlightItems[1];
 
     // 检查并修复返回航班的时间
     let needsFix = false;
-    const metadata = returnFlight.metadata;
+    const metadata = returnFlight.metadata as any;
     
     if (metadata && metadata.flightDetails) {
       const segments = metadata.flightDetails.segments;
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
           
           // 更新行程的结束时间
           const newEndDate = correctSecondArrival;
-          const newDurationMinutes = Math.floor((newEndDate.getTime() - returnFlight.startDate.getTime()) / (60 * 1000));
+          const newDurationMinutes = Math.floor((newEndDate.getTime() - returnFlight.startDate!.getTime()) / (60 * 1000));
           
           // 更新数据库
           await db

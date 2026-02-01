@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from 'coze-coding-dev-sdk';
 import { hospitals, doctors, attractions } from '@/storage/database/shared/schema';
 import { v4 as uuidv4 } from 'uuid';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { hospitalInternationalServices, expandedDoctors, featuredAttractions } from '@/lib/data/expandedData';
 
 /**
@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
       const hospitalNameToIdMap = new Map<string, string>();
       allHospitals.forEach(h => {
         hospitalNameToIdMap.set(h.nameEn.toLowerCase(), h.id);
-        hospitalNameToIdMap.set(h.nameZh, h.id);
+        if (h.nameZh) {
+          hospitalNameToIdMap.set(h.nameZh, h.id);
+        }
       });
 
       // 医院名称映射（从扩充数据中的key到实际医院名称）
@@ -121,7 +123,9 @@ export async function POST(request: NextRequest) {
       const hospitalNameToIdMap = new Map<string, string>();
       allHospitals.forEach(h => {
         hospitalNameToIdMap.set(h.nameEn.toLowerCase(), h.id);
-        hospitalNameToIdMap.set(h.nameZh, h.id);
+        if (h.nameZh) {
+          hospitalNameToIdMap.set(h.nameZh, h.id);
+        }
       });
 
       // 医院名称映射（从扩充数据中的key到实际医院名称）
@@ -172,7 +176,7 @@ export async function POST(request: NextRequest) {
             descriptionEn: `Specialist in ${JSON.parse(doctorData.specialtiesEn).join(', ')}`,
             descriptionZh: `${JSON.parse(doctorData.specialtiesZh).join(', ')}专家`,
             experienceYears: doctorData.experienceYears,
-            consultationFee: doctorData.consultationFee,
+            consultationFee: String(doctorData.consultationFee),
             metadata: doctorData.metadata,
             isActive: true,
             isFeatured: true, // 新增的医生标记为推荐
@@ -253,9 +257,9 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
 
     // 统计当前数据量
-    const hospitalCount = await db.select({ count: 1 }).from(hospitals);
-    const doctorCount = await db.select({ count: 1 }).from(doctors);
-    const attractionCount = await db.select({ count: 1 }).from(attractions);
+    const hospitalCount = await db.select({ count: sql<number>`count(*)` }).from(hospitals);
+    const doctorCount = await db.select({ count: sql<number>`count(*)` }).from(doctors);
+    const attractionCount = await db.select({ count: sql<number>`count(*)` }).from(attractions);
 
     return NextResponse.json({
       success: true,

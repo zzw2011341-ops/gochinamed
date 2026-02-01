@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const hotelItem = itineraryItems.find(item => item.type === 'hotel');
     if (hotelItem) {
       const flightItems = itineraryItems.filter(item => item.type === 'flight');
-      if (flightItems.length === 2) {
+      if (flightItems.length === 2 && flightItems[0].startDate && flightItems[1].startDate) {
         // 确定正确的起止时间
         const outboundFlight = flightItems[0].startDate < flightItems[1].startDate
           ? flightItems[0]
@@ -55,8 +55,18 @@ export async function POST(request: NextRequest) {
           ? flightItems[1]
           : flightItems[0];
 
-        const correctStartDate = outboundFlight.startDate;
-        const correctEndDate = returnFlight.startDate;
+        const correctStartDate = outboundFlight.startDate!;
+        const correctEndDate = returnFlight.startDate!;
+
+        // 检查是否需要修复
+        if (!hotelItem.startDate || !hotelItem.endDate) {
+          console.log(`Hotel item ${hotelItem.id} has null dates, skipping`);
+          return NextResponse.json({
+            success: false,
+            error: 'Hotel dates are null',
+            orderId,
+          });
+        }
 
         const needsFix = hotelItem.startDate > hotelItem.endDate;
 

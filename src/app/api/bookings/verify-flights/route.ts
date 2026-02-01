@@ -34,13 +34,20 @@ export async function POST(request: NextRequest) {
     }
 
     // 按开始时间排序，确定去程和返程
-    flightItems.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    const outboundFlight = flightItems[0];
-    const returnFlight = flightItems[1];
+    const validFlightItems = flightItems.filter(item => item.startDate !== null && item.endDate !== null);
+    if (validFlightItems.length !== 2) {
+      return NextResponse.json(
+        { success: false, error: 'Both flights must have start and end dates' },
+        { status: 400 }
+      );
+    }
+    validFlightItems.sort((a, b) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime());
+    const outboundFlight = validFlightItems[0];
+    const returnFlight = validFlightItems[1];
 
     // 检查返回航班的时间是否合理
-    const outboundEnd = new Date(outboundFlight.endDate);
-    const returnStart = new Date(returnFlight.startDate);
+    const outboundEnd = new Date(outboundFlight.endDate!);
+    const returnStart = new Date(returnFlight.startDate!);
     
     // 返回航班开始应该至少比去程航班结束晚1天
     const expectedReturnStart = new Date(outboundEnd.getTime() + 24 * 60 * 60 * 1000);
@@ -56,8 +63,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查航班段的起点和终点是否正确
-    if (returnFlight.metadata && returnFlight.metadata.flightDetails) {
-      const segments = returnFlight.metadata.flightDetails.segments;
+    const returnMetadata = returnFlight.metadata as any;
+    if (returnMetadata && returnMetadata.flightDetails) {
+      const segments = returnMetadata.flightDetails.segments;
       if (segments.length === 2) {
         const firstSegment = segments[0];
         const secondSegment = segments[1];
