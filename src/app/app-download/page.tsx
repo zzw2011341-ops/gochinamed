@@ -345,30 +345,94 @@ export default function AppDownloadPage() {
                   {/* Manual URL - Most Reliable */}
                   <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 mb-4">
                     <p className="text-sm font-medium text-blue-900 mb-2">
-                      {language === 'zh' ? '📱 手机访问方式：' : '📱 Mobile Access:'}
+                      {language === 'zh' ? '📱 手机访问方式（必须用 http://）' : '📱 Mobile Access (must use http://)'}
                     </p>
-                    <div className="bg-white rounded p-2 border border-blue-300">
-                      <p className="text-center text-sm font-mono text-blue-700 break-all">
-                        http://9.128.80.82:5000/app-download
+                    
+                    {/* Option 1 */}
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-blue-800 mb-1">
+                        {language === 'zh' ? '选项 1（推荐）' : 'Option 1 (Recommended)'}
                       </p>
+                      <div className="bg-white rounded p-2 border border-blue-300">
+                        <p className="text-center text-xs font-mono text-blue-700 break-all">
+                          http://9.128.80.82:5000/app-download
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs text-blue-600 mt-2">
-                      {language === 'zh' ? '请直接在手机浏览器输入上述地址' : 'Enter the URL above in your mobile browser'}
-                    </p>
+
+                    {/* Option 2 */}
+                    <div className="mb-3">
+                      <p className="text-xs font-medium text-blue-800 mb-1">
+                        {language === 'zh' ? '选项 2（如果选项1失败）' : 'Option 2 (if Option 1 fails)'}
+                      </p>
+                      <div className="bg-white rounded p-2 border border-blue-300">
+                        <p className="text-center text-xs font-mono text-blue-700 break-all">
+                          http://169.254.97.193:5000/app-download
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Important Note */}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mt-3">
+                      <p className="text-xs text-yellow-800 font-medium">
+                        ⚠️ {language === 'zh' ? '重要：如果浏览器提示"危险"或"证书错误"，请：' : 'Important: If browser warns "Danger" or "Certificate Error", please:'}
+                      </p>
+                      <ul className="text-xs text-yellow-700 mt-1 space-y-1 list-disc list-inside">
+                        <li>{language === 'zh' ? '确认地址以 http:// 开头（不是 https://）' : 'Confirm URL starts with http:// (not https://)'}</li>
+                        <li>{language === 'zh' ? '点击"继续访问"或"接受风险"按钮' : 'Click "Continue" or "Accept Risk" button'}</li>
+                        <li>{language === 'zh' ? '或尝试另一个 IP 地址选项' : 'Or try the other IP address option'}</li>
+                      </ul>
+                    </div>
                   </div>
 
-                  {/* QR Code */}
+                  {/* QR Codes */}
                   <div className="bg-white rounded-lg p-4 border-2 border-gray-200">
-                    <div className="aspect-square max-w-[200px] mx-auto bg-white rounded-lg flex items-center justify-center">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=http://9.128.80.82:5000/app-download&v=${Date.now()}`}
-                        alt={language === 'zh' ? '扫码下载' : 'Scan to download'}
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                    <p className="text-center text-sm text-gray-600 mt-3">
-                      {language === 'zh' ? '或扫描二维码（如无法访问请使用上方URL）' : 'Or scan QR code (use URL above if QR fails)'}
+                    <p className="text-sm font-medium text-gray-700 mb-3">
+                      {language === 'zh' ? '📷 扫描二维码（推荐手动输入URL更可靠）' : '📷 Scan QR Code (Manual URL recommended for reliability)'}
                     </p>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* QR Code 1 */}
+                      <div>
+                        <p className="text-xs text-gray-600 mb-2 text-center">
+                          {language === 'zh' ? '选项 1' : 'Option 1'}
+                        </p>
+                        <div className="aspect-square bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://9.128.80.82:5000/app-download&v=${Date.now()}`}
+                            alt={language === 'zh' ? '选项1' : 'Option 1'}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 text-center break-all">
+                          9.128.80.82
+                        </p>
+                      </div>
+
+                      {/* QR Code 2 */}
+                      <div>
+                        <p className="text-xs text-gray-600 mb-2 text-center">
+                          {language === 'zh' ? '选项 2' : 'Option 2'}
+                        </p>
+                        <div className="aspect-square bg-white rounded-lg flex items-center justify-center border border-gray-200">
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=http://169.254.97.193:5000/app-download&v=${Date.now()}`}
+                            alt={language === 'zh' ? '选项2' : 'Option 2'}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 text-center break-all">
+                          169.254.97.193
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 bg-red-50 border border-red-200 rounded p-2">
+                      <p className="text-xs text-red-800">
+                        <strong>⚠️ {language === 'zh' ? '注意：' : 'Note:'}</strong>
+                        {language === 'zh' ? ' 如果浏览器提示"危险"或"证书错误"，请点击"继续访问"。这只是因为没有 HTTPS 证书，是正常的。' : ' If browser warns "Danger" or "Certificate Error", click "Continue". This is normal due to no HTTPS certificate.'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
