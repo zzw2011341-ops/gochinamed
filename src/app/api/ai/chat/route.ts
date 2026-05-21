@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
 
           for await (const content of streamHunyuan(
             [
-              { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: userMessage },
+              { Role: 'system', Content: SYSTEM_PROMPT },
+              { Role: 'user', Content: userMessage },
             ],
             {
               model: 'hunyuan-pro',
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
                   .set({
                     messages: JSON.stringify([
                       ...JSON.parse(JSON.stringify(existingConversation.messages || [])),
-                      { role: 'user', content: userMessage },
-                      { role: 'assistant', content: fullResponse },
+                      { Role: 'user', Content: userMessage },
+                      { Role: 'assistant', Content: fullResponse },
                     ]),
                     updatedAt: new Date(),
                   })
@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
                 await db.insert(aiConversations).values({
                   userId,
                   messages: JSON.stringify([
-                    { role: 'user', content: userMessage },
-                    { role: 'assistant', content: fullResponse },
+                    { Role: 'user', Content: userMessage },
+                    { Role: 'assistant', Content: fullResponse },
                   ]),
                 });
               }

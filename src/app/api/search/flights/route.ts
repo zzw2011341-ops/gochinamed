@@ -1,30 +1,98 @@
-import { NextRequest, NextResponse } from "next/server";
-import { FlightManager } from "@/storage/database/flightManager";
+/**
+ * 航班搜索 API - 基于腾讯混元 AI
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { searchFlights, generateTravelPlan } from '@/lib/travel-search';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const params = Object.fromEntries(searchParams.entries());
+    const searchParams = request.nextUrl.searchParams;
+    const origin = searchParams.get('origin') || undefined;
+    const destination = searchParams.get('destination');
+    const departureDate = searchParams.get('departureDate') || undefined;
+    const returnDate = searchParams.get('returnDate') || undefined;
+    const passengers = parseInt(searchParams.get('passengers') || '1');
 
-    const result = await FlightManager.search({
-      origin: params.origin,
-      destination: params.destination,
-      departureDate: params.departureDate,
-      returnDate: params.returnDate,
-      classType: params.classType as any,
-      minPrice: params.minPrice ? parseFloat(params.minPrice) : undefined,
-      maxPrice: params.maxPrice ? parseFloat(params.maxPrice) : undefined,
-      airline: params.airline,
-      limit: parseInt(params.limit || "20"),
-      offset: parseInt(params.offset || "0"),
+    if (!destination) {
+      return NextResponse.json(
+        { error: 'destination is required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await searchFlights({
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      passengers,
     });
 
-    return NextResponse.json(result);
-  } catch (error) {
-    console.error("Flight search error:", error);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      flights: result.data.flights,
+      provider: result.provider,
+      timestamp: result.timestamp,
+    });
+  } catch (error: any) {
+    console.error('航班搜索 API 错误:', error);
     return NextResponse.json(
-      { error: "Flight search failed", details: error instanceof Error ? error.message : "Unknown error" },
-      { status: 400 }
+      { error: 'Internal server error', details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * 生成完整旅行方案
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { origin, destination, departureDate, returnDate, passengers, budget } = body;
+
+    if (!destination) {
+      return NextResponse.json(
+        { error: 'destination is required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await generateTravelPlan({
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      passengers,
+      budget,
+    });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      plan: result.data,
+      provider: result.provider,
+      timestamp: result.timestamp,
+    });
+  } catch (error: any) {
+    console.error('旅行方案生成错误:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error.message },
+      { status: 500 }
     );
   }
 }

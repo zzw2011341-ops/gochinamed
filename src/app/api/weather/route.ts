@@ -22,12 +22,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 获取天气API配置
-    const db = await getDb();
-    const [config] = await db
-      .select()
-      .from(apiConfigs)
-      .where(eq(apiConfigs.provider, 'openweather' as any));
+        // 获取天气API配置
+    let config = null;
+    try {
+      const db = await getDb();
+      const [cfg] = await db
+        .select()
+        .from(apiConfigs)
+        .where(eq(apiConfigs.provider, 'openweather' as any));
+      config = cfg;
+    } catch (dbError: any) {
+      console.log('数据库不可用，使用模拟天气数据:', dbError.message);
+    }
 
     if (!config || !config.isActive) {
       // 如果没有配置天气API，返回模拟数据
