@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LLMClient, Config, ASRClient, TTSClient } from 'coze-coding-dev-sdk';
+import { streamHunyuan } from '@/lib/hunyuan-client';
 import { aiConversations, users } from '@/storage/database';
 import { eq } from 'drizzle-orm';
 import { getDb } from 'coze-coding-dev-sdk';
 
 // 城市名称映射 - 用于识别用户消息中的城市
-const CITY_MAPPINGS = {
+const CITY_MAPPINGS: Record<string, string> = {
   // 美洲
   'new york': 'New York', '纽约': 'New York',
   'los angeles': 'Los Angeles', '洛杉矶': 'Los Angeles',
@@ -37,7 +37,7 @@ const CITY_MAPPINGS = {
   'chengdu': 'Chengdu', '成都': 'Chengdu',
   'wuhan': 'Wuhan', '武汉': 'Wuhan',
   'nanjing': 'Nanjing', '南京': 'Nanjing',
-  'xi\'an': 'Xi\'an', 'xian': 'Xi\'an', '西安': 'Xi\'an',
+  "xi'an": "Xi'an", 'xian': "Xi'an", '西安': "Xi'an",
   'tianjin': 'Tianjin', '天津': 'Tianjin',
   'qingdao': 'Qingdao', '青岛': 'Qingdao',
   'dalian': 'Dalian', '大连': 'Dalian',
@@ -45,11 +45,6 @@ const CITY_MAPPINGS = {
   'suzhou': 'Suzhou', '苏州': 'Suzhou',
   'chongqing': 'Chongqing', '重庆': 'Chongqing',
 };
-
-const config = new Config();
-const llmClient = new LLMClient(config);
-const asrClient = new ASRClient(config);
-const ttsClient = new TTSClient(config);
 
 // System prompt for AI medical assistant
 const SYSTEM_PROMPT = `You are a professional medical assistant for GoChinaMed, a medical tourism platform helping international patients access healthcare in China.
@@ -87,32 +82,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let userMessage = message;
-
-    // Process voice input if provided
+    // Process voice input (暂未实现)
     if (audioData) {
-      try {
-        const recognitionResult = await asrClient.recognize({
-          uid: userId || 'anonymous',
-          base64Data: audioData,
-        });
-        userMessage = recognitionResult.text;
-      } catch (error) {
-        console.error('Speech recognition error:', error);
-        return NextResponse.json(
-          { error: 'Failed to process voice input' },
-          { status: 500 }
-        );
-      }
+      return NextResponse.json(
+        { error: 'Voice input not implemented yet' },
+        { status: 501 }
+      );
     }
 
-    // Prepare messages for LLM
-    const messages = [
-      { role: 'system' as const, content: SYSTEM_PROMPT },
-      { role: 'user' as const, content: userMessage },
-    ];
+    const userMessage = message;
 
-    // Call LLM with streaming enabled
+    // Call 混元 API with streaming
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
@@ -120,16 +100,18 @@ export async function POST(request: NextRequest) {
         try {
           let fullResponse = '';
 
-          for await (const chunk of llmClient.stream(messages, {
-            model: 'doubao-seed-1-6-251015',
-            temperature: 0.7,
-            thinking: 'disabled',
-          })) {
-            if (chunk.content) {
-              const content = chunk.content.toString();
-              fullResponse += content;
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+          for await (const content of streamHunyuan(
+            [
+              { role: 'system', content: SYSTEM_PROMPT },
+              { role: 'user', content: userMessage },
+            ],
+            {
+              model: 'hunyuan-pro',
+              temperature: 0.7,
             }
+          )) {
+            fullResponse += content;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
           }
 
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
@@ -171,7 +153,6 @@ export async function POST(request: NextRequest) {
               const lowerMessage = userMessage.toLowerCase();
               const citiesFound: string[] = [];
 
-              // 在消息中查找城市名称
               for (const [key, value] of Object.entries(CITY_MAPPINGS)) {
                 if (lowerMessage.includes(key)) {
                   if (!citiesFound.includes(value)) {
@@ -181,12 +162,10 @@ export async function POST(request: NextRequest) {
               }
 
               if (citiesFound.length > 0) {
-                // 判断哪个是出发城市，哪个是目的城市
-                // 简单逻辑：第一个提到的城市通常是出发地，第二个是目的地
                 const originCity = citiesFound[0];
                 const destinationCity = citiesFound.length > 1 ? citiesFound[1] : null;
 
-                const updateData: any = { updatedAt: new Date() };
+                const updateData: Record<string, any> = { updatedAt: new Date() };
                 if (originCity) updateData.originCity = originCity;
                 if (destinationCity) updateData.destinationCity = destinationCity;
 
@@ -199,7 +178,7 @@ export async function POST(request: NextRequest) {
             }
           }
         } catch (error) {
-          console.error('LLM streaming error:', error);
+          console.error('混元 API streaming error:', error);
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Failed to generate response' })}\n\n`));
         } finally {
           controller.close();
