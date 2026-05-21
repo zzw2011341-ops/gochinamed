@@ -1,0 +1,223 @@
+import { eq, and, SQL, like, sql, or, desc } from "drizzle-orm";
+import { getDb } from "coze-coding-dev-sdk";
+import { doctors, hospitals, insertDoctorSchema, updateDoctorSchema } from "./shared/schema";
+import type { Doctor, InsertDoctor, UpdateDoctor } from "./shared/schema";
+
+export class DoctorManager {
+  async createDoctor(data: InsertDoctor): Promise<Doctor> {
+    const db = await getDb();
+    const validated = insertDoctorSchema.parse(data);
+    const [doctor] = await db.insert(doctors).values(validated).returning();
+    return doctor;
+  }
+
+  async getDoctors(options: {
+    skip?: number;
+    limit?: number;
+    filters?: Partial<Pick<Doctor, 'id' | 'hospitalId' | 'isFeatured' | 'isActive'>>;
+    search?: string;
+  } = {}): Promise<Doctor[]> {
+    const { skip = 0, limit = 100, filters = {}, search = '' } = options;
+    const db = await getDb();
+
+    const conditions: SQL[] = [];
+
+    if (filters.id !== undefined) {
+      conditions.push(eq(doctors.id, filters.id));
+    }
+    if (filters.hospitalId !== undefined) {
+      conditions.push(eq(doctors.hospitalId, filters.hospitalId));
+    }
+    if (filters.isFeatured !== undefined) {
+      conditions.push(eq(doctors.isFeatured, filters.isFeatured));
+    }
+    if (filters.isActive !== undefined) {
+      conditions.push(eq(doctors.isActive, filters.isActive));
+    }
+
+    // Search by name
+    if (search) {
+      conditions.push(
+        like(doctors.nameEn, `%${search}%`)
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    return db
+      .select()
+      .from(doctors)
+      .where(whereClause)
+      .limit(limit)
+      .offset(skip)
+      .orderBy(doctors.createdAt);
+  }
+
+  async getDoctorById(id: string): Promise<Doctor | null> {
+    const db = await getDb();
+    const [doctor] = await db.select().from(doctors).where(eq(doctors.id, id));
+    return doctor || null;
+  }
+
+  async getDoctorsByHospital(hospitalId: string): Promise<Doctor[]> {
+    const db = await getDb();
+    return db
+      .select()
+      .from(doctors)
+      .where(
+        and(
+          eq(doctors.hospitalId, hospitalId),
+          eq(doctors.isActive, true)
+        )
+      )
+      .orderBy(doctors.createdAt);
+  }
+
+  async getFeaturedDoctors(limit = 10): Promise<Doctor[]> {
+    const db = await getDb();
+    return db
+      .select()
+      .from(doctors)
+      .where(
+        and(
+          eq(doctors.isFeatured, true),
+          eq(doctors.isActive, true)
+        )
+      )
+      .limit(limit);
+  }
+
+  async getDoctorWithHospital(id: string): Promise<(Doctor & { hospital?: any }) | null> {
+    const db = await getDb();
+    const [doctor] = await db
+      .select({
+        id: doctors.id,
+        hospitalId: doctors.hospitalId,
+        cityId: doctors.cityId,
+        nameEn: doctors.nameEn,
+        nameZh: doctors.nameZh,
+        title: doctors.title,
+        gender: doctors.gender,
+        specialtiesEn: doctors.specialtiesEn,
+        specialtiesZh: doctors.specialtiesZh,
+        descriptionEn: doctors.descriptionEn,
+        descriptionZh: doctors.descriptionZh,
+        experienceYears: doctors.experienceYears,
+        imageUrl: doctors.imageUrl,
+        consultationFee: doctors.consultationFee,
+        isFeatured: doctors.isFeatured,
+        isActive: doctors.isActive,
+        metadata: doctors.metadata,
+        createdAt: doctors.createdAt,
+        updatedAt: doctors.updatedAt,
+        hospital: {
+          id: hospitals.id,
+          nameEn: hospitals.nameEn,
+          nameZh: hospitals.nameZh,
+          location: hospitals.location,
+        },
+      })
+      .from(doctors)
+      .leftJoin(hospitals, eq(doctors.hospitalId, hospitals.id))
+      .where(eq(doctors.id, id));
+
+    return doctor || null;
+  }
+
+  async updateDoctor(id: string, data: UpdateDoctor): Promise<Doctor | null> {
+    const db = await getDb();
+    const validated = updateDoctorSchema.parse(data);
+    const [doctor] = await db
+      .update(doctors)
+      .set({ ...validated, updatedAt: new Date() })
+      .where(eq(doctors.id, id))
+      .returning();
+    return doctor || null;
+  }
+
+  async deleteDoctor(id: string): Promise<boolean> {
+    const db = await getDb();
+    const result = await db.delete(doctors).where(eq(doctors.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getTotalDoctorsCount(): Promise<number> {
+    const db = await getDb();
+    const result = await db.select({ count: sql`count(*)` }).from(doctors);
+    return Number(result[0]?.count ?? 0);
+  }
+
+  static async getDoctorCount(): Promise<number> {
+    const db = await getDb();
+    const result = await db.select({ count: sql`count(*)` }).from(doctors);
+    return Number(result[0]?.count ?? 0);
+  }
+
+  static async search(options: {
+    keyword?: string;
+    specialty?: string;
+    location?: string;
+    hospitalId?: string;
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ doctors: Doctor[]; total: number }> {
+    const { keyword = '', specialty = '', location = '', hospitalId, limit = 20, offset = 0 } = options;
+    const db = await getDb();
+
+    const conditions: SQL[] = [
+      eq(doctors.isActive, true),
+    ];
+
+    if (keyword) {
+      conditions.push(
+        or(
+          like(doctors.nameEn, `%${keyword}%`),
+          like(doctors.nameZh, `%${keyword}%`),
+          like(doctors.specialtiesEn, `%${keyword}%`),
+          like(doctors.specialtiesZh, `%${keyword}%`)
+        )!
+      );
+    }
+
+    if (specialty) {
+      conditions.push(
+        or(
+          like(doctors.specialtiesEn, `%${specialty}%`),
+          like(doctors.specialtiesZh, `%${specialty}%`)
+        )!
+      );
+    }
+
+    if (hospitalId) {
+      conditions.push(eq(doctors.hospitalId, hospitalId));
+    }
+
+    if (location && location !== 'all') {
+      // 根据location参数筛选医生，location是城市的ID
+      conditions.push(eq(doctors.cityId, location));
+    }
+
+    const whereClause = and(...conditions);
+
+    const doctorsList = await db
+      .select()
+      .from(doctors)
+      .where(whereClause)
+      .limit(limit)
+      .offset(offset)
+      .orderBy(desc(doctors.isFeatured), doctors.createdAt);
+
+    // Get total count
+    const [{ count }] = await db
+      .select({ count: sql`count(*)` })
+      .from(doctors)
+      .where(whereClause);
+
+    return {
+      doctors: doctorsList,
+      total: Number(count),
+    };
+  }
+}
+
+export const doctorManager = new DoctorManager();
