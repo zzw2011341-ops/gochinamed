@@ -1,5 +1,5 @@
 import { eq, and, SQL, like, sql, or, desc } from "drizzle-orm";
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { doctors, hospitals, insertDoctorSchema, updateDoctorSchema } from "./shared/schema";
 import type { Doctor, InsertDoctor, UpdateDoctor } from "./shared/schema";
 

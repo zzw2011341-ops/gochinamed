@@ -4,7 +4,7 @@
  * 运行: npx tsx src/storage/database/seedExpandedAttractions.ts
  */
 
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { attractions } from "./shared/schema";
 
 const EXPANDED_ATTRACTIONS = [

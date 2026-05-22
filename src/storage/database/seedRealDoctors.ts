@@ -5,7 +5,7 @@
  * npx tsx src/storage/database/seedRealDoctors.ts
  */
 
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { doctors, hospitals } from "./shared/schema";
 import { v4 as uuidv4 } from "uuid";
 

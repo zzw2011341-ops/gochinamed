@@ -6,7 +6,7 @@
  * npx tsx src/storage/database/seedAttractionsData.ts
  */
 
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { attractions } from "./shared/schema";
 
 const SAMPLE_ATTRACTIONS = [

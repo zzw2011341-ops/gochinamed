@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from 'coze-coding-dev-sdk';
+import { getDb } from '@/lib/db';
 import { orders } from '@/storage/database/shared/schema';
 import { eq, and } from 'drizzle-orm';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { callHunyuan } from '@/lib/hunyuan-client';
 
-const config = new Config();
-const llmClient = new LLMClient(config);
 
 interface AdjustmentRequest {
   reason: string;
@@ -115,21 +113,16 @@ Respond in JSON format:
 
 Be conservative and realistic in pricing. Consider market rates for medical services in China.`;
 
-      const response = await llmClient.stream([
-        { role: 'system', content: 'You are a JSON generator. Only output valid JSON objects.' },
-        { role: 'user', content: prompt }
+      const fullContent = await callHunyuan([
+        { Role: "system", Content: "You are a JSON generator. Only output valid JSON objects." },
+        { Role: "user", Content: prompt }
       ], {
-        model: 'doubao-seed-1-6-251015',
+        model: 'hunyuan-lite',
         temperature: 0.5,
-        thinking: 'disabled',
+        
       });
 
-      let fullContent = '';
-      for await (const chunk of response) {
-        if (chunk.content) {
-          fullContent += chunk.content.toString();
-        }
-      }
+      
 
       // 解析AI响应
       try {

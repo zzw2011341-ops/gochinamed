@@ -1,5 +1,5 @@
 import { eq, and, SQL, desc, sql } from "drizzle-orm";
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { communityPosts, comments, likes, insertCommunityPostSchema, updateCommunityPostSchema } from "./shared/schema";
 import type { CommunityPost, InsertCommunityPost, UpdateCommunityPost, Comment, Like } from "./shared/schema";
 

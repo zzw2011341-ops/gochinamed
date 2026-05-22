@@ -6,7 +6,7 @@
  * npx tsx src/storage/database/seedAdmin.ts
  */
 
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { users } from "./shared/schema";
 import { eq } from "drizzle-orm";
 

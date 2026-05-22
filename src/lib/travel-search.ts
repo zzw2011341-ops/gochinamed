@@ -4,7 +4,7 @@
  */
 
 import { callHunyuan } from './hunyuan-client';
-import { getDb } from 'coze-coding-dev-sdk';
+import { getDb } from '@/lib/db';
 import { attractions } from '@/storage/database/shared/schema';
 import { eq, and } from 'drizzle-orm';
 

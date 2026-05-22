@@ -3,7 +3,7 @@
  * 使用联网搜索集成获取真实航班信息，包括航线、价格、时长等
  */
 
-import { SearchClient, Config } from 'coze-coding-dev-sdk';
+// Hunyuan AI search (replaced Coze SearchClient)
 
 export interface FlightRoute {
   origin: string;
@@ -295,137 +295,43 @@ function saveToCache(route: FlightRoute): void {
  * 使用联网搜索获取真实航班数据
  */
 async function searchRealFlightData(origin: string, destination: string): Promise<FlightRoute | null> {
-  const config = new Config();
-  const searchClient = new SearchClient(config);
-
   try {
-    // 构建搜索查询
     const originAirport = getAirportCode(origin);
     const destAirport = getAirportCode(destination);
 
-    const searchQuery = `flights from ${origin} to ${destination} direct flight connection price duration airlines ${new Date().getFullYear()}`;
+    const prompt = `Flight info ${origin} to ${destination}. JSON: {hasDirectFlight:bool, connectionCities:[], estimatedDurationMinutes:int, flightNumbers:[], airlines:[], minPriceUSD:int, maxPriceUSD:int, typicalPriceUSD:int}`;
+    
+    const { callHunyuan } = await import('@/lib/hunyuan-client');
+    const response = await callHunyuan([
+      { Role: 'system', Content: 'Return only valid JSON.' },
+      { Role: 'user', Content: prompt }
+    ], { model: 'hunyuan-lite', temperature: 0.3 });
 
-    const response = await searchClient.webSearch(searchQuery, 5, true);
+    let jsonStr = response.trim();
+    if (jsonStr.startsWith('\`\`\`json')) jsonStr = jsonStr.replace(/^\`\`\`json\n?/g, '').replace(/\n?\`\`\`$/g, '');
+    const data = JSON.parse(jsonStr);
+    
+    const flightRoute: FlightRoute = {
+      origin,
+      destination,
+      hasDirectFlight: data.hasDirectFlight || false,
+      connectionCities: data.connectionCities || [],
+      estimatedDurationMinutes: data.estimatedDurationMinutes || estimateFlightDurationByDistance(origin, destination),
+      flightNumbers: data.flightNumbers || [],
+      airlines: data.airlines || [],
+      minPriceUSD: data.minPriceUSD || 300,
+      maxPriceUSD: data.maxPriceUSD || 1500,
+      typicalPriceUSD: data.typicalPriceUSD || 800,
+      lastUpdated: new Date(),
+    };
 
-    if (response.web_items && response.web_items.length > 0) {
-      // 解析搜索结果
-      const flightRoute: FlightRoute = {
-        origin,
-        destination,
-        hasDirectFlight: false,
-        connectionCities: [],
-        estimatedDurationMinutes: 0,
-        flightNumbers: [],
-        airlines: [],
-        minPriceUSD: 0,
-        maxPriceUSD: 0,
-        typicalPriceUSD: 0,
-        lastUpdated: new Date(),
-      };
-
-      // 分析搜索结果提取航班信息
-      let hasFlightInfo = false;
-
-      for (const item of response.web_items) {
-        const text = `${item.title} ${item.snippet} ${item.summary || ''}`.toLowerCase();
-
-        // 检测是否有直飞航班
-        if (text.includes('direct flight') || text.includes('non-stop') || text.includes('nonstop')) {
-          flightRoute.hasDirectFlight = true;
-        }
-
-        // 检测是否需要中转
-        if (text.includes('connecting flight') || text.includes('connection') || text.includes('stopover') || text.includes('layover')) {
-          flightRoute.hasDirectFlight = false;
-
-          // 尝试提取中转城市
-          const hubCities = ['beijing', 'shanghai', 'guangzhou', 'tokyo', 'seoul', 'singapore', 'dubai', 'hong kong', 'london', 'paris', 'frankfurt'];
-          for (const hub of hubCities) {
-            if (text.includes(hub)) {
-              const formattedHub = hub.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-              if (!flightRoute.connectionCities?.includes(formattedHub)) {
-                flightRoute.connectionCities?.push(formattedHub);
-              }
-            }
-          }
-        }
-
-        // 提取价格信息
-        const priceMatch = text.match(/\$?(\d{3,5})\s*(usd|dollars?)/i);
-        if (priceMatch) {
-          const price = parseInt(priceMatch[1]);
-          if (flightRoute.minPriceUSD === 0 || price < flightRoute.minPriceUSD) {
-            flightRoute.minPriceUSD = price;
-          }
-          if (price > flightRoute.maxPriceUSD) {
-            flightRoute.maxPriceUSD = price;
-          }
-          hasFlightInfo = true;
-        }
-
-        // 提取飞行时长
-        const durationMatch = text.match(/(\d+)\s*hours?\s*(\d+)?\s*minutes?/i);
-        if (durationMatch) {
-          const hours = parseInt(durationMatch[1]);
-          const minutes = durationMatch[2] ? parseInt(durationMatch[2]) : 0;
-          const totalMinutes = hours * 60 + minutes;
-          if (flightRoute.estimatedDurationMinutes === 0 || totalMinutes < flightRoute.estimatedDurationMinutes) {
-            flightRoute.estimatedDurationMinutes = totalMinutes;
-          }
-          hasFlightInfo = true;
-        }
-
-        // 提取航空公司信息
-        const airlines = ['air china', 'china eastern', 'china southern', 'united', 'delta', 'american', 'lufthansa', 'british airways', 'air france', 'korean air', 'jal', 'ana', 'singapore airlines', 'emirates', 'qatar'];
-        for (const airline of airlines) {
-          if (text.includes(airline)) {
-            const formattedAirline = airline.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            if (!flightRoute.airlines?.includes(formattedAirline)) {
-              flightRoute.airlines?.push(formattedAirline);
-            }
-          }
-        }
-
-        // 提取航班号
-        const flightNumberMatch = text.match(/\b([A-Z]{2}\d{3,4})\b/g);
-        if (flightNumberMatch) {
-          for (const flightNum of flightNumberMatch) {
-            if (!flightRoute.flightNumbers?.includes(flightNum)) {
-              flightRoute.flightNumbers?.push(flightNum);
-            }
-          }
-        }
-      }
-
-      // 如果找到航班信息，设置典型价格和更新缓存
-      if (hasFlightInfo) {
-        // 典型价格为最小值和最大值的中间值
-        flightRoute.typicalPriceUSD = Math.round((flightRoute.minPriceUSD + flightRoute.maxPriceUSD) / 2);
-
-        // 如果没有提取到飞行时长，使用距离估算
-        if (flightRoute.estimatedDurationMinutes === 0) {
-          flightRoute.estimatedDurationMinutes = estimateFlightDurationByDistance(origin, destination);
-        }
-
-        // 如果搜索结果显示需要中转但没有提取到中转城市，使用规则判断
-        if (!flightRoute.hasDirectFlight && (!flightRoute.connectionCities || flightRoute.connectionCities.length === 0)) {
-          const connectionCity = getConnectionCity(origin, destination);
-          if (connectionCity) {
-            flightRoute.connectionCities = [connectionCity];
-          }
-        }
-
-        saveToCache(flightRoute);
-        return flightRoute;
-      }
-    }
+    saveToCache(flightRoute);
+    return flightRoute;
   } catch (error) {
     console.error('Error searching flight data:', error);
+    return null;
   }
-
-  return null;
 }
-
 /**
  * 判断航线是否需要中转
  * 规则：
@@ -789,117 +695,35 @@ export async function searchFlightRoute(
  * 注意：如果联网搜索失败（如 VEFAAS 错误），将返回 null，由调用方使用估算数据
  */
 async function searchRealFlightDataWithoutCache(origin: string, destination: string): Promise<FlightRoute | null> {
-  const config = new Config();
-  const searchClient = new SearchClient(config);
-
   try {
-    const searchQuery = `flights from ${origin} to ${destination} direct flight connection price duration airlines ${new Date().getFullYear()}`;
+    const { callHunyuan } = await import('@/lib/hunyuan-client');
+    const prompt = `Flight info ${origin} to ${destination}. JSON: {hasDirectFlight:bool, connectionCities:[], estimatedDurationMinutes:int, flightNumbers:[], airlines:[], minPriceUSD:int, maxPriceUSD:int, typicalPriceUSD:int}`;
+    const response = await callHunyuan([
+      { Role: 'system', Content: 'Return only valid JSON.' },
+      { Role: 'user', Content: prompt }
+    ], { model: 'hunyuan-lite', temperature: 0.3 });
 
-    const response = await searchClient.webSearch(searchQuery, 5, true);
-
-    if (response.web_items && response.web_items.length > 0) {
-      const flightRoute: FlightRoute = {
-        origin,
-        destination,
-        hasDirectFlight: false,
-        connectionCities: [],
-        estimatedDurationMinutes: 0,
-        flightNumbers: [],
-        airlines: [],
-        minPriceUSD: 0,
-        maxPriceUSD: 0,
-        typicalPriceUSD: 0,
-        lastUpdated: new Date(),
-      };
-
-      let hasFlightInfo = false;
-
-      for (const item of response.web_items) {
-        const text = `${item.title} ${item.snippet} ${item.summary || ''}`.toLowerCase();
-
-        if (text.includes('direct flight') || text.includes('non-stop') || text.includes('nonstop')) {
-          flightRoute.hasDirectFlight = true;
-        }
-
-        if (text.includes('connecting flight') || text.includes('connection') || text.includes('stopover') || text.includes('layover')) {
-          flightRoute.hasDirectFlight = false;
-          const hubCities = ['beijing', 'shanghai', 'guangzhou', 'tokyo', 'seoul', 'singapore', 'dubai', 'hong kong', 'london', 'paris', 'frankfurt'];
-          for (const hub of hubCities) {
-            if (text.includes(hub)) {
-              const formattedHub = hub.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-              if (!flightRoute.connectionCities?.includes(formattedHub)) {
-                flightRoute.connectionCities?.push(formattedHub);
-              }
-            }
-          }
-        }
-
-        const priceMatch = text.match(/\$?(\d{3,5})\s*(usd|dollars?)/i);
-        if (priceMatch) {
-          const price = parseInt(priceMatch[1]);
-          if (flightRoute.minPriceUSD === 0 || price < flightRoute.minPriceUSD) {
-            flightRoute.minPriceUSD = price;
-          }
-          if (price > flightRoute.maxPriceUSD) {
-            flightRoute.maxPriceUSD = price;
-          }
-          hasFlightInfo = true;
-        }
-
-        const durationMatch = text.match(/(\d+)\s*hours?\s*(\d+)?\s*minutes?/i);
-        if (durationMatch) {
-          const hours = parseInt(durationMatch[1]);
-          const minutes = durationMatch[2] ? parseInt(durationMatch[2]) : 0;
-          const totalMinutes = hours * 60 + minutes;
-          if (flightRoute.estimatedDurationMinutes === 0 || totalMinutes < flightRoute.estimatedDurationMinutes) {
-            flightRoute.estimatedDurationMinutes = totalMinutes;
-          }
-          hasFlightInfo = true;
-        }
-
-        const airlines = ['air china', 'china eastern', 'china southern', 'united', 'delta', 'american', 'lufthansa', 'british airways', 'air france', 'korean air', 'jal', 'ana', 'singapore airlines', 'emirates', 'qatar'];
-        for (const airline of airlines) {
-          if (text.includes(airline)) {
-            const formattedAirline = airline.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            if (!flightRoute.airlines?.includes(formattedAirline)) {
-              flightRoute.airlines?.push(formattedAirline);
-            }
-          }
-        }
-
-        const flightNumberMatch = text.match(/\b([A-Z]{2}\d{3,4})\b/g);
-        if (flightNumberMatch) {
-          for (const flightNum of flightNumberMatch) {
-            if (!flightRoute.flightNumbers?.includes(flightNum)) {
-              flightRoute.flightNumbers?.push(flightNum);
-            }
-          }
-        }
-      }
-
-      if (hasFlightInfo) {
-        flightRoute.typicalPriceUSD = Math.round((flightRoute.minPriceUSD + flightRoute.maxPriceUSD) / 2);
-
-        if (flightRoute.estimatedDurationMinutes === 0) {
-          flightRoute.estimatedDurationMinutes = estimateFlightDurationByDistance(origin, destination);
-        }
-
-        if (!flightRoute.hasDirectFlight && (!flightRoute.connectionCities || flightRoute.connectionCities.length === 0)) {
-          const connectionCity = getConnectionCity(origin, destination);
-          if (connectionCity) {
-            flightRoute.connectionCities = [connectionCity];
-          }
-        }
-
-        return flightRoute;
-      }
-    }
+    let jsonStr = response.trim();
+    if (jsonStr.startsWith('\`\`\`json')) jsonStr = jsonStr.replace(/^\`\`\`json\n?/g, '').replace(/\n?\`\`\`$/g, '');
+    const data = JSON.parse(jsonStr);
+    
+    return {
+      origin,
+      destination,
+      hasDirectFlight: data.hasDirectFlight || false,
+      connectionCities: data.connectionCities || [],
+      estimatedDurationMinutes: data.estimatedDurationMinutes || estimateFlightDurationByDistance(origin, destination),
+      flightNumbers: data.flightNumbers || [],
+      airlines: data.airlines || [],
+      minPriceUSD: data.minPriceUSD || 300,
+      maxPriceUSD: data.maxPriceUSD || 1500,
+      typicalPriceUSD: data.typicalPriceUSD || 800,
+      lastUpdated: new Date(),
+    };
   } catch (error) {
-    console.error(`[FlightSearch] Search failed for ${origin} -> ${destination}, falling back to estimated data. Error:`, error);
-    // 返回 null，由调用方使用估算数据
+    console.error('Error in searchRealFlightDataWithoutCache:', error);
+    return null;
   }
-
-  return null;
 }
 
 /**

@@ -6,7 +6,7 @@
  * npx tsx src/storage/database/seedComprehensiveMedicalData.ts
  */
 
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { hospitals, doctors, cities } from "./shared/schema";
 import { v4 as uuidv4 } from "uuid";
 

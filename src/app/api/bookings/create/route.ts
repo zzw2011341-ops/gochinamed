@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from 'coze-coding-dev-sdk';
+import { getDb } from '@/lib/db';
 import { users } from '@/storage/database/shared/schema';
 import { eq } from 'drizzle-orm';
-import { LLMClient, Config } from 'coze-coding-dev-sdk';
+import { callHunyuan } from "@/lib/hunyuan-client";
 import { calculateFlightCostUSD } from '@/lib/services/flightSearchService';
 
-const config = new Config();
-const llmClient = new LLMClient(config);
+
 
 interface BookingRequest {
   userId: string;
@@ -343,21 +342,14 @@ Return ONLY the JSON array with 3 options, no additional text.`;
     console.log('[AI Prompt] Flight pricing info included in prompt:', flightPricing);
 
     try {
-      const response = await llmClient.stream([
-        { role: 'system', content: 'You are a JSON generator. Only output valid JSON arrays.' },
-        { role: 'user', content: prompt }
+      const fullContent = await callHunyuan([
+        { Role: "system", Content: "You are a JSON generator. Only output valid JSON arrays." },
+        { Role: "user", Content: prompt }
       ], {
-        model: 'doubao-seed-1-6-251015',
+        model: 'hunyuan-lite',
         temperature: 0.8,
-        thinking: 'disabled',
+        
       });
-
-      let fullContent = '';
-      for await (const chunk of response) {
-        if (chunk.content) {
-          fullContent += chunk.content.toString();
-        }
-      }
 
       // 解析AI返回的JSON
       let plans: PlanOption[];

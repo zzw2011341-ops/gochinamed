@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // 尝试从数据库获取
     try {
-      const { getDb } = await import('coze-coding-dev-sdk');
+      const { getDb } = await import('@/lib/db');
       const { hospitals } = await import('@/storage/database/shared/schema');
       const { eq } = await import('drizzle-orm');
       

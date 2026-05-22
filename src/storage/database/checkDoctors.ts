@@ -1,4 +1,4 @@
-import { getDb } from "coze-coding-dev-sdk";
+import { getDb } from '@/lib/db';
 import { doctors } from "./shared/schema";
 
 async function main() {
