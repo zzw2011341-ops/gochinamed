@@ -101,9 +101,19 @@ export async function POST(request: NextRequest) {
           });
 
           if (!hunyuanRes.ok || !hunyuanRes.body) {
-            throw new Error(`Hunyuan API error: ${hunyuanRes.status}`);
-          }
+            // API 失败，返回降级响应
+            const fallbackMsg = language === "zh"
+              ? "抱歉，AI助手暂时无法连接（API密钥可能已过期）。请访问 https://console.cloud.tencent.com/hunyuan/start 获取新密钥。\n\n您可以直接浏览我们的医院和医生页面，或使用搜索功能。"
+              : "Sorry, the AI assistant is temporarily unavailable (API key may have expired). Please visit https://console.cloud.tencent.com/hunyuan/start for a new key.\n\nYou can browse our hospitals and doctors pages, or use the search function.";
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: fallbackMsg })}
 
+`));
+            controller.enqueue(encoder.encode("data: [DONE]
+
+"));
+            controller.close();
+            return;
+          }
           const reader = hunyuanRes.body.getReader();
           const decoder = new TextDecoder();
 
