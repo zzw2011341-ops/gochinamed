@@ -4,8 +4,8 @@ import { eq } from 'drizzle-orm';
 import { getDb } from 'coze-coding-dev-sdk';
 
 // 腾讯混元 API 配置
-const HUNYUAN_API_KEY = 'sk-sp-OYN1bI6MeMYFsKLTo9d3G1FxRcz0rWFst5jkTiK8LUMYp2Zz';
-const HUNYUAN_API_URL = 'https://api.hunyuan.cloud.tencent.com/hyllm/v1/chat/completions';
+const HUNYUAN_API_KEY = 'sk-sp-q9k6UedBfSttuDC0tzIPOesaScB9ywjiZ9vC62yDtXnt1eYr';
+const HUNYUAN_API_URL = 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
 
 const CITY_MAPPINGS: Record<string, string> = {
   'new york': 'New York', '纽约': 'New York',
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
               'Authorization': `Bearer ${HUNYUAN_API_KEY}`,
             },
             body: JSON.stringify({
-              model: 'hunyuan-lite',
+              model: 'hunyuan-pro',
               messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: message },
