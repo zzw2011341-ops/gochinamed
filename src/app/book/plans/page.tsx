@@ -10,11 +10,12 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Check, Star, Plane, Hotel, Stethoscope, DollarSign, Calendar, MapPin, Info } from 'lucide-react';
+import { generateItinerary, ItineraryDay } from '@/lib/itineraryGenerator';
 
 interface PlanOption {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   // 基础费用
   hotelFee: number;
   flightFee: number;
@@ -50,10 +51,10 @@ interface Attraction {
   id: string;
   nameEn: string;
   nameZh: string;
-  description: string;
   duration: string; // 预计游览时间
   price: number; // 门票费用
-  category: string; // 类别：cultural, natural, modern, etc.
+  category: string; // 类别
+  description?: string; // 景点描述：cultural, natural, modern, etc.
 }
 
 // 不同城市的景点数据
@@ -427,7 +428,31 @@ const cityAttractions: Record<string, Attraction[]> = {
     }
   ],
   // 默认景点列表（用于其他城市）
-  'default': [
+  
+  'Chengdu': [
+    { id: 'cd-1', nameEn: 'Giant Panda Breeding Center', nameZh: '大熊猫繁育研究基地', duration: '3-4 hours', price: 58, category: 'nature' , description: 'Visit 大熊猫繁育研究基地' },
+    { id: 'cd-2', nameEn: 'Wuhou Shrine', nameZh: '武侯祠', duration: '2-3 hours', price: 50, category: 'cultural' , description: 'Visit 武侯祠' },
+    { id: 'cd-3', nameEn: 'Jinli Ancient Street', nameZh: '锦里古街', duration: '2 hours', price: 0, category: 'cultural' , description: 'Visit 锦里古街' },
+    { id: 'cd-4', nameEn: 'Kuanzhai Alley', nameZh: '宽窄巷子', duration: '2-3 hours', price: 0, category: 'cultural' , description: 'Visit 宽窄巷子' },
+    { id: 'cd-5', nameEn: 'Dujiangyan Irrigation', nameZh: '都江堰', duration: 'Full day', price: 80, category: 'cultural' , description: 'Visit 都江堰' },
+    { id: 'cd-6', nameEn: 'Leshan Giant Buddha', nameZh: '乐山大佛', duration: 'Full day', price: 80, category: 'cultural' , description: 'Visit 乐山大佛' },
+    { id: 'cd-7', nameEn: 'Sanxingdui Museum', nameZh: '三星堆博物馆', duration: '3-4 hours', price: 72, category: 'cultural' , description: 'Visit 三星堆博物馆' },
+  ],
+  'Hangzhou': [
+    { id: 'hz-1', nameEn: 'West Lake', nameZh: '西湖', duration: 'Full day', price: 0, category: 'natural' , description: 'Visit 西湖' },
+    { id: 'hz-2', nameEn: 'Lingyin Temple', nameZh: '灵隐寺', duration: '2-3 hours', price: 45, category: 'religious' , description: 'Visit 灵隐寺' },
+    { id: 'hz-3', nameEn: 'Six Harmonies Pagoda', nameZh: '六和塔', duration: '1-2 hours', price: 30, category: 'cultural' , description: 'Visit 六和塔' },
+    { id: 'hz-4', nameEn: 'Xixi Wetland', nameZh: '西溪湿地', duration: '3-4 hours', price: 80, category: 'natural' , description: 'Visit 西溪湿地' },
+    { id: 'hz-5', nameEn: 'Hefang Street', nameZh: '河坊街', duration: '2 hours', price: 0, category: 'cultural' , description: 'Visit 河坊街' },
+  ],
+  'Xian': [
+    { id: 'xa-1', nameEn: 'Terracotta Warriors', nameZh: '兵马俑', duration: '3-4 hours', price: 120, category: 'cultural' , description: 'Visit 兵马俑' },
+    { id: 'xa-2', nameEn: 'City Wall', nameZh: '西安城墙', duration: '2-3 hours', price: 54, category: 'cultural' , description: 'Visit 西安城墙' },
+    { id: 'xa-3', nameEn: 'Big Wild Goose Pagoda', nameZh: '大雁塔', duration: '1-2 hours', price: 40, category: 'cultural' , description: 'Visit 大雁塔' },
+    { id: 'xa-4', nameEn: 'Muslim Quarter', nameZh: '回民街', duration: '2-3 hours', price: 0, category: 'cultural' , description: 'Visit 回民街' },
+    { id: 'xa-5', nameEn: 'Huashan Mountain', nameZh: '华山', duration: 'Full day', price: 180, category: 'natural' , description: 'Visit 华山' },
+  ],
+'default': [
     {
       id: 'default-1',
       nameEn: 'City Museum',
@@ -533,6 +558,7 @@ export default function PlanSelectionPage() {
   const [tourismFee, setTourismFee] = useState(0); // 旅游服务费用
   const [showAttractionDialog, setShowAttractionDialog] = useState(false); // 景点选择对话框
   const [selectedAttractions, setSelectedAttractions] = useState<string[]>([]); // 选中的景点ID列表
+  const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
   const [attractions, setAttractions] = useState<Attraction[]>([]); // 当前城市的景点列表
 
   // 判断是否同城旅行
@@ -588,11 +614,35 @@ export default function PlanSelectionPage() {
       // 加载当前城市的景点列表
       const cityAttractionList = cityAttractions[bookingData.destinationCity] || cityAttractions['default'];
       setAttractions(cityAttractionList);
-      // 默认选中前3个热门景点
-      setSelectedAttractions(cityAttractionList.slice(0, 3).map(a => a.id));
+      // 智能选择：如果景点较多，均匀选择；否则全选
+      if (cityAttractionList.length <= 8) {
+        setSelectedAttractions(cityAttractionList.map(a => a.id));
+      } else {
+        // 均匀选择：每隔几个景点选一个
+        const step = Math.max(1, Math.floor(cityAttractionList.length / 8));
+        const selected = [];
+        for (let i = 0; i < cityAttractionList.length && selected.length < 8; i += step) {
+          selected.push(cityAttractionList[i].id);
+        }
+        setSelectedAttractions(selected);
+        
+        // 生成智能行程
+        const isel = selected;
+        try {
+          const genItin = generateItinerary({
+            destinationCity: bookingData.destinationCity,
+            travelDate: bookingData.travelDate,
+            returnDate: '',
+            selectedAttractions: isel,
+            attractions: cityAttractionList,
+          });
+          setItinerary(genItin);
+        } catch(e) { console.error('Itinerary gen failed:', e); }
+      }
     } else {
       setAttractions([]);
       setSelectedAttractions([]);
+      setItinerary([]);
     }
   }, [includeTourism, bookingData]);
 
@@ -605,8 +655,8 @@ export default function PlanSelectionPage() {
       }, 0);
       setTourismFee(totalFee);
     } else if (includeTourism) {
-      // 如果用户开启旅游服务但没有选择景点，使用默认费用
-      setTourismFee(7 * 80);
+      // 如果没有选择景点，使用默认费用（按天数）
+      setTourismFee(7 * 50);
     } else {
       setTourismFee(0);
     }
@@ -618,6 +668,18 @@ export default function PlanSelectionPage() {
     if (checked) {
       // 打开景点选择对话框
       setShowAttractionDialog(true);
+      // 重新生成行程
+      if (bookingData) {
+        const cityAttr = attractions.length > 0 ? attractions : (cityAttractions[bookingData.destinationCity] || cityAttractions['default']);
+        const generated = generateItinerary({
+          destinationCity: bookingData.destinationCity,
+          travelDate: bookingData.travelDate,
+          returnDate: '',
+          selectedAttractions: selectedAttractions,
+          attractions: cityAttr,
+        });
+        setItinerary(generated);
+      }
     }
   };
 
