@@ -2,13 +2,27 @@ import { NextResponse } from 'next/server';
 import { hospitalManager } from '@/storage/database';
 import { callHunyuan } from '@/lib/hunyuan-client';
 
+/**
+ * 去重函数：根据医院ID去重
+ */
+function deduplicateHospitals(hospitals: any[]): any[] {
+  const seen = new Set<string>();
+  return hospitals.filter(h => {
+    if (seen.has(h.id)) return false;
+    seen.add(h.id);
+    return true;
+  });
+}
+
 export async function GET() {
   try {
     // 尝试从数据库获取
     try {
-      const featuredHospitals = await hospitalManager.getFeaturedHospitals(10);
-      if (featuredHospitals.length > 0) {
-        return NextResponse.json({ hospitals: featuredHospitals, source: 'database' });
+      const featuredHospitals = await hospitalManager.getFeaturedHospitals(20);
+      // 去重
+      const uniqueHospitals = deduplicateHospitals(featuredHospitals);
+      if (uniqueHospitals.length > 0) {
+        return NextResponse.json({ hospitals: uniqueHospitals.slice(0, 8), source: 'database' });
       }
     } catch (dbError: any) {
       console.log('数据库不可用，使用 AI 生成:', dbError.message);

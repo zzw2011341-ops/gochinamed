@@ -1,5 +1,5 @@
 import { eq, and, like, desc, sql, gt } from "drizzle-orm";
-import { getDb } from '@/lib/db';
+import { getDb } from "coze-coding-dev-sdk";
 import { attractions } from "./shared/schema";
 import type { Attraction } from "./shared/schema";
 import { z } from "zod";

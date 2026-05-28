@@ -45,6 +45,13 @@ export async function GET(request: NextRequest) {
         limit: validated.type === "all" ? 5 : validated.limit,
         offset: validated.offset,
       });
+      // 去重：按 nameEn 去重
+      const seenHospitals = new Set();
+      hospitalResult.hospitals = hospitalResult.hospitals.filter(h => {
+        if (seenHospitals.has(h.nameEn)) return false;
+        seenHospitals.add(h.nameEn);
+        return true;
+      });
       results.hospitals = hospitalResult;
     }
 
@@ -56,6 +63,13 @@ export async function GET(request: NextRequest) {
         hospitalId: undefined,
         limit: validated.type === "all" ? 5 : validated.limit,
         offset: validated.offset,
+      });
+      // 去重：按 nameEn 去重
+      const seenDocs = new Set();
+      doctorResult.doctors = doctorResult.doctors.filter(d => {
+        if (seenDocs.has(d.nameEn)) return false;
+        seenDocs.add(d.nameEn);
+        return true;
       });
       results.doctors = doctorResult;
     }

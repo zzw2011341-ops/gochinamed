@@ -84,12 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
 
+    const data = await response.json();
+    
     if (!response.ok) {
-      const data = await response.json();
       throw new Error(data.error || "Login failed");
     }
 
-    const data = await response.json();
     setUser(data.user);
     // Refresh user to ensure state is synced
     await refreshUser();

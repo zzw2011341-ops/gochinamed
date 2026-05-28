@@ -242,6 +242,190 @@ const cityAttractions: Record<string, Attraction[]> = {
       category: 'cultural'
     }
   ],
+  'Guangzhou': [
+    {
+      id: 'gz-1',
+      nameEn: 'Canton Tower',
+      nameZh: '广州塔',
+      description: 'Iconic 600m tower with observation deck and restaurant',
+      duration: '2-3 hours',
+      price: 150,
+      category: 'modern'
+    },
+    {
+      id: 'gz-2',
+      nameEn: 'Chen Clan Ancestral Hall',
+      nameZh: '陈家祠',
+      description: 'Exquisite Qing dynasty ancestral temple with intricate carvings',
+      duration: '1-2 hours',
+      price: 10,
+      category: 'cultural'
+    },
+    {
+      id: 'gz-3',
+      nameEn: 'Shamian Island',
+      nameZh: '沙面岛',
+      description: 'Historic colonial-era island with tree-lined boulevards',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'gz-4',
+      nameEn: 'Yuexiu Park',
+      nameZh: '越秀公园',
+      description: 'City park with the iconic Five Rams statue and Zhenhai Tower',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'gz-5',
+      nameEn: 'Canton Tower Ferris Wheel',
+      nameZh: '广州塔摩天轮',
+      description: 'Sky-high Ferris wheel on Canton Tower',
+      duration: '1-2 hours',
+      price: 298,
+      category: 'modern'
+    },
+    {
+      id: 'gz-6',
+      nameEn: 'Guangzhou Opera House',
+      nameZh: '广州大剧院',
+      description: 'Stunning modern architecture by Zaha Hadid',
+      duration: '2-3 hours',
+      price: 80,
+      category: 'modern'
+    },
+    {
+      id: 'gz-7',
+      nameEn: 'Canton Tower Aquarium',
+      nameZh: '广州塔海洋馆',
+      description: 'Underwater world beneath the Canton Tower',
+      duration: '2-3 hours',
+      price: 120,
+      category: 'modern'
+    },
+    {
+      id: 'gz-8',
+      nameEn: 'Baiyun Mountain',
+      nameZh: '白云山',
+      description: 'Scenic mountain park with hiking trails and city views',
+      duration: '3-4 hours',
+      price: 5,
+      category: 'natural'
+    },
+    {
+      id: 'gz-9',
+      nameEn: 'Sacred Heart Cathedral',
+      nameZh: '石室圣心大教堂',
+      description: 'Historic Gothic-style Catholic cathedral',
+      duration: '1-2 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'gz-10',
+      nameEn: 'Guangdong Museum',
+      nameZh: '广东省博物馆',
+      description: 'Modern museum showcasing Lingnan culture',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    }
+  ],
+  'Shenzhen': [
+    {
+      id: 'sz-1',
+      nameEn: 'Window of the World',
+      nameZh: '世界之窗',
+      description: 'Theme park with replicas of world-famous landmarks',
+      duration: '3-4 hours',
+      price: 220,
+      category: 'modern'
+    },
+    {
+      id: 'sz-2',
+      nameEn: 'Lianhua Mountain Park',
+      nameZh: '莲花山公园',
+      description: 'City park with statue of Deng Xiaoping and skyline views',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'sz-3',
+      nameEn: 'Dameisha Beach',
+      nameZh: '大梅沙海滩',
+      description: 'Popular public beach for swimming and sunbathing',
+      duration: '3-4 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'sz-4',
+      nameEn: 'OCT Loft Creative Culture Park',
+      nameZh: '华侨城创意文化园',
+      description: 'Creative arts district with galleries and cafes',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'modern'
+    },
+    {
+      id: 'sz-5',
+      nameEn: 'Shenzhen Museum',
+      nameZh: '深圳博物馆',
+      description: 'Museum showcasing Shenzhen development history',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'sz-6',
+      nameEn: 'Happy Valley Theme Park',
+      nameZh: '欢乐谷',
+      description: 'Large theme park with thrilling roller coasters',
+      duration: 'Full day',
+      price: 230,
+      category: 'modern'
+    },
+    {
+      id: 'sz-7',
+      nameEn: 'Splendid China Folk Village',
+      nameZh: '锦绣中华民俗村',
+      description: 'Miniature park showcasing China cultural heritage',
+      duration: '3-4 hours',
+      price: 180,
+      category: 'cultural'
+    },
+    {
+      id: 'sz-8',
+      nameEn: 'Dafen Oil Painting Village',
+      nameZh: '大芬油画村',
+      description: 'Famous village for oil painting reproductions',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    },
+    {
+      id: 'sz-9',
+      nameEn: 'Mangrove Nature Reserve',
+      nameZh: '红树林自然保护区',
+      description: 'Coastal wetland with migratory birds',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'natural'
+    },
+    {
+      id: 'sz-10',
+      nameEn: 'Nantou Ancient Town',
+      nameZh: '南头古城',
+      description: 'Ancient city with over 1700 years of history',
+      duration: '2-3 hours',
+      price: 0,
+      category: 'cultural'
+    }
+  ],
   // 默认景点列表（用于其他城市）
   'default': [
     {

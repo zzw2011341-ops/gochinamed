@@ -81,7 +81,7 @@ export function Navbar() {
             <Link href="/attractions" className="text-gray-700 hover:text-blue-600 font-medium">
               {t('nav.attractions')}
             </Link>
-            <Link href="/community" className="text-gray-700 hover:text-blue-600 font-medium">
+            <Link href="/community" className="text-gray-700 hover:text-blue-600 font-medium hidden">
               {t('nav.community')}
             </Link>
             <Link href="/ai-assistant" className="text-gray-700 hover:text-blue-600 font-medium">
@@ -96,7 +96,7 @@ export function Navbar() {
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[100]" sideOffset={8}>
                 <SelectItem value="en">English</SelectItem>
                 <SelectItem value="de">Deutsch</SelectItem>
                 <SelectItem value="fr">Français</SelectItem>
@@ -130,7 +130,7 @@ export function Navbar() {
                       {user.name}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" sideOffset={8} className="z-[100]">
                     <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
                     <DropdownMenuLabel className="text-xs text-gray-500">
                       {user.role === 'admin' ? 'Administrator' : 'Patient'}
@@ -191,16 +191,32 @@ export function Navbar() {
         </div>
       </div>
 
+      {/* Mobile menu overlay */}
+      {isMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 z-[98] md:hidden"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200 py-4 px-4">
+        <div className="md:hidden bg-white border-t border-gray-200 py-4 px-4 relative z-[99]">
           <div className="space-y-4">
+            {/* Navigation Links */}
             <Link
               href="/"
               className="block text-gray-700 hover:text-blue-600 font-medium"
               onClick={() => setIsMenuOpen(false)}
             >
               {t('nav.home')}
+            </Link>
+            <Link
+              href="/search"
+              className="block text-gray-700 hover:text-blue-600 font-medium"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              {t('nav.search') || 'Search'}
             </Link>
             <Link
               href="/doctors"
@@ -237,12 +253,68 @@ export function Navbar() {
             >
               {t('nav.aiAssistant')}
             </Link>
+
+            {/* Authenticated user actions */}
+            {user && (
+              <>
+                <Link
+                  href="/book"
+                  className="block text-blue-600 hover:text-blue-700 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <CalendarPlus className="h-4 w-4 inline mr-2" />
+                  {language === 'zh' ? '我要预订' : 'Book Now'}
+                </Link>
+                <Link
+                  href="/my-trips"
+                  className="block text-gray-700 hover:text-blue-600 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Plane className="h-4 w-4 inline mr-2" />
+                  {t('nav.myTrips')}
+                </Link>
+                <Link
+                  href="/profile"
+                  className="block text-gray-700 hover:text-blue-600 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-4 w-4 inline mr-2" />
+                  {t('nav.profile')}
+                </Link>
+              </>
+            )}
+
+            {/* Divider and auth buttons for non-authenticated users */}
+            {!user && (
+              <div className="pt-4 border-t border-gray-200 space-y-2">
+                <Link
+                  href="/login"
+                  className="block w-full"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Button variant="outline" size="sm" className="w-full">
+                    {t('nav.login')}
+                  </Button>
+                </Link>
+                <Link
+                  href="/register"
+                  className="block w-full"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <Button size="sm" className="w-full">
+                    {t('nav.register')}
+                  </Button>
+                </Link>
+              </div>
+            )}
+
+            {/* Language Selector */}
             <div className="pt-4 border-t border-gray-200">
               <Select value={language} onValueChange={(value: any) => setLanguage(value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[100]" sideOffset={8}>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="de">Deutsch</SelectItem>
                   <SelectItem value="fr">Français</SelectItem>

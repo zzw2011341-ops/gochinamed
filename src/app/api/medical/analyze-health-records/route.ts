@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { callHunyuan } from '@/lib/hunyuan-client';
+import { LLMClient, Config } from 'coze-coding-dev-sdk';
+
+const config = new Config();
+const llmClient = new LLMClient(config);
 
 interface AnalysisRequest {
   fileUrls: string[];
@@ -16,130 +19,134 @@ interface AnalysisResponse {
     priorityConsultation: boolean;
     suggestedDoctors?: string[];
   };
-  aiDiagnosis?: {
-    description: string;
-    possibleConditions: string[];
-    confidence: number;
-  };
-  disclaimers: string[];
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: AnalysisRequest = await request.json();
-    const { fileUrls, userId } = body;
 
-    if (!fileUrls || fileUrls.length === 0) {
+    if (!body.fileUrls || body.fileUrls.length === 0) {
       return NextResponse.json(
-        { error: 'At least one file URL is required' },
+        { error: 'No files provided for analysis' },
         { status: 400 }
       );
     }
 
-    // Build the analysis prompt
-    const fileDescriptions = fileUrls.map((url, index) => `File ${index + 1}: ${url}`).join('\n');
+    // Prepare the prompt for health record analysis
+    const prompt = `You are an AI medical assistant specializing in analyzing health records and providing preliminary recommendations. 
 
-    const prompt = `You are analyzing medical records for a patient on GoChinaMed, a medical tourism platform.
+Please analyze the health records from the following URLs:
+${body.fileUrls.map(url => `- ${url}`).join('\n')}
 
-Files to analyze:
-${fileDescriptions}
+Please provide a comprehensive analysis including:
 
-Please provide:
-1. A comprehensive analysis of the medical records
-2. Recommended medical specialties for consultation
-3. Suggested medical tests
-4. Severity assessment (low/medium/high)
-5. Whether urgent consultation is needed
-6. Possible diagnoses (with confidence levels)
+1. **Medical Condition Assessment**: 
+   - Identify the primary health condition(s)
+   - Assess the severity level (low/medium/high)
+   - Note any critical findings that require immediate attention
 
-Return your response as a JSON object with this structure:
+2. **Consultation Direction**:
+   - Recommend the appropriate medical specialty for consultation (e.g., cardiology, neurology, orthopedics, etc.)
+   - Provide a brief rationale for this recommendation
+
+3. **Suggested Specialties**: List relevant medical specialties that should be involved
+
+4. **Recommended Tests/Examinations**:
+   - List specific diagnostic tests that would be beneficial
+   - Include both urgent tests and follow-up examinations
+
+5. **Priority Assessment**:
+   - Indicate whether this requires immediate/emergency consultation (true/false)
+   - Suggest an appropriate timeline for consultation
+
+6. **Additional Notes**:
+   - Any medication considerations
+   - Lifestyle recommendations
+   - Red flags to watch for
+
+Please format your response as JSON with the following structure:
 {
-  "analysis": "detailed analysis text",
+  "analysis": "detailed text analysis",
   "recommendations": {
-    "consultationDirection": "suggested direction for medical consultation",
-    "suggestedSpecialties": ["specialty1", "specialty2"],
-    "recommendedTests": ["test1", "test2"],
-    "severity": "low|medium|high",
-    "priorityConsultation": boolean,
-    "suggestedDoctors": ["doctor1", "doctor2"]
-  },
-  "aiDiagnosis": {
-    "description": "description",
-    "possibleConditions": ["condition1", "condition2"],
-    "confidence": 0.0-1.0
-  },
-  "disclaimers": ["disclaimer1", "disclaimer2"]
+    "consultationDirection": "primary specialty",
+    "suggestedSpecialties": ["specialty1", "specialty2", ...],
+    "recommendedTests": ["test1", "test2", ...],
+    "severity": "low/medium/high",
+    "priorityConsultation": true/false,
+    "suggestedDoctors": ["doctor_id1", "doctor_id2", ...]
+  }
 }
 
 Important:
 - This is a preliminary analysis and NOT a medical diagnosis
 - Always recommend professional medical consultation
 - If any critical findings are detected, emphasize immediate medical attention
-- Be conservative and cautious in recommendations`;
+- Be conservative and cautious in recommendations
+- If unable to analyze files, indicate that clearly in the response`;
 
-    // Call the Hunyuan API
-    const fullContent = await callHunyuan([
-      { Role: 'assistant', Content: 'You are an AI medical assistant. Always provide preliminary analysis with strong disclaimers that this is not a medical diagnosis and professional consultation is required.' },
-      { Role: 'user', Content: prompt }
+    // Call the LLM API
+    const response = await llmClient.stream([
+      {
+        role: 'system',
+        content: 'You are an AI medical assistant. Always provide preliminary analysis with strong disclaimers that this is not a medical diagnosis and professional consultation is required.',
+      },
+      {
+        role: 'user',
+        content: prompt,
+      },
     ], {
-      model: 'hunyuan-lite',
+      model: 'doubao-seed-1-6-251015',
       temperature: 0.3,
+      thinking: 'disabled',
     });
+
+    let fullContent = '';
+    for await (const chunk of response) {
+      if (chunk.content) {
+        fullContent += chunk.content.toString();
+      }
+    }
 
     // Parse the AI response
     let aiResponse: AnalysisResponse;
     try {
-      const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
+      // Try to extract JSON from the response
+      const content = fullContent;
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         aiResponse = JSON.parse(jsonMatch[0]);
       } else {
+        // If no JSON found, create a basic response
         aiResponse = {
-          analysis: fullContent,
+          analysis: content,
           recommendations: {
-            suggestedSpecialties: [],
-            recommendedTests: [],
+            consultationDirection: 'general',
+            suggestedSpecialties: ['internal_medicine'],
+            recommendedTests: ['blood_test', 'physical_exam'],
+            severity: 'medium',
             priorityConsultation: false,
           },
-          disclaimers: [
-            'This is an AI-generated preliminary analysis.',
-            'Please consult with a qualified healthcare professional for medical advice.',
-            'This analysis is based on limited information and may not be complete.',
-          ],
         };
       }
-    } catch (parseError) {
+    } catch (error) {
+      console.error('Failed to parse AI response:', error);
       aiResponse = {
-        analysis: fullContent,
+        analysis: fullContent || 'Analysis completed',
         recommendations: {
-          suggestedSpecialties: [],
-          recommendedTests: [],
+          consultationDirection: 'general',
+          suggestedSpecialties: ['internal_medicine'],
+          recommendedTests: ['blood_test', 'physical_exam'],
+          severity: 'medium',
           priorityConsultation: false,
         },
-        disclaimers: [
-          'This is an AI-generated preliminary analysis.',
-          'Please consult with a qualified healthcare professional for medical advice.',
-        ],
       };
     }
 
-    // Always add basic disclaimers
-    aiResponse.disclaimers = [
-      ...(aiResponse.disclaimers || []),
-      'This analysis is for reference only and does not constitute a medical diagnosis.',
-      'Please seek professional medical consultation for accurate diagnosis and treatment.',
-    ];
-
-    return NextResponse.json({
-      success: true,
-      analysis: aiResponse,
-      source: 'hunyuan-ai',
-      timestamp: Date.now(),
-    });
-
-  } catch (error: any) {
-    console.error('Health records analysis error:', error);
+    return NextResponse.json(aiResponse);
+  } catch (error) {
+    console.error('Health record analysis error:', error);
     return NextResponse.json(
-      { error: 'Failed to analyze health records', details: error.message },
+      { error: 'Failed to analyze health records' },
       { status: 500 }
     );
   }

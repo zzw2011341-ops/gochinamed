@@ -1,49 +1,233 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { streamHunyuan } from '@/lib/hunyuan-client';
+import { aiConversations, users } from '@/storage/database';
+import { eq } from 'drizzle-orm';
+import { getDb } from 'coze-coding-dev-sdk';
 
-const SYSTEM_PROMPT = `You are a professional medical assistant for GoChinaMed, a medical tourism platform. Always prioritize patient safety and suggest consulting healthcare professionals for serious conditions.`;
+// 腾讯混元 API 配置
+const HUNYUAN_API_KEY = 'sk-sp-OYN1bI6MeMYFsKLTo9d3G1FxRcz0rWFst5jkTiK8LUMYp2Zz';
+const HUNYUAN_API_URL = 'https://api.hunyuan.cloud.tencent.com/hyllm/v1/chat/completions';
+
+const CITY_MAPPINGS: Record<string, string> = {
+  'new york': 'New York', '纽约': 'New York',
+  'los angeles': 'Los Angeles', '洛杉矶': 'Los Angeles',
+  'san francisco': 'San Francisco', '旧金山': 'San Francisco',
+  'chicago': 'Chicago', '芝加哥': 'Chicago',
+  'miami': 'Miami', '迈阿密': 'Miami',
+  'toronto': 'Toronto', '多伦多': 'Toronto',
+  'vancouver': 'Vancouver', '温哥华': 'Vancouver',
+  'são paulo': 'São Paulo', 'sao paulo': 'São Paulo', '圣保罗': 'São Paulo',
+  'london': 'London', '伦敦': 'London',
+  'paris': 'Paris', '巴黎': 'Paris',
+  'berlin': 'Berlin', '柏林': 'Berlin',
+  'munich': 'Munich', '慕尼黑': 'Munich',
+  'frankfurt': 'Frankfurt', '法兰克福': 'Frankfurt',
+  'rome': 'Rome', '罗马': 'Rome',
+  'madrid': 'Madrid', '马德里': 'Madrid',
+  'amsterdam': 'Amsterdam', '阿姆斯特丹': 'Amsterdam',
+  'vienna': 'Vienna', '维也纳': 'Vienna',
+  'zurich': 'Zurich', '苏黎世': 'Zurich',
+  'beijing': 'Beijing', '北京': 'Beijing',
+  'shanghai': 'Shanghai', '上海': 'Shanghai',
+  'guangzhou': 'Guangzhou', '广州': 'Guangzhou',
+  'shenzhen': 'Shenzhen', '深圳': 'Shenzhen',
+  'hangzhou': 'Hangzhou', '杭州': 'Hangzhou',
+  'chengdu': 'Chengdu', '成都': 'Chengdu',
+  'wuhan': 'Wuhan', '武汉': 'Wuhan',
+  'nanjing': 'Nanjing', '南京': 'Nanjing',
+  'xian': 'Xi\'an', '西安': 'Xi\'an',
+  'tianjin': 'Tianjin', '天津': 'Tianjin',
+  'qingdao': 'Qingdao', '青岛': 'Qingdao',
+  'dalian': 'Dalian', '大连': 'Dalian',
+  'xiamen': 'Xiamen', '厦门': 'Xiamen',
+  'suzhou': 'Suzhou', '苏州': 'Suzhou',
+  'chongqing': 'Chongqing', '重庆': 'Chongqing',
+};
+
+const SYSTEM_PROMPT = `You are a professional medical assistant for GoChinaMed, a medical tourism platform helping international patients access healthcare in China.
+
+Your responsibilities:
+1. Provide accurate medical information and guidance
+2. Help patients understand their symptoms and possible treatments
+3. Recommend suitable doctors and hospitals in China based on patient conditions
+4. Answer questions about medical tourism, including travel, accommodation, and cultural aspects
+5. Be empathetic, professional, and supportive.
+
+Guidelines:
+- Always prioritize patient safety
+- Suggest consulting with healthcare professionals for serious conditions
+- Provide clear, easy-to-understand explanations
+- Consider cultural differences and language barriers
+- Ask follow-up questions when necessary to better understand the patient's needs
+
+Available information:
+- We have access to top Chinese hospitals and renowned doctors
+- We can help with treatment planning, travel arrangements, and accommodation
+- We support multiple languages: English, German, French, Chinese
+
+Tone: Professional, empathetic, informative, and reassuring`;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { message } = body;
+    const { message, userId, language = 'en' } = body;
+
     if (!message) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const rawStream = await streamHunyuan(
-      [
-        { Role: 'system', Content: SYSTEM_PROMPT },
-        { Role: 'user', Content: message }
-      ],
-      { model: 'hunyuan-lite', temperature: 0.7 }
-    );
-
-    // 包装为 SSE 格式
     const encoder = new TextEncoder();
-    const sseStream = new ReadableStream({
+
+    const stream = new ReadableStream({
       async start(controller) {
-        const reader = rawStream.getReader();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = new TextDecoder().decode(value);
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: chunk })}\n\n`));
+        try {
+          let fullResponse = '';
+
+          // 调用腾讯混元 API（流式）
+          const hunyuanRes = await fetch(HUNYUAN_API_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${HUNYUAN_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: 'hunyuan-lite',
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: message },
+              ],
+              stream: true,
+              temperature: 0.7,
+            }),
+          });
+
+          if (!hunyuanRes.ok || !hunyuanRes.body) {
+            throw new Error(`Hunyuan API error: ${hunyuanRes.status}`);
+          }
+
+          const reader = hunyuanRes.body.getReader();
+          const decoder = new TextDecoder();
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter(l => l.trim());
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const data = line.slice(6).trim();
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content || '';
+                if (content) {
+                  fullResponse += content;
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+                }
+              } catch (e) {
+                // 忽略解析错误
+              }
+            }
+          }
+
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+
+          // 保存对话到数据库
+          if (userId) {
+            try {
+              const db = await getDb();
+              const [existingConversation] = await db
+                .select()
+                .from(aiConversations)
+                .where(eq(aiConversations.userId, userId))
+                .orderBy(aiConversations.createdAt)
+                .limit(1);
+
+              if (existingConversation) {
+                const msgs = JSON.parse(JSON.stringify(existingConversation.messages || []));
+                msgs.push(
+                  { role: 'user', content: message },
+                  { role: 'assistant', content: fullResponse }
+                );
+                await db.update(aiConversations)
+                  .set({ messages: JSON.stringify(msgs), updatedAt: new Date() })
+                  .where(eq(aiConversations.id, existingConversation.id));
+              } else {
+                await db.insert(aiConversations).values({
+                  userId,
+                  messages: JSON.stringify([
+                    { role: 'user', content: message },
+                    { role: 'assistant', content: fullResponse },
+                  ]),
+                });
+              }
+
+              // 提取城市信息
+              const lowerMessage = message.toLowerCase();
+              const citiesFound: string[] = [];
+              for (const [key, value] of Object.entries(CITY_MAPPINGS)) {
+                if (lowerMessage.includes(key) && !citiesFound.includes(value)) {
+                  citiesFound.push(value);
+                }
+              }
+
+              if (citiesFound.length > 0) {
+                const updateData: any = { updatedAt: new Date() };
+                if (citiesFound[0]) updateData.originCity = citiesFound[0];
+                if (citiesFound[1]) updateData.destinationCity = citiesFound[1];
+                await db.update(users).set(updateData).where(eq(users.id, userId));
+              }
+            } catch (dbError) {
+              console.error('Error saving conversation:', dbError);
+            }
+          }
+        } catch (error) {
+          console.error('Hunyuan API error:', error);
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: 'Failed to generate response' })}\n\n`));
+        } finally {
+          controller.close();
         }
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      }
+      },
     });
 
-    return new Response(sseStream, {
+    return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Chat API error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    if (!userId) {
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    }
+
+    const db = await getDb();
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(eq(aiConversations.userId, userId))
+      .orderBy(aiConversations.createdAt)
+      .limit(1);
+
+    if (!conversation) {
+      return NextResponse.json({ messages: [] });
+    }
+
+    return NextResponse.json({ messages: JSON.parse(JSON.stringify(conversation.messages || [])) });
+  } catch (error) {
+    console.error('Get conversation error:', error);
+    return NextResponse.json({ error: 'Failed to retrieve conversation' }, { status: 500 });
   }
 }

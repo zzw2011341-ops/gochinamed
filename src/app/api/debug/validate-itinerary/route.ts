@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb } from 'coze-coding-dev-sdk';
 import { itineraries, orders } from '@/storage/database/shared/schema';
 import { eq } from 'drizzle-orm';
 

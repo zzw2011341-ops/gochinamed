@@ -1,5 +1,5 @@
 import { eq, and } from "drizzle-orm";
-import { getDb } from '@/lib/db';
+import { getDb } from "coze-coding-dev-sdk";
 import { users } from "./shared/schema";
 import type { User } from "./shared/schema";
 import { z } from "zod";

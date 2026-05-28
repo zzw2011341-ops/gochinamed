@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb } from 'coze-coding-dev-sdk';
 import { apiConfigs } from '@/storage/database/shared/schema';
 import { eq } from 'drizzle-orm';
 import { apiManager } from '@/lib/api';
@@ -22,18 +22,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-        // 获取天气API配置
-    let config = null;
-    try {
-      const db = await getDb();
-      const [cfg] = await db
-        .select()
-        .from(apiConfigs)
-        .where(eq(apiConfigs.provider, 'openweather' as any));
-      config = cfg;
-    } catch (dbError: any) {
-      console.log('数据库不可用，使用模拟天气数据:', dbError.message);
-    }
+    // 获取天气API配置
+    const db = await getDb();
+    const [config] = await db
+      .select()
+      .from(apiConfigs)
+      .where(eq(apiConfigs.provider, 'openweather' as any));
 
     if (!config || !config.isActive) {
       // 如果没有配置天气API，返回模拟数据

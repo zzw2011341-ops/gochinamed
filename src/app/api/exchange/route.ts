@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb } from '@/lib/db';
+import { getDb } from 'coze-coding-dev-sdk';
 import { apiConfigs } from '@/storage/database/shared/schema';
 import { eq } from 'drizzle-orm';
 import { apiManager } from '@/lib/api';
@@ -17,18 +17,12 @@ export async function GET(request: NextRequest) {
     const to = searchParams.get('to');
     const amount = parseFloat(searchParams.get('amount') || '1');
 
-        // 获取汇率API配置
-    let config = null;
-    try {
-      const db = await getDb();
-      const [cfg] = await db
-        .select()
-        .from(apiConfigs)
-        .where(eq(apiConfigs.provider, 'exchangerate' as any));
-      config = cfg;
-    } catch (dbError: any) {
-      console.log('数据库不可用，使用固定汇率:', dbError.message);
-    }
+    // 获取汇率API配置
+    const db = await getDb();
+    const [config] = await db
+      .select()
+      .from(apiConfigs)
+      .where(eq(apiConfigs.provider, 'exchangerate' as any));
 
     if (!config || !config.isActive) {
       // 如果没有配置汇率API，返回固定汇率

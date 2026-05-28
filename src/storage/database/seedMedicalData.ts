@@ -6,7 +6,7 @@
  * npx tsx src/storage/database/seedMedicalData.ts
  */
 
-import { getDb } from '@/lib/db';
+import { getDb } from "coze-coding-dev-sdk";
 import { hospitals, doctors, cities } from "./shared/schema";
 
 // 城市列表

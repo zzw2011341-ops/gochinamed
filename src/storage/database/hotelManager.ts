@@ -1,5 +1,5 @@
 import { eq, and, like, or, desc, sql, gt } from "drizzle-orm";
-import { getDb } from '@/lib/db';
+import { getDb } from "coze-coding-dev-sdk";
 import { hotels } from "./shared/schema";
 import type { Hotel } from "./shared/schema";
 import { z } from "zod";
