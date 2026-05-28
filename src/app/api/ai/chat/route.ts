@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { getDb } from 'coze-coding-dev-sdk';
 
 // 腾讯混元 API 配置
-const HUNYUAN_API_KEY = 'sk-sp-q9k6UedBfSttuDC0tzIPOesaScB9ywjiZ9vC62yDtXnt1eYr';
+const HUNYUAN_API_KEY = 'sk-s6QbXuDlkJ8h8VTfTEKsn7y9jUS47ZOXQzzTm34SeeznvbrK';
 const HUNYUAN_API_URL = 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
 
 const CITY_MAPPINGS: Record<string, string> = {

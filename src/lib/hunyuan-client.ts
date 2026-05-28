@@ -2,7 +2,7 @@ export async function callHunyuan(
   messages: any[],
   options?: { model?: string; temperature?: number }
 ): Promise<string> {
-  const apiKey = process.env.HUNYUAN_API_KEY || 'sk-sp-q9k6UedBfSttuDC0tzIPOesaScB9ywjiZ9vC62yDtXnt1eYr';
+  const apiKey = process.env.HUNYUAN_API_KEY || 'sk-s6QbXuDlkJ8h8VTfTEKsn7y9jUS47ZOXQzzTm34SeeznvbrK';
   const apiUrl = 'https://api.hunyuan.cloud.tencent.com/v1/chat/completions';
   
   try {
