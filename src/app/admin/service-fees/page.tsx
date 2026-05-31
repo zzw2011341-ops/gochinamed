@@ -42,7 +42,7 @@ export default function ServiceFeesPage() {
   const loadFees = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/service-fees');
+      const response = await fetch('/gochinamed/api/admin/service-fees');
       if (response.ok) {
         const data = await response.json();
         setFees(data.fees);
@@ -65,7 +65,7 @@ export default function ServiceFeesPage() {
     setSaving(true);
     try {
       const promises = fees.map(fee =>
-        fetch('/api/admin/service-fees', {
+        fetch('/gochinamed/api/admin/service-fees', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(fee),

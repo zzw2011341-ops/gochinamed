@@ -168,7 +168,7 @@ export default function BookPage() {
       router.push('/login');
     } else if (user.id) {
       // 刷新用户信息以获取最新的城市和预算偏好
-      fetch('/api/auth/me')
+      fetch('/gochinamed/api/auth/me')
         .then(res => res.json())
         .then(data => {
           if (data.user) {
@@ -562,7 +562,7 @@ export default function BookPage() {
     setLoading(true);
     try {
       // 保存预订信息并获取可选方案
-      const response = await fetch('/api/bookings/create', {
+      const response = await fetch('/gochinamed/api/bookings/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

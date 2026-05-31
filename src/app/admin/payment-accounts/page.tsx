@@ -89,7 +89,7 @@ export default function PaymentAccountsPage() {
   const loadAccounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/payment-accounts');
+      const response = await fetch('/gochinamed/api/admin/payment-accounts');
       if (response.ok) {
         const data = await response.json();
         setAccounts(data.accounts);
@@ -143,7 +143,7 @@ export default function PaymentAccountsPage() {
   const handleToggleActive = async (account: PaymentAccount) => {
     try {
       setSubmitting(true);
-      const response = await fetch('/api/admin/payment-accounts', {
+      const response = await fetch('/gochinamed/api/admin/payment-accounts', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

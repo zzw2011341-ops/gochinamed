@@ -130,7 +130,7 @@ export default function ApiConfigsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const response = await fetch('/api/admin/api-configs');
+      const response = await fetch('/gochinamed/api/admin/api-configs');
       if (response.ok) {
         const data = await response.json();
         setConfigs(data.configs || []);

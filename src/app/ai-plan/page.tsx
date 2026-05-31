@@ -128,7 +128,7 @@ export default function AIPlanPage() {
     setPlan("");
 
     try {
-      const response = await fetch("/api/ai/generate-plan", {
+      const response = await fetch("/gochinamed/api/ai/generate-plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

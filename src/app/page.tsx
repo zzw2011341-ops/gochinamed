@@ -71,8 +71,8 @@ export default function HomePage() {
     async function fetchData() {
       try {
         const [doctorsRes, hospitalsRes] = await Promise.all([
-          fetch('/api/doctors/featured'),
-          fetch('/api/hospitals/featured'),
+          fetch('/gochinamed/api/doctors/featured'),
+          fetch('/gochinamed/api/hospitals/featured'),
         ]);
 
         const doctorsData = await doctorsRes.json();
@@ -117,7 +117,7 @@ export default function HomePage() {
     setIsChatLoading(true);
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch('/gochinamed/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -284,7 +284,7 @@ export default function HomePage() {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'voice-input.webm');
 
-      const response = await fetch('/api/voice/transcribe', {
+      const response = await fetch('/gochinamed/api/voice/transcribe', {
         method: 'POST',
         body: formData,
       });

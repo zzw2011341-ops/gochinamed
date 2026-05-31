@@ -137,7 +137,7 @@ export default function PaymentPage() {
 
   const fetchServiceFees = async () => {
     try {
-      const response = await fetch('/api/service-fees');
+      const response = await fetch('/gochinamed/api/service-fees');
       if (response.ok) {
         const data = await response.json();
         setServiceFees(data.fees);
@@ -215,7 +215,7 @@ export default function PaymentPage() {
         throw new Error('No plan selected');
       }
       
-      const response = await fetch('/api/bookings/payment', {
+      const response = await fetch('/gochinamed/api/bookings/payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

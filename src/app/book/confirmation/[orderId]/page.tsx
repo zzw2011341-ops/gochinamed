@@ -80,7 +80,7 @@ export default function ConfirmationPage() {
       return;
     }
     try {
-      const response = await fetch(`/api/bookings/itinerary?orderId=${params.orderId}`);
+      const response = await fetch(`/gochinamed/api/bookings/itinerary?orderId=${params.orderId}`);
       if (response.ok) {
         const data = await response.json();
         setItineraryData(data.data);

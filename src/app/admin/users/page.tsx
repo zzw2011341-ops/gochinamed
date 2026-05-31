@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/admin/users?limit=100");
+      const response = await fetch("/gochinamed/api/admin/users?limit=100");
       const result = await response.json();
 
       if (!response.ok) {
@@ -151,7 +151,7 @@ export default function AdminUsersPage() {
 
     try {
       setIsProcessing(true);
-      const response = await fetch("/api/admin/users", {
+      const response = await fetch("/gochinamed/api/admin/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -58,7 +58,7 @@ export default function RegisterPage() {
         preferredLanguage: formData.preferredLanguage,
       });
 
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("/gochinamed/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validatedData),

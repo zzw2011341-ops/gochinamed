@@ -46,7 +46,7 @@ export default function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch("/api/admin/stats");
+      const response = await fetch("/gochinamed/api/admin/stats");
       if (!response.ok) {
         throw new Error("Failed to fetch stats");
       }

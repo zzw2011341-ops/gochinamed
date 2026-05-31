@@ -36,7 +36,7 @@ export default function CommunityPage() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch("/api/community/posts");
+      const response = await fetch("/gochinamed/api/community/posts");
       if (response.ok) {
         const data = await response.json();
         setPosts(data.posts || []);

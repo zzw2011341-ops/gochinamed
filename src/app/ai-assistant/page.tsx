@@ -54,7 +54,7 @@ export default function AIAssistantPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai/chat', {
+      const response = await fetch('/gochinamed/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ export default function AIAssistantPage() {
     formData.append('file', file);
 
     try {
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/gochinamed/api/upload', {
         method: 'POST',
         body: formData,
       });

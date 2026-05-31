@@ -30,7 +30,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const response = await fetch("/api/user/profile", {
+      const response = await fetch("/gochinamed/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
