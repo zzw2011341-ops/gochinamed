@@ -4,8 +4,8 @@ const nextConfig = {
   reactStrictMode: true,
 
   // Deploy under /GoMedChina subpath
-  basePath: '',
-  assetPrefix: '',
+  basePath: '/gochinamed',
+  assetPrefix: '/gochinamed',
 
   /* config options here */
   images: {

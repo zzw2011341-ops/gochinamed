@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Star, Clock, DollarSign, Search, ArrowLeft } from "lucide-react";
+import { MapPin, Star, Clock, DollarSign, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/locales";
-import { MEDICAL_CITIES, type City } from "@/data/cities";
 
 interface Attraction {
   id: string;
@@ -43,18 +42,12 @@ export default function AttractionsPage() {
     fetchAttractions();
   }, []);
 
-  // 城市ID到英文名的映射
-  const getCityName = (cityId: string): string => {
-    const city = MEDICAL_CITIES.find(c => c.id === cityId);
-    return city ? city.nameEn : cityId;
-  };
-
   const fetchAttractions = async (keyword?: string, city?: string, category?: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (keyword) params.append("keyword", keyword);
-      if (city && city !== "all") params.append("city", getCityName(city));
+      if (city && city !== "all") params.append("city", city);
       if (category && category !== "all") params.append("category", category);
       params.append("limit", "50");
 
@@ -77,8 +70,10 @@ export default function AttractionsPage() {
     fetchAttractions(searchKeyword, selectedCity, selectedCategory);
   };
 
-  // 使用与医院页面相同的城市列表（44个中国城市）
-  const cities: City[] = MEDICAL_CITIES;
+  const cities = [
+    "Beijing", "Shanghai", "Guangzhou", "Shenzhen", "Chengdu",
+    "Xi'an", "Hangzhou", "Nanjing", "Wuhan", "Suzhou"
+  ];
 
   const categories = [
     { value: "all", label: "All Categories" },
@@ -105,18 +100,6 @@ export default function AttractionsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Back Button */}
-      <div className="max-w-7xl mx-auto px-4 pt-4">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/")}
-          className="mb-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {translations[language].common.back || "Back to Home"}
-        </Button>
-      </div>
-
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-6">
@@ -160,8 +143,8 @@ export default function AttractionsPage() {
                   <SelectContent>
                     <SelectItem value="all">{t.attractions?.allCities || "All Cities"}</SelectItem>
                     {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.id}>
-                        {language === 'zh' ? city.nameZh : city.nameEn}
+                      <SelectItem key={city} value={city}>
+                        {city}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -228,11 +211,7 @@ export default function AttractionsPage() {
                       )}
                       <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                         <MapPin className="h-3 w-3" />
-                        {(function() {
-                            const byId = MEDICAL_CITIES.find(c => c.id === attraction.city);
-                            const byName = byId || MEDICAL_CITIES.find(c => c.nameEn === attraction.city);
-                            return byName ? (language === 'zh' ? byName.nameZh : byName.nameEn) : attraction.city;
-                          })()}
+                        {attraction.city}
                       </div>
                     </div>
                     {attraction.rating && (

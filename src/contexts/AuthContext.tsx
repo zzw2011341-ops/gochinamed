@@ -120,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Clear the flag after a short delay
     setTimeout(() => localStorage.removeItem('auth_logout'), 100);
     setUser(null);
+    if (typeof window !== "undefined") window.location.href = "/";
     // Refresh user to ensure all components get the updated state
     await refreshUser();
   };

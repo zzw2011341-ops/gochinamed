@@ -57,7 +57,7 @@ export default function DoctorsPage() {
       const response = await fetch(`/api/search/medical?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
-        setDoctors(data.doctors?.doctors || data.doctors || []);
+        setDoctors(data.doctors?.doctors || data.doctors || data?.doctors || []);
       } else {
         setDoctors([]);
       }

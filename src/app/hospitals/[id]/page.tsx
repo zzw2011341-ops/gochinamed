@@ -87,7 +87,7 @@ export default function HospitalDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600 mb-4">{error || "Hospital not found"}</p>
-          <Button onClick={() => router.back()}>Back</Button>
+          <Button onClick={() => router.push("/hospitals")}>Back</Button>
         </div>
       </div>
     );
@@ -102,7 +102,7 @@ export default function HospitalDetailPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <Button
             variant="ghost"
-            onClick={() => router.back()}
+            onClick={() => router.push("/hospitals")}
             className="text-white hover:bg-white/10 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

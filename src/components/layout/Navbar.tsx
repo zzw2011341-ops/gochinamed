@@ -239,13 +239,7 @@ export function Navbar() {
             >
               {t('nav.attractions')}
             </Link>
-            <Link
-              href="/community"
-              className="block text-gray-700 hover:text-blue-600 font-medium"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {t('nav.community')}
-            </Link>
+            {/* 社区暂时屏蔽 */}
             <Link
               href="/ai-assistant"
               className="block text-gray-700 hover:text-blue-600 font-medium"
@@ -260,7 +254,7 @@ export function Navbar() {
                 <Link
                   href="/book"
                   className="block text-blue-600 hover:text-blue-700 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
+              onClick={() => setIsMenuOpen(false)}
                 >
                   <CalendarPlus className="h-4 w-4 inline mr-2" />
                   {language === 'zh' ? '我要预订' : 'Book Now'}
@@ -268,7 +262,7 @@ export function Navbar() {
                 <Link
                   href="/my-trips"
                   className="block text-gray-700 hover:text-blue-600 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
+              onClick={() => setIsMenuOpen(false)}
                 >
                   <Plane className="h-4 w-4 inline mr-2" />
                   {t('nav.myTrips')}
@@ -276,7 +270,7 @@ export function Navbar() {
                 <Link
                   href="/profile"
                   className="block text-gray-700 hover:text-blue-600 font-medium"
-                  onClick={() => setIsMenuOpen(false)}
+              onClick={() => setIsMenuOpen(false)}
                 >
                   <User className="h-4 w-4 inline mr-2" />
                   {t('nav.profile')}

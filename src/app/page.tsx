@@ -807,7 +807,7 @@ export default function HomePage() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/doctors" className="hover:text-white">{t('nav.doctors')}</Link></li>
                 <li><Link href="/hospitals" className="hover:text-white">{t('nav.hospitals')}</Link></li>
-                <li><Link href="/community" className="hover:text-white">{t('nav.community')}</Link></li>
+                <li>{/* 社区暂时屏蔽 */}</li>
               </ul>
             </div>
             <div>
