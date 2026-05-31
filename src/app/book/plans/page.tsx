@@ -526,15 +526,6 @@ const cityAttractions: Record<string, Attraction[]> = {
       category: 'modern'
     },
     {
-      id: 'default-9',
-      nameEn: 'Riverside Walk',
-      nameZh: '江边步道',
-      description: 'Scenic walk along the river',
-      duration: '1-2 hours',
-      price: 0,
-      category: 'natural'
-    },
-    {
       id: 'default-10',
       nameEn: 'Temple of Local Religion',
       nameZh: '本地寺庙',
