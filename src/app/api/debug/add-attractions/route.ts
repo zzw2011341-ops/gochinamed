@@ -200,24 +200,45 @@ function getDefaultAttractionsForCity(city: string): any[] {
 
   const cityAttractions: Record<string, any[]> = {
     'beijing': [
-      { id: 'bj-001', nameEn: 'Forbidden City', description: 'The imperial palace of Ming and Qing dynasties', price: 15 },
-      { id: 'bj-002', nameEn: 'Great Wall of China', description: 'Ancient fortification built to protect China', price: 10 },
+      { id: 'bj-001', nameEn: 'Forbidden City', nameZh: '故宫', description: 'The imperial palace of Ming and Qing dynasties', price: 15 },
+      { id: 'bj-002', nameEn: 'Great Wall at Badaling', nameZh: '八达岭长城', description: 'Ancient fortification built to protect China', price: 45 },
+      { id: 'bj-003', nameEn: 'Temple of Heaven', nameZh: '天坛', description: 'Imperial sacrificial altar complex', price: 15 },
+      { id: 'bj-004', nameEn: 'Summer Palace', nameZh: '颐和园', description: 'Imperial garden with Kunming Lake', price: 30 },
     ],
     'shanghai': [
-      { id: 'sh-001', nameEn: 'The Bund', description: 'Famous waterfront area with colonial buildings', price: 0 },
-      { id: 'sh-002', nameEn: 'Oriental Pearl Tower', description: 'Iconic TV tower and observation deck', price: 20 },
+      { id: 'sh-001', nameEn: 'The Bund', nameZh: '外滩', description: 'Famous waterfront area with colonial buildings', price: 0 },
+      { id: 'sh-002', nameEn: 'Oriental Pearl Tower', nameZh: '东方明珠', description: 'Iconic TV tower and observation deck', price: 20 },
+      { id: 'sh-003', nameEn: 'Yu Garden', nameZh: '豫园', description: 'Classical Chinese garden in Old Shanghai', price: 10 },
+      { id: 'sh-004', nameEn: 'Nanjing Road', nameZh: '南京路', description: 'Busy shopping street in Shanghai', price: 0 },
     ],
-    'changchun': [
-      { id: 'cc-001', nameEn: 'Changchun World Sculpture Park', description: 'World-class sculpture exhibition park', price: 10 },
-      { id: 'cc-002', nameEn: 'Jingyuetan National Forest Park', description: 'Beautiful forest park with lake and nature', price: 15 },
+    'jinan': [
+      { id: 'jn-001', nameEn: 'Daming Lake', nameZh: '大明湖', description: 'Famous scenic lake in the city center', price: 0 },
+      { id: 'jn-002', nameEn: 'Qianfo Mountain', nameZh: '千佛山', description: 'Mountain with thousands of Buddhist statues', price: 30 },
+      { id: 'jn-003', nameEn: 'Baotu Spring', nameZh: '趵突泉', description: 'The most famous spring in Jinan', price: 40 },
+      { id: 'jn-004', nameEn: 'Black Tiger Spring', nameZh: '黑虎泉', description: 'Historic spring near the city wall', price: 0 },
     ],
     'guangzhou': [
-      { id: 'gz-001', nameEn: 'Canton Tower', description: 'One of the tallest towers in the world', price: 18 },
-      { id: 'gz-002', nameEn: 'Chen Clan Ancestral Hall', description: 'Traditional Lingnan architecture', price: 10 },
+      { id: 'gz-001', nameEn: 'Canton Tower', nameZh: '广州塔', description: 'One of the tallest towers in the world', price: 18 },
+      { id: 'gz-002', nameEn: 'Chen Clan Ancestral Hall', nameZh: '陈家祠', description: 'Traditional Lingnan architecture', price: 10 },
+      { id: 'gz-003', nameEn: 'Shamian Island', nameZh: '沙面岛', description: 'Historic European architecture zone', price: 0 },
     ],
     'shenzhen': [
-      { id: 'sz-001', nameEn: 'Window of the World', description: 'Famous theme park with world landmarks', price: 25 },
-      { id: 'sz-002', nameEn: 'Dameisha Beach', description: 'Beautiful beach with sunshine and sand', price: 0 },
+      { id: 'sz-001', nameEn: 'Window of the World', nameZh: '世界之窗', description: 'Famous theme park with world landmarks', price: 25 },
+      { id: 'sz-002', nameEn: 'Dameisha Beach', nameZh: '大梅沙', description: 'Beautiful beach with sunshine and sand', price: 0 },
+      { id: 'sz-003', nameEn: 'OCT East', nameZh: '东部华侨城', description: 'Large tourism complex with theme parks', price: 30 },
+    ],
+    'changchun': [
+      { id: 'cc-001', nameEn: 'Changchun World Sculpture Park', nameZh: '长春世界雕塑公园', description: 'World-class sculpture exhibition park', price: 10 },
+      { id: 'cc-002', nameEn: 'Jingyuetan National Forest Park', nameZh: '净月潭国家森林公园', description: 'Beautiful forest park with lake and nature', price: 15 },
+    ],
+    'chengdu': [
+      { id: 'cd-001', nameEn: 'Giant Panda Breeding Base', nameZh: '大熊猫繁育基地', description: 'World-famous panda research center', price: 52 },
+      { id: 'cd-002', nameEn: 'Wuhou Shrine', nameZh: '武侯祠', description: 'Memorial temple for Zhuge Liang', price: 30 },
+      { id: 'cd-003', nameEn: 'Jinli Ancient Street', nameZh: '锦里古街', description: 'Traditional street with local snacks', price: 0 },
+    ],
+    'hangzhou': [
+      { id: 'hz-001', nameEn: 'West Lake (Xi Hu)', nameZh: '西湖', description: 'UNESCO World Heritage scenic lake', price: 0 },
+      { id: 'hz-002', nameEn: 'Lingyin Temple', nameZh: '灵隐寺', description: 'Ancient Buddhist temple in the mountains', price: 45 },
     ],
   };
 
@@ -230,7 +251,7 @@ function getDefaultAttractionsForCity(city: string): any[] {
 
   // 默认景点
   return [
-    { id: 'default-001', nameEn: 'City Museum', description: 'Local history and culture exhibition', price: 10 },
-    { id: 'default-002', nameEn: 'City Park', description: 'Beautiful park for relaxation', price: 5 },
+    { id: 'default-001', nameEn: 'City Museum', nameZh: '市博物馆', description: 'Local history and culture exhibition', price: 10 },
+    { id: 'default-002', nameEn: 'City Park', nameZh: '市公园', description: 'Beautiful park for relaxation', price: 5 },
   ];
 }
