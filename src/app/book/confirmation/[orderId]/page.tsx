@@ -48,7 +48,34 @@ export default function ConfirmationPage() {
   const fetchItineraryDetails = async () => {
     // Test mode: TEST- prefix = mock data
     if (typeof params.orderId === "string" && params.orderId.startsWith("TEST-")) {
-      setItineraryData({order:{id:params.orderId,status:"confirmed"}});
+      setItineraryData({
+        order: {
+          id: params.orderId,
+          status: "confirmed",
+          doctorAppointmentStatus: "confirmed",
+          serviceReservationStatus: "confirmed",
+          totalAmount: "1500.00",
+          medicalFee: "200.00",
+          hotelFee: "700.00",
+          flightFee: "600.00",
+          ticketFee: "100.00",
+          currency: "USD",
+          createdAt: new Date().toISOString(),
+          travelDate: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
+        },
+        itinerary: [
+          { type: "flight", name: "CA1234 Air China", description: "Flight PEK to PVG",
+            startDate: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
+            endDate: new Date(Date.now() + 7*24*60*60*1000 + 2*60*60*1000).toISOString(),
+            location: "Beijing - Shanghai", price: "450.00" },
+          { type: "hotel", name: "Grand Hotel Shanghai", description: "3 nights accommodation",
+            startDate: new Date(Date.now() + 7*24*60*60*1000 + 3*60*60*1000).toISOString(),
+            endDate: new Date(Date.now() + 10*24*60*60*1000).toISOString(),
+            location: "Shanghai", price: "700.00" },
+        ],
+        costs: { subtotal: "1500.00", serviceFee: "75.00", total: "1575.00" },
+        destinationCity: "Shanghai",
+      });
       setLoading(false);
       return;
     }
