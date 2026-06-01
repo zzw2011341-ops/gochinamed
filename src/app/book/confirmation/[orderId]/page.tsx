@@ -424,7 +424,7 @@ export default function ConfirmationPage() {
                         <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
                           {getIconByType(item.type)}
                         </div>
-                        {index < timeline.length - 1 && (
+                        {index < (timeline?.length || 0) - 1 && (
                           <div className="w-0.5 h-16 bg-gray-300 mt-2" />
                         )}
                       </div>
@@ -466,7 +466,7 @@ export default function ConfirmationPage() {
                                     <div className="text-xs text-gray-500 mt-1">
                                       {language === 'zh' ? '飞行时间' : 'Flight time'}: {Math.floor(segment.durationMinutes / 60)}h {segment.durationMinutes % 60}m
                                     </div>
-                                    {segIndex < item.flightSegments.length - 1 && item.layoverMinutes && (
+                                    {segIndex < (item.flightSegments?.length || 0) - 1 && item.layoverMinutes && (
                                       <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-orange-600">
                                         {language === 'zh' ? '中转' : 'Layover'}: {item.connectionCity} - {item.layoverFormatted}
                                       </div>
@@ -1018,7 +1018,7 @@ export default function ConfirmationPage() {
                           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
                             {getIconByType(item.type)}
                           </div>
-                          {index < timeline.length - 1 && (
+                          {index < (timeline?.length || 0) - 1 && (
                             <div className="w-0.5 h-16 bg-gray-300 mt-2" />
                           )}
                         </div>
@@ -1583,7 +1583,7 @@ function getMapUrl(item: any, hospital: any, destinationCity: string, openInNewW
   if (item.type === 'flight' && item.flightSegments) {
     // 航班路线：显示起点到终点的路线
     const origin = item.flightSegments[0]?.origin || '';
-    const destination = item.flightSegments[item.flightSegments.length - 1]?.destination || '';
+    const destination = item.flightSegments?.[item.flightSegments.length - 1]?.destination || '';
     if (origin && destination) {
       // 使用高德地图的路线规划
       return `${amapBaseUrl}/dir?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
