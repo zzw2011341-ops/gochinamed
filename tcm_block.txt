@@ -1,0 +1,167 @@
+      {/* 中医名家 (TCM Famous Doctors) */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              {language === 'zh' ? '中医名家' : 'Famous TCM Doctors'}
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              {language === 'zh' 
+                ? '汇聚国家级名老中医，传承精华，守正创新' 
+                : 'Featuring nationally renowned TCM masters, inheriting wisdom and innovating'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Doctor 1 */}
+            <Card className="hover:shadow-xl transition-all duration-300 border-t-4 border-t-red-500">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-red-600">王</span>
+                  </div>
+                  <div className="flex-1">
+                    <CardTitle className="text-xl mb-1">
+                      {language === 'zh' ? '王大夫' : 'Dr. Wang'}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {language === 'zh' ? '国家级名老中医' : 'National Famous TCM Master'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '擅长领域：' : 'Specialties:'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="border-red-300 text-red-700">{
+                      language === 'zh' ? '心脑血管疾病' : 'Cardiovascular Diseases'
+                    }</Badge>
+                    <Badge variant="outline" className="border-red-300 text-red-700">{
+                      language === 'zh' ? '糖尿病' : 'Diabetes'
+                    }</Badge>
+                    <Badge variant="outline" className="border-red-300 text-red-700">{
+                      language === 'zh' ? '中医养生' : 'TCM Wellness'
+                    }</Badge>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">{language === 'zh' ? '联系方式：' : 'Contact:'}</span> 
+                    <a href="tel:+8613800138000" className="text-blue-600 hover:underline">138-0013-8000</a>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">{language === 'zh' ? '出诊时间：' : 'Schedule:'}</span> 
+                    {language === 'zh' ? '周一、三、五 上午' : 'Mon, Wed, Fri (AM)'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Doctor 2 */}
+            <Card className="hover:shadow-xl transition-all duration-300 border-t-4 border-t-blue-500">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-blue-600">李</span>
+                  </div>
+                  <div className="flex-1">
+                    <CardTitle className="text-xl mb-1">
+                      {language === 'zh' ? '李教授' : 'Prof. Li'}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {language === 'zh' ? '中医针灸专家' : 'TCM Acupuncture Specialist'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '擅长领域：' : 'Specialties:'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="border-blue-300 text-blue-700">{
+                      language === 'zh' ? '针灸治疗' : 'Acupuncture'
+                    }</Badge>
+                    <Badge variant="outline" className="border-blue-300 text-blue-700">{
+                      language === 'zh' ? '疼痛管理' : 'Pain Management'
+                    }</Badge>
+                    <Badge variant="outline" className="border-blue-300 text-blue-700">{
+                      language === 'zh' ? '神经康复' : 'Neurological Rehab'
+                    }</Badge>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">{language === 'zh' ? '联系方式：' : 'Contact:'}</span> 
+                    <a href="tel:+8613900139000" className="text-blue-600 hover:underline">139-0013-9000</a>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">{language === 'zh' ? '出诊时间：' : 'Schedule:'}</span> 
+                    {language === 'zh' ? '周二、四、六 全天' : 'Tue, Thu, Sat (All Day)'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Doctor 3 */}
+            <Card className="hover:shadow-xl transition-all duration-300 border-t-4 border-t-green-500">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-green-600">张</span>
+                  </div>
+                  <div className="flex-1">
+                    <CardTitle className="text-xl mb-1">
+                      {language === 'zh' ? '张主任' : 'Dr. Zhang'}
+                    </CardTitle>
+                    <CardDescription className="text-sm">
+                      {language === 'zh' ? '中医妇科专家' : 'TCM Gynecology Specialist'}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    {language === 'zh' ? '擅长领域：' : 'Specialties:'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="border-green-300 text-green-700">{
+                      language === 'zh' ? '妇科疾病' : 'Gynecological Diseases'
+                    }</Badge>
+                    <Badge variant="outline" className="border-green-300 text-green-700">{
+                      language === 'zh' ? '不孕不育' : 'Infertility'
+                    }</Badge>
+                    <Badge variant="outline" className="border-green-300 text-green-700">{
+                      language === 'zh' ? '产后调理' : 'Postpartum Care'
+                    }</Badge>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-100">
+                  <p className="text-sm text-gray-600 mb-1">
+                    <span className="font-medium">{language === 'zh' ? '联系方式：' : 'Contact:'}</span> 
+                    <a href="tel:+8613600136000" className="text-blue-600 hover:underline">136-0013-6000</a>
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">{language === 'zh' ? '出诊时间：' : 'Schedule:'}</span> 
+                    {language === 'zh' ? '周一至周五 下午' : 'Mon-Fri (PM)'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="text-center mt-12">
+            <Link href="/traditional-chinese-medicine">
+              <Button variant="outline" size="lg" className="gap-2">
+                <Sparkles className="h-5 w-5" />
+                {language === 'zh' ? '查看更多中医名家' : 'View More TCM Doctors'}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
