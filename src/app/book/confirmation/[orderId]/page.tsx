@@ -443,7 +443,7 @@ export default function ConfirmationPage() {
                             )}
                             {item.flightSegments && item.flightSegments.length > 0 && (
                               <div className="mt-3 space-y-2">
-                                {item.flightSegments.map((segment: any, segIndex: number) => (
+                                {item.flightSegments?.map((segment: any, segIndex: number) => (
                                   <div key={segIndex} className="bg-gray-50 rounded-lg p-3 text-sm">
                                     <div className="flex items-center gap-2 mb-2">
                                       <Plane className="h-4 w-4 text-blue-600" />
@@ -889,7 +889,7 @@ export default function ConfirmationPage() {
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
-                            {tip.tips.map((item: string, i: number) => (
+                            {tip.tips?.map((item: string, i: number) => (
                               <li key={i} className="flex items-start gap-2">
                                 <span className="text-blue-600 mt-1">•</span>
                                 {item}
@@ -913,7 +913,7 @@ export default function ConfirmationPage() {
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
-                            {tip.tips.map((item: string, i: number) => (
+                            {tip.tips?.map((item: string, i: number) => (
                               <li key={i} className="flex items-start gap-2">
                                 <span className="text-blue-600 mt-1">•</span>
                                 {item}
@@ -937,7 +937,7 @@ export default function ConfirmationPage() {
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
-                            {tip.tips.map((item: string, i: number) => (
+                            {tip.tips?.map((item: string, i: number) => (
                               <li key={i} className="flex items-start gap-2">
                                 <span className="text-blue-600 mt-1">•</span>
                                 {item}
@@ -961,7 +961,7 @@ export default function ConfirmationPage() {
                         <div key={index}>
                           <div className="font-medium text-sm text-red-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
-                            {tip.tips.map((item: string, i: number) => (
+                            {tip.tips?.map((item: string, i: number) => (
                               <li key={i} className="flex items-start gap-2">
                                 <span className="text-red-600 mt-1">•</span>
                                 {item}
@@ -1259,7 +1259,7 @@ export default function ConfirmationPage() {
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
-                              {tip.tips.map((item: string, i: number) => (
+                              {tip.tips?.map((item: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <span className="text-blue-600 mt-1">•</span>
                                   {item}
@@ -1283,7 +1283,7 @@ export default function ConfirmationPage() {
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
-                              {tip.tips.map((item: string, i: number) => (
+                              {tip.tips?.map((item: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <span className="text-blue-600 mt-1">•</span>
                                   {item}
@@ -1307,7 +1307,7 @@ export default function ConfirmationPage() {
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
-                              {tip.tips.map((item: string, i: number) => (
+                              {tip.tips?.map((item: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <span className="text-blue-600 mt-1">•</span>
                                   {item}
@@ -1331,7 +1331,7 @@ export default function ConfirmationPage() {
                           <div key={index}>
                             <div className="font-medium text-sm text-red-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
-                              {tip.tips.map((item: string, i: number) => (
+                              {tip.tips?.map((item: string, i: number) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <span className="text-red-600 mt-1">•</span>
                                   {item}
@@ -1454,7 +1454,7 @@ export default function ConfirmationPage() {
                       {language === 'zh' ? '航班路线' : 'Flight Route'}
                     </h4>
                     <div className="space-y-2 text-sm">
-                      {selectedMapItem.flightSegments.map((segment: any, idx: number) => (
+                      {selectedMapItem.flightSegments?.map((segment: any, idx: number) => (
                         <div key={idx} className="flex items-center gap-2">
                           <span className="font-medium">{segment.origin}</span>
                           <ArrowLeft className="h-3 w-3 text-gray-400 rotate-180" />
