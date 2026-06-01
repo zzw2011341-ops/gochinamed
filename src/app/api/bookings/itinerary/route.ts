@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
       } : null,
       doctor: doctor ? {
         id: doctor.id,
-        name: doctor.nameEn,
+        nameEn: doctor.nameEn,
         nameZh: doctor.nameZh,
         title: doctor.title,
         specialties: doctor.specialtiesEn,
@@ -236,7 +236,7 @@ export async function GET(request: NextRequest) {
       } : null,
       hospital: hospital ? {
         id: hospital.id,
-        name: hospital.nameEn,
+        nameEn: hospital.nameEn,
         nameZh: hospital.nameZh,
         location: hospital.location,
         level: hospital.level,
