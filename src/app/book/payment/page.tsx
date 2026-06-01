@@ -77,10 +77,11 @@ export default function PaymentPage() {
   const [selectedAttractions, setSelectedAttractions] = useState<any[]>([]); // 选中的景点
 
   useEffect(() => {
-    // 从sessionStorage获取选中的方案和预订数据
-    const savedPlan = sessionStorage.getItem('selectedPlan');
-    const savedBookingData = sessionStorage.getItem('bookingPlans');
-    const savedAttractions = sessionStorage.getItem('selectedAttractions');
+    try {
+      // 从sessionStorage获取选中的方案和预订数据
+      const savedPlan = sessionStorage.getItem('selectedPlan');
+      const savedBookingData = sessionStorage.getItem('bookingPlans');
+      const savedAttractions = sessionStorage.getItem('selectedAttractions');
 
     console.log('[Payment Page] savedPlan:', savedPlan ? 'exists' : 'missing');
     console.log('[Payment Page] savedBookingData:', savedBookingData ? 'exists' : 'missing');
@@ -124,8 +125,17 @@ export default function PaymentPage() {
 
     // 获取选中的景点
     if (savedAttractions) {
-      setSelectedAttractions(JSON.parse(savedAttractions));
+      try {
+        setSelectedAttractions(JSON.parse(savedAttractions));
+      } catch (e) {
+        console.error('[Payment Page] Failed to parse attractions:', e);
+      }
     }
+  } catch (error) {
+    console.error('[Payment Page] Error loading data:', error);
+    // 如果数据加载失败，跳转到方案选择页
+    router.push('/book/plans');
+  }
   }, [router]);
 
   useEffect(() => {
