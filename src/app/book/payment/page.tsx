@@ -97,21 +97,37 @@ export default function PaymentPage() {
         console.log('[Payment Page] bookingDataFull.requestData:', bookingDataFull.requestData);
         console.log('[Payment Page] bookingDataFull.requestData.travelDate:', bookingDataFull.requestData?.travelDate);
 
+        // 提取护照信息并自动填充
+        const requestData = bookingDataFull.requestData || {};
+        const passportNumberFromBooking = requestData.passportNumber || '';
+        const passportCountryFromBooking = requestData.passportCountry || '';
+        
+        if (passportNumberFromBooking) {
+          setPassportNumber(passportNumberFromBooking);
+          console.log('[Payment Page] Auto-filled passportNumber from booking data');
+        }
+        if (passportCountryFromBooking) {
+          setPassportCountry(passportCountryFromBooking);
+          console.log('[Payment Page] Auto-filled passportCountry from booking data');
+        }
+
         plan.bookingData = {
-          originCity: bookingDataFull.requestData?.originCity || '',
-          destinationCity: bookingDataFull.requestData?.destinationCity || '',
-          travelDate: bookingDataFull.requestData?.travelDate || '',
-          appointmentDate: bookingDataFull.requestData?.appointmentDate || '',
-          returnDate: bookingDataFull.requestData?.returnDate || '',
+          originCity: requestData.originCity || '',
+          destinationCity: requestData.destinationCity || '',
+          travelDate: requestData.travelDate || '',
+          appointmentDate: requestData.appointmentDate || '',
+          returnDate: requestData.returnDate || '',
           hotelName: plan.hotelName,
-          selectedHospital: bookingDataFull.requestData?.selectedHospital || '',
-          doctorId: bookingDataFull.requestData?.selectedDoctor || '',
-          treatmentType: bookingDataFull.requestData?.treatmentType || '',
-          consultationDirection: bookingDataFull.requestData?.consultationDirection || '',
-          examinationItems: bookingDataFull.requestData?.examinationItems || '',
-          surgeryTypes: bookingDataFull.requestData?.surgeryTypes || '',
-          treatmentDirection: bookingDataFull.requestData?.treatmentDirection || '',
-          rehabilitationDirection: bookingDataFull.requestData?.rehabilitationDirection || '',
+          selectedHospital: requestData.selectedHospital || '',
+          doctorId: requestData.selectedDoctor || '',
+          treatmentType: requestData.treatmentType || '',
+          consultationDirection: requestData.consultationDirection || '',
+          examinationItems: requestData.examinationItems || '',
+          surgeryTypes: requestData.surgeryTypes || '',
+          treatmentDirection: requestData.treatmentDirection || '',
+          rehabilitationDirection: requestData.rehabilitationDirection || '',
+          passportNumber: passportNumberFromBooking,
+          passportCountry: passportCountryFromBooking,
         };
 
         console.log('[Payment Page] Final plan.bookingData:', plan.bookingData);
@@ -119,7 +135,7 @@ export default function PaymentPage() {
       setSelectedPlan(plan);
       setLoading(false);
     } else {
-      // 如果没有选中的方案，返回方案选择页面
+      setLoading(false);
       router.push('/book/plans');
     }
 
