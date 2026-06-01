@@ -441,7 +441,7 @@ export default function ConfirmationPage() {
                                 {item.route}
                               </p>
                             )}
-                            {item.flightSegments && item.flightSegments.length > 0 && (
+                            {item.flightSegments?.length > 0 && (
                               <div className="mt-3 space-y-2">
                                 {item.flightSegments?.map((segment: any, segIndex: number) => (
                                   <div key={segIndex} className="bg-gray-50 rounded-lg p-3 text-sm">
@@ -711,7 +711,7 @@ export default function ConfirmationPage() {
                         </div>
                       )}
 
-                      {order.planAdjustments && order.planAdjustments.length > 0 && (
+                      {order?.planAdjustments?.length > 0 && (
                         <div>
                           <h4 className="font-medium text-sm mb-2 flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-blue-600" />
@@ -831,7 +831,7 @@ export default function ConfirmationPage() {
             </Card>
 
             {/* 服务预订详情 */}
-            {reservations.length > 0 && (
+            {(reservations?.length || 0) > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -878,7 +878,7 @@ export default function ConfirmationPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {travelTips.medical.length > 0 && (
+                {(travelTips?.medical?.length || 0) > 0 && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <Stethoscope className="h-4 w-4 text-blue-600" />
@@ -902,7 +902,7 @@ export default function ConfirmationPage() {
                   </div>
                 )}
 
-                {travelTips.travel.length > 0 && (
+                {(travelTips?.travel?.length || 0) > 0 && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <Plane className="h-4 w-4 text-blue-600" />
@@ -926,7 +926,7 @@ export default function ConfirmationPage() {
                   </div>
                 )}
 
-                {travelTips.documents.length > 0 && (
+                {(travelTips?.documents?.length || 0) > 0 && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-blue-600" />
@@ -950,7 +950,7 @@ export default function ConfirmationPage() {
                   </div>
                 )}
 
-                {travelTips.emergency.length > 0 && (
+                {(travelTips?.emergency?.length || 0) > 0 && (
                   <div>
                     <h4 className="font-medium mb-3 flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-red-600" />
@@ -1198,7 +1198,7 @@ export default function ConfirmationPage() {
               </Card>
 
               {/* 服务预订详情 */}
-              {reservations.length > 0 && (
+              {(reservations?.length || 0) > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -1248,7 +1248,7 @@ export default function ConfirmationPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {travelTips.medical.length > 0 && (
+                  {(travelTips?.medical?.length || 0) > 0 && (
                     <div>
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <Stethoscope className="h-4 w-4 text-blue-600" />
@@ -1272,7 +1272,7 @@ export default function ConfirmationPage() {
                     </div>
                   )}
 
-                  {travelTips.travel.length > 0 && (
+                  {(travelTips?.travel?.length || 0) > 0 && (
                     <div>
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <Plane className="h-4 w-4 text-blue-600" />
@@ -1296,7 +1296,7 @@ export default function ConfirmationPage() {
                     </div>
                   )}
 
-                  {travelTips.documents.length > 0 && (
+                  {(travelTips?.documents?.length || 0) > 0 && (
                     <div>
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <FileText className="h-4 w-4 text-blue-600" />
@@ -1320,7 +1320,7 @@ export default function ConfirmationPage() {
                     </div>
                   )}
 
-                  {travelTips.emergency.length > 0 && (
+                  {(travelTips?.emergency?.length || 0) > 0 && (
                     <div>
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-red-600" />
