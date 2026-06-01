@@ -239,7 +239,11 @@ export default function BookPage() {
   // 解析医院专长
   const parseHospitalSpecialties = (hospital: Hospital) => {
     try {
-      const specialties = hospital.level ? JSON.parse(hospital.level) : [];
+      // hospital.level is a string like "Grade 3A", not JSON
+      const levelStr = hospital.level 
+        ? (Array.isArray(hospital.level) ? hospital.level : [hospital.level]) 
+        : [];
+      const specialties = levelStr;
 
       // 定义映射关系
       const consultationDirectionMap: Record<string, string[]> = {
