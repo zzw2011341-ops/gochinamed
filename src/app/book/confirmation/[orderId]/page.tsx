@@ -372,7 +372,7 @@ export default function ConfirmationPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                    {weatherForecast.forecast.map((day: any, index: number) => (
+                    {weatherForecast?.forecast?.map((day: any, index: number) => (
                       <div key={index} className="text-center p-4 bg-blue-50 rounded-lg">
                         <div className="text-sm font-medium text-blue-900 mb-2">{day.date}</div>
                         <div className="text-2xl mb-2">{getWeatherIcon(day.condition)}</div>
@@ -418,7 +418,7 @@ export default function ConfirmationPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {timeline.map((item: any, index: number) => (
+                  {timeline?.map((item: any, index: number) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
@@ -718,7 +718,7 @@ export default function ConfirmationPage() {
                             {language === 'zh' ? '方案调整记录' : 'Plan Adjustments'}
                           </h4>
                           <div className="space-y-2">
-                            {order.planAdjustments.map((adjustment: string, index: number) => (
+                            {order?.planAdjustments?.map((adjustment: string, index: number) => (
                               <div key={index} className="bg-blue-50 rounded-lg p-3">
                                 <p className="text-sm text-gray-700">{adjustment}</p>
                               </div>
@@ -841,7 +841,7 @@ export default function ConfirmationPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {reservations.map((reservation: any) => (
+                    {reservations?.map((reservation: any) => (
                       <div key={reservation.id} className="border rounded-lg p-4">
                         <div className="flex items-start justify-between">
                           <div>
@@ -885,7 +885,7 @@ export default function ConfirmationPage() {
                       {language === 'zh' ? '医疗注意事项' : 'Medical Tips'}
                     </h4>
                     <div className="space-y-3">
-                      {travelTips.medical.map((tip: any, index: number) => (
+                      {travelTips?.medical?.map((tip: any, index: number) => (
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
@@ -909,7 +909,7 @@ export default function ConfirmationPage() {
                       {language === 'zh' ? '旅行注意事项' : 'Travel Tips'}
                     </h4>
                     <div className="space-y-3">
-                      {travelTips.travel.map((tip: any, index: number) => (
+                      {travelTips?.travel?.map((tip: any, index: number) => (
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
@@ -933,7 +933,7 @@ export default function ConfirmationPage() {
                       {language === 'zh' ? '文件清单' : 'Document Checklist'}
                     </h4>
                     <div className="space-y-3">
-                      {travelTips.documents.map((tip: any, index: number) => (
+                      {travelTips?.documents?.map((tip: any, index: number) => (
                         <div key={index}>
                           <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
@@ -957,7 +957,7 @@ export default function ConfirmationPage() {
                       {language === 'zh' ? '紧急联系信息' : 'Emergency Information'}
                     </h4>
                     <div className="space-y-3">
-                      {travelTips.emergency.map((tip: any, index: number) => (
+                      {travelTips?.emergency?.map((tip: any, index: number) => (
                         <div key={index}>
                           <div className="font-medium text-sm text-red-900 mb-2">{tip.category}</div>
                           <ul className="space-y-1 text-sm text-gray-600">
@@ -1012,7 +1012,7 @@ export default function ConfirmationPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {timeline.map((item: any, index: number) => (
+                    {timeline?.map((item: any, index: number) => (
                       <div key={item.id} className="flex gap-4">
                         <div className="flex flex-col items-center">
                           <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center">
@@ -1208,7 +1208,7 @@ export default function ConfirmationPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {reservations.map((reservation: any) => (
+                      {reservations?.map((reservation: any) => (
                         <div key={reservation.id} className="border rounded-lg p-4">
                           <div className="flex items-start justify-between">
                             <div>
@@ -1255,7 +1255,7 @@ export default function ConfirmationPage() {
                         {language === 'zh' ? '医疗注意事项' : 'Medical Tips'}
                       </h4>
                       <div className="space-y-3">
-                        {travelTips.medical.map((tip: any, index: number) => (
+                        {travelTips?.medical?.map((tip: any, index: number) => (
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
@@ -1279,7 +1279,7 @@ export default function ConfirmationPage() {
                         {language === 'zh' ? '旅行注意事项' : 'Travel Tips'}
                       </h4>
                       <div className="space-y-3">
-                        {travelTips.travel.map((tip: any, index: number) => (
+                        {travelTips?.travel?.map((tip: any, index: number) => (
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
@@ -1303,7 +1303,7 @@ export default function ConfirmationPage() {
                         {language === 'zh' ? '文件清单' : 'Document Checklist'}
                       </h4>
                       <div className="space-y-3">
-                        {travelTips.documents.map((tip: any, index: number) => (
+                        {travelTips?.documents?.map((tip: any, index: number) => (
                           <div key={index}>
                             <div className="font-medium text-sm text-blue-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
@@ -1327,7 +1327,7 @@ export default function ConfirmationPage() {
                         {language === 'zh' ? '紧急联系信息' : 'Emergency Information'}
                       </h4>
                       <div className="space-y-3">
-                        {travelTips.emergency.map((tip: any, index: number) => (
+                        {travelTips?.emergency?.map((tip: any, index: number) => (
                           <div key={index}>
                             <div className="font-medium text-sm text-red-900 mb-2">{tip.category}</div>
                             <ul className="space-y-1 text-sm text-gray-600">
