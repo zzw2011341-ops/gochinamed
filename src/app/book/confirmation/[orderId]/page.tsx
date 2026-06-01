@@ -174,7 +174,7 @@ export default function ConfirmationPage() {
                 {language === 'zh' ? '订单号' : 'Order ID'}: {order.id}
               </p>
               <p className="text-sm text-gray-500 mt-2">
-                {new Date(order.createdAt).toLocaleString()}
+                {order?.createdAt ? new Date(order.createdAt).toLocaleString() : ''}
               </p>
             </div>
 
@@ -249,7 +249,7 @@ export default function ConfirmationPage() {
                   <CardContent>
                     <div className="text-center">
                       <div className="text-3xl font-bold text-blue-600">
-                        {costs.currency} {costs.totalAmount.toLocaleString()}
+                        {costs.currency} {(costs?.totalAmount ?? 0).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
                         {language === 'zh' ? '包含所有服务费用' : 'Including all service fees'}
@@ -348,7 +348,7 @@ export default function ConfirmationPage() {
                 <CardContent>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-600">
-                      {costs.currency} {costs.totalAmount.toLocaleString()}
+                      {costs.currency} {(costs?.totalAmount ?? 0).toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 mt-1">
                       {language === 'zh' ? '包含所有服务费用' : 'Including all service fees'}
@@ -559,7 +559,7 @@ export default function ConfirmationPage() {
                           <div>
                             <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
                             <div className="font-medium text-blue-600">
-                              {new Date(order.doctorAppointmentDate).toLocaleString()}
+                              {order.doctorAppointmentDate ? new Date(order.doctorAppointmentDate).toLocaleString() : 'N/A'}
                             </div>
                           </div>
                         )}
@@ -612,7 +612,7 @@ export default function ConfirmationPage() {
                         {costs.medicalFee > 0 && (
                           <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                             <div className="text-sm text-blue-900">
-                              {language === 'zh' ? '医疗费用' : 'Medical Fee'}: {costs.currency} {costs.medicalFee.toLocaleString()}
+                              {language === 'zh' ? '医疗费用' : 'Medical Fee'}: {costs.currency} {(costs?.medicalFee ?? 0).toLocaleString()}
                             </div>
                           </div>
                         )}
@@ -739,7 +739,7 @@ export default function ConfirmationPage() {
                                 : (language === 'zh' ? '待审核的调整' : 'Pending Adjustment')}
                             </span>
                             <span className={`font-medium ${order.priceAdjustmentAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                              {order.priceAdjustmentAmount > 0 ? '+' : ''}{costs.currency} {order.priceAdjustmentAmount.toLocaleString()}
+                              {order.priceAdjustmentAmount > 0 ? '+' : ''}{costs.currency} {(order?.priceAdjustmentAmount ?? 0).toLocaleString()}
                             </span>
                           </div>
                         </div>
@@ -768,7 +768,7 @@ export default function ConfirmationPage() {
                     {costs.medicalFee > 0 && (
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                         <div className="text-sm text-blue-900">
-                          {language === 'zh' ? '医疗费用' : 'Medical Fee'}: {costs.currency} {costs.medicalFee.toLocaleString()}
+                          {language === 'zh' ? '医疗费用' : 'Medical Fee'}: {costs.currency} {(costs?.medicalFee ?? 0).toLocaleString()}
                         </div>
                         <div className="text-xs text-blue-700 mt-1">
                           {language === 'zh' ? '已包含在总费用中，但未绑定特定医生或医院' : 'Included in total cost, but not linked to specific doctor or hospital'}
@@ -794,37 +794,37 @@ export default function ConfirmationPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">{language === 'zh' ? '医疗费用' : 'Medical Fee'}</span>
-                    <span>{costs.currency} {costs.medicalFee.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.medicalFee ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">{language === 'zh' ? '酒店费用' : 'Hotel Fee'}</span>
-                    <span>{costs.currency} {costs.hotelFee.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.hotelFee ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">{language === 'zh' ? '机票费用' : 'Flight Fee'}</span>
-                    <span>{costs.currency} {costs.flightFee.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.flightFee ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">{language === 'zh' ? '门票费用' : 'Ticket Fee'}</span>
-                    <span>{costs.currency} {costs.ticketFee.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.ticketFee ?? 0).toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-gray-600">
                     <span>{language === 'zh' ? '小计' : 'Subtotal'}</span>
-                    <span>{costs.currency} {costs.subtotal.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.subtotal ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-blue-600">
                     <span>{language === 'zh' ? '中介服务费' : `Service Fee (${(costs.serviceFeeRate * 100).toFixed(2)}%)`}</span>
-                    <span>{costs.currency} {costs.serviceFeeAmount.toLocaleString()}</span>
+                    <span>{costs.currency} {(costs?.serviceFeeAmount ?? 0).toLocaleString()}</span>
                   </div>
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span>{language === 'zh' ? '总计' : 'Total'}</span>
-                    <span className="text-blue-600">{costs.currency} {costs.totalAmount.toLocaleString()}</span>
+                    <span className="text-blue-600">{costs.currency} {(costs?.totalAmount ?? 0).toLocaleString()}</span>
                   </div>
                 </div>
               </CardContent>
@@ -858,7 +858,7 @@ export default function ConfirmationPage() {
                           </Badge>
                         </div>
                         <div className="mt-2 text-sm text-blue-600">
-                          {costs.currency} {Number(reservation.price).toLocaleString()}
+                          {costs.currency} {(reservation?.price != null ? Number(reservation.price) : 0).toLocaleString()}
                         </div>
                       </div>
                     ))}
@@ -1093,7 +1093,7 @@ export default function ConfirmationPage() {
                         <div>
                           <div className="text-sm text-gray-600 mb-1">{language === 'zh' ? '预约时间' : 'Appointment Date'}</div>
                           <div className="font-medium text-blue-600">
-                            {new Date(order.doctorAppointmentDate).toLocaleString()}
+                            {order.doctorAppointmentDate ? new Date(order.doctorAppointmentDate).toLocaleString() : 'N/A'}
                           </div>
                         </div>
                       )}
@@ -1161,37 +1161,37 @@ export default function ConfirmationPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">{language === 'zh' ? '医疗费用' : 'Medical Fee'}</span>
-                      <span>{costs.currency} {costs.medicalFee.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.medicalFee ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">{language === 'zh' ? '酒店费用' : 'Hotel Fee'}</span>
-                      <span>{costs.currency} {costs.hotelFee.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.hotelFee ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">{language === 'zh' ? '机票费用' : 'Flight Fee'}</span>
-                      <span>{costs.currency} {costs.flightFee.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.flightFee ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">{language === 'zh' ? '门票费用' : 'Ticket Fee'}</span>
-                      <span>{costs.currency} {costs.ticketFee.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.ticketFee ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between text-gray-600">
                       <span>{language === 'zh' ? '小计' : 'Subtotal'}</span>
-                      <span>{costs.currency} {costs.subtotal.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.subtotal ?? 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-blue-600">
                       <span>{language === 'zh' ? '中介服务费' : `Service Fee (${(costs.serviceFeeRate * 100).toFixed(2)}%)`}</span>
-                      <span>{costs.currency} {costs.serviceFeeAmount.toLocaleString()}</span>
+                      <span>{costs.currency} {(costs?.serviceFeeAmount ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="border-t pt-4">
                     <div className="flex justify-between items-center text-lg font-bold">
                       <span>{language === 'zh' ? '总计' : 'Total'}</span>
-                      <span className="text-blue-600">{costs.currency} {costs.totalAmount.toLocaleString()}</span>
+                      <span className="text-blue-600">{costs.currency} {(costs?.totalAmount ?? 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1225,7 +1225,7 @@ export default function ConfirmationPage() {
                             </Badge>
                           </div>
                           <div className="mt-2 text-sm text-blue-600">
-                            {costs.currency} {Number(reservation.price).toLocaleString()}
+                            {costs.currency} {(reservation?.price != null ? Number(reservation.price) : 0).toLocaleString()}
                           </div>
                         </div>
                       ))}
