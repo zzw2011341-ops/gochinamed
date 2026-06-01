@@ -1582,8 +1582,8 @@ function getMapUrl(item: any, hospital: any, destinationCity: string, openInNewW
 
   if (item.type === 'flight' && item.flightSegments) {
     // 航班路线：显示起点到终点的路线
-    const origin = item.flightSegments[0]?.origin || '';
-    const destination = item.flightSegments?.[item.flightSegments.length - 1]?.destination || '';
+    const origin = item.flightSegments?.[0]?.origin || "";
+    const destination = item.flightSegments?.length ? item.flightSegments[item.flightSegments.length - 1]?.destination || "" : "";
     if (origin && destination) {
       // 使用高德地图的路线规划
       return `${amapBaseUrl}/dir?from=${encodeURIComponent(origin)}&to=${encodeURIComponent(destination)}`;
