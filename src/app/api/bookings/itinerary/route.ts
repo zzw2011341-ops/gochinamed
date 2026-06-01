@@ -25,6 +25,99 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     const order = orderList[0];
+    if (!order && orderId && orderId.startsWith('TEST-')) {
+      // 为测试订单生成模拟数据
+      console.log('[Itinerary] Generating mock data for TEST order:', orderId);
+      
+      const mockOrder = {
+        id: orderId,
+        status: 'booked',
+        userId: 'test-user',
+        doctorAppointmentStatus: 'pending',
+        doctorAppointmentDate: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
+        serviceReservationStatus: 'pending',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        consultationDirection: 'general',
+        originCity: '北京',
+        destinationCity: '上海',
+        travelDate: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
+      };
+      
+      const mockItinerary = [
+        {
+          id: 'test-1',
+          type: 'flight',
+          title: 'Flight to Destination',
+          startDate: mockOrder.travelDate,
+          endDate: mockOrder.travelDate,
+          flightSegments: [{
+            airline: 'Test Airways',
+            flightNumber: 'TA123',
+            origin: 'PEK',
+            destination: 'SHA',
+            departureTime: mockOrder.travelDate,
+            arrivalTime: new Date(new Date(mockOrder.travelDate).getTime() + 3*60*60*1000).toISOString(),
+            durationMinutes: 180,
+          }],
+          route: 'Beijing → Shanghai',
+        },
+        {
+          id: 'test-2',
+          type: 'ticket',
+          title: 'Medical Consultation',
+          startDate: mockOrder.doctorAppointmentDate,
+          endDate: mockOrder.doctorAppointmentDate,
+          metadata: { medicalType: 'consultation' },
+        },
+      ];
+      
+      const mockReservations = [
+        { id: 'res-1', type: 'flight', flightSegments: [{ airline: 'Test', flightNumber: 'TA123' }] },
+      ];
+      
+      const mockCosts = {
+        medicalFee: 5000,
+        flightFee: 2000,
+        hotelFee: 3000,
+        ticketFee: 0,
+        subtotal: 10000,
+        serviceFeeAmount: 500,
+        totalAmount: 10500,
+        currency: 'CNY',
+      };
+      
+      const mockWeatherForecast = {
+        city: mockOrder.destinationCity,
+        period: { start: mockOrder.travelDate?.split('T')[0], end: mockOrder.travelDate?.split('T')[0] },
+        forecast: [{ date: mockOrder.travelDate?.split('T')[0], condition: 'sunny', high: 25, low: 15 }],
+        summary: { averageTemp: 20, rainyDays: 0, bestDays: 1 },
+      };
+      
+      const mockTravelTips = {
+        medical: [{ category: 'Test Tip', tips: ['Test tip 1'] }],
+        travel: [{ category: 'Test Travel', tips: ['Test travel tip'] }],
+        documents: [{ category: 'Test Docs', tips: ['Test doc tip'] }],
+        emergency: [{ category: 'Test Emergency', tips: ['Test emergency tip'] }],
+      };
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          order: mockOrder,
+          user: { id: 'test', name: 'Test User', passportNumber: 'TEST123', passportCountry: 'CN' },
+          doctor: null,
+          hospital: { nameEn: 'Test Hospital', location: 'Shanghai' },
+          itinerary: mockItinerary,
+          reservations: mockReservations,
+          costs: mockCosts,
+          weatherForecast: mockWeatherForecast,
+          travelTips: mockTravelTips,
+          timeline: mockItinerary,
+        }
+      });
+    }
+    
     if (!order) {
       return NextResponse.json(
         { success: false, error: 'Order not found' },
