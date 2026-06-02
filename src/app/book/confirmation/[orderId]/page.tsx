@@ -54,12 +54,6 @@ export default function ConfirmationPage() {
           status: "confirmed",
           doctorAppointmentStatus: "confirmed",
           serviceReservationStatus: "confirmed",
-          totalAmount: "1500.00",
-          medicalFee: "200.00",
-          hotelFee: "700.00",
-          flightFee: "600.00",
-          ticketFee: "100.00",
-          currency: "USD",
           createdAt: new Date().toISOString(),
           travelDate: new Date(Date.now() + 7*24*60*60*1000).toISOString(),
         },
@@ -73,7 +67,8 @@ export default function ConfirmationPage() {
             endDate: new Date(Date.now() + 10*24*60*60*1000).toISOString(),
             location: "Shanghai", price: "700.00" },
         ],
-        costs: { subtotal: "1500.00", serviceFee: "75.00", total: "1575.00" },
+        costs: { medicalFee: 5000, hotelFee: 3000, flightFee: 2000, ticketFee: 0, subtotal: 10000, serviceFeeRate: 0.05, serviceFeeAmount: 500, totalAmount: 10500, currency: "USD" },
+        user: { id: 'test', name: 'Test User', email: 'test@example.com', passportNumber: 'TEST123', passportCountry: 'CN' },
         destinationCity: "Shanghai",
       });
       setLoading(false);
