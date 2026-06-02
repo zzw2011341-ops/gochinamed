@@ -25,8 +25,6 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     const order = orderList[0];
-    console.log("[Itinerary] Order keys:", Object.keys(order));
-    console.log("[Itinerary] doctorId:", order.doctorId, "hospitalId:", order.hospitalId);
     if (!order && orderId && orderId.startsWith('TEST-')) {
       // 为测试订单生成模拟数据
       console.log('[Itinerary] Generating mock data for TEST order:', orderId);
