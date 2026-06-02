@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from 'coze-coding-dev-sdk';
-import { orders, itineraries } from '@/storage/database/shared/schema';
+import { orders, itineraries, doctors } from '@/storage/database/shared/schema';
+import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Attraction {
@@ -73,25 +74,29 @@ export async function POST(request: NextRequest) {
     console.log('[Payment] Insert order keys:', Object.keys(insertData));
     await db.insert(orders).values(insertData);
 
-    // Build itinerary items
+    // Build itinerary items（Bug 2 + Bug 5: 按天分时，避免所有行程在同一天）
     const items: any[] = [];
     const travelDate = bd?.travelDate ? new Date(bd.travelDate) : now;
     const returnDate = bd?.returnDate ? new Date(bd.returnDate) : new Date(+travelDate + 259200000);
 
-    // 1. Flight
+    // 1. 去程航班（travelDate 08:00-12:00）
     if (bd?.travelDate) {
       const origin = bd.originCity || 'Origin';
       const dest = bd.destinationCity || 'Destination';
+      const flightStart = new Date(travelDate);
+      flightStart.setHours(8, 0, 0, 0);
+      const flightEnd = new Date(travelDate);
+      flightEnd.setHours(12, 0, 0, 0);
       items.push({
         id: uuidv4(), orderId, type: 'flight',
         name: `${origin} → ${dest} Flight`,
-        startDate: travelDate, endDate: travelDate,
+        startDate: flightStart, endDate: flightEnd,
         location: `${origin} → ${dest}`,
         status: 'pending', createdAt: now,
       });
     }
 
-    // 2. Hotel
+    // 2. 酒店（travelDate ~ returnDate）
     if (bd?.hotelName) {
       items.push({
         id: uuidv4(), orderId, type: 'hotel',
@@ -102,28 +107,55 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3. Medical appointment (use travelDate, not today)
+    // 3. 医疗预约（Bug 4: 查询真实医生名；Bug 2: travelDate+1 09:00-11:00）
     if (bd?.doctorId && bd.doctorId !== '') {
-      const docName = plan.doctorName || 'Doctor';
-      const aptDate = bd.appointmentDate ? new Date(bd.appointmentDate) : travelDate;
+      // Bug 4: 从数据库查询医生名
+      let docName = 'Doctor';
+      try {
+        const doctorList = await db.select({
+          nameEn: doctors.nameEn,
+          nameZh: doctors.nameZh,
+        }).from(doctors).where(eq(doctors.id, bd.doctorId)).limit(1);
+        if (doctorList.length > 0) {
+          docName = doctorList[0].nameEn || doctorList[0].nameZh || 'Doctor';
+        }
+      } catch (e) {
+        console.error('[Payment] Error fetching doctor name:', e);
+      }
+
+      // Bug 2: 医疗预约安排在 travelDate+1 09:00-11:00
+      const aptDate = bd.appointmentDate ? new Date(bd.appointmentDate) : new Date(+travelDate + 86400000);
+      aptDate.setHours(9, 0, 0, 0);
+      const aptEnd = new Date(aptDate.getTime() + 2 * 3600000); // +2 hours
       items.push({
         id: uuidv4(), orderId, type: 'ticket',
         name: `Medical Consultation - ${docName}`,
-        startDate: aptDate, endDate: aptDate,
+        startDate: aptDate, endDate: aptEnd,
         location: bd.destinationCity || '',
         status: 'pending', createdAt: now,
       });
     }
 
-    // 4. Attractions (tourism tickets)
-    const attrList: Attraction[] = attractions || bd?.selectedAttractions || [];
+    // 4. 景点（Bug 3: 只用用户传的 attractions，不用 bd?.selectedAttractions）
+    // Bug 2: 按天分时，景点安排在 travelDate+1 14:00 起
+    const attrList: Attraction[] = attractions || [];  // Bug 3: 只使用用户明确选择的景点
+    let attrDayOffset = 1; // 从 travelDate+1 开始
     for (const attr of attrList) {
       const attrName = attr.name || attr.nameEn || attr.nameZh || 'Attraction';
-      const attrDate = attr.visitDate ? new Date(attr.visitDate) : travelDate;
+      // 使用用户指定的 visitDate，或者按天分配
+      let attrDate: Date;
+      if (attr.visitDate) {
+        attrDate = new Date(attr.visitDate);
+      } else {
+        attrDate = new Date(+travelDate + attrDayOffset * 86400000);
+        attrDate.setHours(14, 0, 0, 0); // Bug 2: 14:00-17:00
+        attrDayOffset++;
+      }
+      const attrEnd = new Date(attrDate.getTime() + 3 * 3600000); // +3 hours
       items.push({
         id: uuidv4(), orderId, type: 'ticket',
         name: attrName,
-        startDate: attrDate, endDate: attrDate,
+        startDate: attrDate, endDate: attrEnd,
         location: attr.location || bd?.destinationCity || '',
         price: String(attr.price || 0),
         status: 'pending', createdAt: now,

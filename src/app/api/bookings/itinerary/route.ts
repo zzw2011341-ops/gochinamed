@@ -174,9 +174,13 @@ export async function GET(request: NextRequest) {
     let weatherForecast = order.weatherForecast;
     if (!weatherForecast && itineraryItems.length > 0) {
       try {
-        // 获取第一个和最后一个行程的日期
-        const firstDate = itineraryItems[0].startDate;
-        const lastDate = itineraryItems[itineraryItems.length - 1].endDate;
+// Bug 5 fix: min startDate and max endDate across all items for full trip coverage
+                let firstDate = null;
+                let lastDate = null;
+                for (const item of itineraryItems) {
+                  if (item.startDate && (!firstDate || item.startDate < firstDate)) firstDate = item.startDate;
+                  if (item.endDate && (!lastDate || item.endDate > lastDate)) lastDate = item.endDate;
+                }
 
         if (firstDate && lastDate && hospital) {
           const weatherResponse = await fetch(
