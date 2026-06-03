@@ -5,16 +5,16 @@
 
 export interface ItineraryDay {
   day: number;
-  date: string; // YYYY-MM-DD
+  date: string;
   items: ItineraryItem[];
-  notes?: string; // 当天备注（如"休息日"）
+  notes?: string;
 }
 
 export interface ItineraryItem {
-  time: string; // HH:MM
+  time: string;
   attractionId: string;
-  duration: number; // 游览时间（分钟）
-  notes?: string; // 备注（如"建议游玩2小时"）
+  duration: number;
+  notes?: string;
 }
 
 export interface Attraction {
@@ -22,45 +22,27 @@ export interface Attraction {
   nameEn: string;
   nameZh: string;
   description?: string;
-  duration: string; // 如 "2-3 hours", "Full day"
+  duration: string;
   price: number;
   category: string;
 }
 
-/**
- * 解析 duration 字符串为分钟数
- */
 function parseDuration(duration: string): number {
-  // 匹配 "2-3 hours" -> 取平均值 2.5h = 150min
   const hourMatch = duration.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*hours?/i);
   if (hourMatch) {
     const avg = (parseFloat(hourMatch[1]) + parseFloat(hourMatch[2])) / 2;
     return Math.round(avg * 60);
   }
-  // 匹配 "2 hours" -> 120min
   const singleHour = duration.match(/(\d+(?:\.\d+)?)\s*hours?/i);
   if (singleHour) {
     return Math.round(parseFloat(singleHour[1]) * 60);
   }
-  // 匹配 "Full day" -> 480min
   if (/full\s*day/i.test(duration)) {
     return 480;
   }
-  // 默认 2 小时
   return 120;
 }
 
-/**
- * 获取景点的区域（用于就近安排）
- */
-function getAttractionZone(attractionId: string): string {
-  const zoneMap: Record<string, string> = {};
-  return zoneMap[attractionId] || 'other';
-}
-
-/**
- * 生成智能行程
- */
 export function generateItinerary(params: {
   destinationCity: string;
   travelDate: string;
@@ -76,7 +58,7 @@ export function generateItinerary(params: {
 }): ItineraryDay[] {
   const {
     travelDate,
-    returnDate = '',
+    returnDate = "",
     selectedAttractions,
     attractions,
     medicalAppointment,
@@ -93,98 +75,65 @@ export function generateItinerary(params: {
   const totalDays = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
 
   const selected = attractions.filter(a => selectedAttractions.includes(a.id));
-  if (selected.length === 0) {
-    return Array.from({ length: totalDays }, (_, i) => ({
-      day: i + 1,
-      date: formatDate(addDays(startDate, i)),
-      items: [],
-      notes: i === 0 ? 'Arrival day' : i === totalDays - 1 ? 'Departure day' : 'Free day',
-    }));
-  }
 
-  const zoneGroups: Record<string, typeof selected> = {};
-  selected.forEach(attr => {
-    const zone = getAttractionZone(attr.id);
-    if (!zoneGroups[zone]) zoneGroups[zone] = [];
-    zoneGroups[zone].push(attr);
-  });
-
-  const attractionsPerDay = Math.max(1, Math.min(4, Math.ceil(selected.length / totalDays)));
   const days: ItineraryDay[] = [];
-  let attrIndex = 0;
-
   for (let day = 0; day < totalDays; day++) {
-    const currentDate = addDays(startDate, day);
-    const dateStr = formatDate(currentDate);
-    const items: ItineraryItem[] = [];
-
-    if (medicalAppointment && medicalAppointment.date === dateStr) {
-      items.push({
-        time: medicalAppointment.time || '09:00',
-        attractionId: '__medical__',
-        duration: medicalAppointment.durationMinutes || 240,
-        notes: `Medical appointment${medicalAppointment.hospitalName ? ` at ${medicalAppointment.hospitalName}` : ''}`,
-      });
-    }
-
-    const zones = Object.keys(zoneGroups);
-    let addedCount = 0;
-    while (addedCount < attractionsPerDay && attrIndex < selected.length) {
-      for (const zone of zones) {
-        if (attrIndex >= selected.length) break;
-        const zoneAttrs = zoneGroups[zone];
-        if (zoneAttrs.length > 0) {
-          const attr = zoneAttrs.shift()!;
-          const durationMin = parseDuration(attr.duration);
-          const startHour = 9 + Math.floor((items.length * (durationMin + 30)) / 60);
-          const startMin = (items.length * (durationMin + 30)) % 60;
-          const timeStr = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
-          items.push({
-            time: timeStr,
-            attractionId: attr.id,
-            duration: durationMin,
-            notes: `${durationMin}min visit`,
-          });
-          addedCount++;
-          attrIndex++;
-          if (addedCount >= attractionsPerDay) break;
-        }
-      }
-    }
-
-    const notes = items.length === 0
-      ? (day === 0 ? 'Arrival day - rest and recover' :
-         day === totalDays - 1 ? 'Departure day' : 'Free day for rest or shopping')
-      : undefined;
-
-    days.push({ day: day + 1, date: dateStr, items, notes });
-  }
-
-  if (attrIndex < selected.length) {
-    const remaining = selected.slice(attrIndex);
-    remaining.forEach((attr, i) => {
-      const dayIdx = i % days.length;
-      const durationMin = parseDuration(attr.duration);
-      const startHour = 9 + Math.floor((days[dayIdx].items.length * (durationMin + 30)) / 60);
-      const startMin = (days[dayIdx].items.length * (durationMin + 30)) % 60;
-      days[dayIdx].items.push({
-        time: `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`,
-        attractionId: attr.id,
-        duration: durationMin,
-        notes: `${durationMin}min visit`,
-      });
+    const d = new Date(startDate.getTime() + day * 86400000);
+    const dateStr = d.toISOString().split("T")[0];
+    days.push({
+      day: day + 1,
+      date: dateStr,
+      items: [],
+      notes: day === 0 ? "Arrival day - rest and recover" : day === totalDays - 1 ? "Departure day" : undefined,
     });
   }
 
+  if (selected.length === 0) {
+    return days;
+  }
+
+  if (medicalAppointment) {
+    const medDayIdx = days.findIndex(d => d.date === medicalAppointment.date);
+    if (medDayIdx >= 0) {
+      days[medDayIdx].items.push({
+        time: medicalAppointment.time || "09:00",
+        attractionId: "__medical__",
+        duration: medicalAppointment.durationMinutes || 240,
+        notes: "Medical appointment" + (medicalAppointment.hospitalName ? " at " + medicalAppointment.hospitalName : ""),
+      });
+      days[medDayIdx].notes = undefined;
+    }
+  }
+
+  const attractionsPerDay = Math.max(1, Math.min(4, Math.ceil(selected.length / totalDays)));
+  let dayIdx = 0;
+
+  for (const attr of selected) {
+    let attempts = 0;
+    while (attempts < totalDays) {
+      if (days[dayIdx].items.length < attractionsPerDay) {
+        break;
+      }
+      dayIdx = (dayIdx + 1) % totalDays;
+      attempts++;
+    }
+
+    const durationMin = parseDuration(attr.duration);
+    const existingCount = days[dayIdx].items.length;
+    const startHour = 9 + Math.floor((existingCount * (durationMin + 30)) / 60);
+    const startMin = (existingCount * (durationMin + 30)) % 60;
+    const timeStr = String(startHour).padStart(2, "0") + ":" + String(startMin).padStart(2, "0");
+
+    days[dayIdx].items.push({
+      time: timeStr,
+      attractionId: attr.id,
+      duration: durationMin,
+      notes: durationMin + "min visit",
+    });
+    days[dayIdx].notes = undefined;
+
+    dayIdx = (dayIdx + 1) % totalDays;
+  }
+
   return days;
-}
-
-function addDays(date: Date, days: number): Date {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
 }

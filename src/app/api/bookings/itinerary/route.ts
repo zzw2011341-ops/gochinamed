@@ -237,7 +237,15 @@ export async function GET(request: NextRequest) {
         nameEn: doctor.nameEn,
         nameZh: doctor.nameZh,
         title: doctor.title,
-        specialties: doctor.specialtiesEn,
+        // Bug 2 fix: parse specialtiesEn JSON string to readable string
+        specialties: (() => {
+          try {
+            const parsed = JSON.parse(doctor.specialtiesEn || '[]');
+            return Array.isArray(parsed) ? parsed.join(', ') : doctor.specialtiesEn;
+          } catch (e) {
+            return doctor.specialtiesEn || '';
+          }
+        })(),
         experienceYears: doctor.experienceYears,
       } : null,
       hospital: hospital ? {
@@ -263,6 +271,24 @@ export async function GET(request: NextRequest) {
       weatherForecast,
       travelTips,
       timeline: generateTimeline(itineraryItems, order.doctorAppointmentDate),
+      // Bug 3 fix: extract recommended attractions and food recommendations
+      recommendedAttractions: itineraryItems
+        .filter(item => item.type === 'ticket' && item.metadata && item.metadata.attractionType === 'tourism')
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          visitDate: item.startDate,
+          location: item.location || (hospital ? hospital.location : ''),
+          price: item.price,
+        })),
+      foodRecommendations: (() => {
+        try {
+          const meta = order.metadata ? (typeof order.metadata === 'string' ? JSON.parse(order.metadata) : order.metadata) : {};
+          return meta.foodRecommendations || [];
+        } catch (e) {
+          return [];
+        }
+      })(),
     };
 
     return NextResponse.json({

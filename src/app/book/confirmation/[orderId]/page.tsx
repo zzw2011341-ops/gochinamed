@@ -257,12 +257,15 @@ export default function ConfirmationPage() {
           </div>
         ) : (
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">
                 {language === 'zh' ? '概览' : 'Overview'}
               </TabsTrigger>
               <TabsTrigger value="itinerary">
                 {language === 'zh' ? '行程' : 'Itinerary'}
+              </TabsTrigger>
+              <TabsTrigger value="attractions">
+                {language === 'zh' ? '景点美食' : 'Sights & Food'}
               </TabsTrigger>
               <TabsTrigger value="medical">
                 {language === 'zh' ? '就医' : 'Medical'}
@@ -863,6 +866,108 @@ export default function ConfirmationPage() {
             )}
           </TabsContent>
 
+          {/* 景点与美食推荐 */}
+          <TabsContent value="attractions" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Ticket className="h-5 w-5 text-blue-600" />
+                  {language === 'zh' ? '推荐景点' : 'Recommended Attractions'}
+                </CardTitle>
+                <CardDescription>
+                  {language === 'zh' ? '目的地周边热门景点' : 'Popular attractions near your destination'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(itineraryData?.recommendedAttractions?.length || 0) > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {itineraryData.recommendedAttractions.map((attr: any, index: number) => (
+                      <div key={attr.id || index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-blue-600" />
+                            {attr.name}
+                          </h4>
+                          {attr.price && (
+                            <Badge variant="secondary">
+                              {itineraryData.costs?.currency || 'USD'} {Number(attr.price).toLocaleString()}
+                            </Badge>
+                          )}
+                        </div>
+                        {attr.visitDate && (
+                          <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                            <Calendar className="h-4 w-4" />
+                            {new Date(attr.visitDate).toLocaleDateString()}
+                          </div>
+                        )}
+                        {attr.location && (
+                          <div className="text-sm text-gray-600 flex items-center gap-2 mt-1">
+                            <MapPin className="h-4 w-4" />
+                            {attr.location}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Ticket className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600">
+                      {language === 'zh' ? '该订单暂未选择景点' : 'No attractions selected for this order'}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {language === 'zh' ? '您可以在预订时添加景点游览选项' : 'You can add attractions when booking'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-orange-600" />
+                  {language === 'zh' ? '美食推荐' : 'Food Recommendations'}
+                </CardTitle>
+                <CardDescription>
+                  {language === 'zh' ? '当地特色美食推荐' : 'Local cuisine recommendations'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(itineraryData?.foodRecommendations?.length || 0) > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {itineraryData.foodRecommendations.map((food: any, index: number) => (
+                      <div key={food.id || index} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-orange-50">
+                        <h4 className="font-medium flex items-center gap-2 mb-2">
+                          <MapPin className="h-4 w-4 text-orange-600" />
+                          {food.name}
+                        </h4>
+                        {food.description && (
+                          <p className="text-sm text-gray-700 mb-2">{food.description}</p>
+                        )}
+                        {food.category && (
+                          <Badge variant="outline" className="text-xs">{food.category}</Badge>
+                        )}
+                        {food.recommended && (
+                          <p className="text-sm text-orange-700 mt-2">
+                            {language === 'zh' ? '推荐指数' : 'Rating'}: {food.recommended}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-600">
+                      {language === 'zh' ? '暂无美食推荐' : 'No food recommendations yet'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* 注意事项 */}
           <TabsContent value="tips" className="space-y-6">
             <Card>
@@ -1138,6 +1243,73 @@ export default function ConfirmationPage() {
                   </CardContent>
                 </Card>
               )}
+            </div>
+
+            {/* 景点与美食部分 */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold border-b pb-2">
+                {language === 'zh' ? '景点美食' : 'Sights & Food'}
+              </h3>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-blue-600" />
+                    {language === 'zh' ? '推荐景点' : 'Recommended Attractions'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(itineraryData?.recommendedAttractions?.length || 0) > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {itineraryData.recommendedAttractions.map((attr: any, index: number) => (
+                        <div key={attr.id || index} className="border rounded-lg p-4">
+                          <h4 className="font-medium">{attr.name}</h4>
+                          {attr.visitDate && (
+                            <div className="text-sm text-gray-600 mt-1">
+                              {language === 'zh' ? '游览日期' : 'Visit'}: {new Date(attr.visitDate).toLocaleDateString()}
+                            </div>
+                          )}
+                          {attr.price && (
+                            <div className="text-sm text-blue-600 mt-1">
+                              {itineraryData.costs?.currency || 'USD'} {Number(attr.price).toLocaleString()}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-600">
+                      {language === 'zh' ? '暂无景点信息' : 'No attraction information'}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-orange-600" />
+                    {language === 'zh' ? '美食推荐' : 'Food Recommendations'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(itineraryData?.foodRecommendations?.length || 0) > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {itineraryData.foodRecommendations.map((food: any, index: number) => (
+                        <div key={food.id || index} className="border rounded-lg p-4 bg-orange-50">
+                          <h4 className="font-medium">{food.name}</h4>
+                          {food.description && (
+                            <p className="text-sm text-gray-700 mt-1">{food.description}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-600">
+                      {language === 'zh' ? '暂无美食推荐' : 'No food recommendations'}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             {/* 费用部分 */}
