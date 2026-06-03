@@ -131,20 +131,11 @@ export default function BookPage() {
     treatmentDirection: "",
     rehabilitationDirection: "",
     budget: user?.budget?.toString() || "",
-    aiPlanText: "",
   });
 
   // 数据
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-
-  // 从 sessionStorage 读取豆包方案文本（只在浏览器端执行）
-  useEffect(() => {
-    const saved = sessionStorage.getItem('aiPlanText');
-    if (saved) {
-      setFormData(prev => ({ ...prev, aiPlanText: saved }));
-    }
-  }, []);
 
   // 判断是否同城旅行
   const isSameCity = formData.originCity === formData.destinationCity;
@@ -581,7 +572,6 @@ export default function BookPage() {
         body: JSON.stringify({
           ...formData,
           userId: user?.id,
-          aiPlanText: formData.aiPlanText || sessionStorage.getItem('aiPlanText') || "",
         }),
       });
 
