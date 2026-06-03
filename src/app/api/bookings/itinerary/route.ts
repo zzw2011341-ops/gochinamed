@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
       timeline: generateTimeline(itineraryItems, order.doctorAppointmentDate),
       // Bug 3 fix: extract recommended attractions and food recommendations
       recommendedAttractions: itineraryItems
-        .filter(item => item.type === 'ticket' && item.metadata && item.metadata.attractionType === 'tourism')
+        .filter(item => item.type === 'ticket' && item.metadata && (item.metadata as any)?.attractionType === 'tourism')
         .map(item => ({
           id: item.id,
           name: item.name,
@@ -283,7 +283,7 @@ export async function GET(request: NextRequest) {
         })),
       foodRecommendations: (() => {
         try {
-          const meta = order.metadata ? (typeof order.metadata === 'string' ? JSON.parse(order.metadata) : order.metadata) : {};
+          const meta = (order as any).metadata ? (typeof (order as any).metadata === 'string' ? JSON.parse((order as any).metadata) : (order as any).metadata) : {};
           return meta.foodRecommendations || [];
         } catch (e) {
           return [];
@@ -492,7 +492,7 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
         details.route = item.location;
       }
       // 区分医疗咨询和景点
-      if (item.metadata && item.metadata.attractionType === 'tourism') {
+      if (item.metadata && (item.metadata as any)?.attractionType === 'tourism') {
         details.isAttraction = true;
       } else if (item.metadata && item.metadata.medicalType === 'consultation') {
         details.isMedicalConsultation = true;
