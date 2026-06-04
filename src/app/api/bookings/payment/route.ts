@@ -79,21 +79,44 @@ export async function POST(request: NextRequest) {
     const travelDate = bd?.travelDate ? new Date(bd.travelDate) : now;
     const returnDate = bd?.returnDate ? new Date(bd.returnDate) : new Date(+travelDate + 259200000);
 
-    // 1. 去程航班（travelDate 08:00-12:00）
+    // 1. 去程航班（Bug 1: 多段联程航班）
     if (bd?.travelDate) {
       const origin = bd.originCity || 'Origin';
       const dest = bd.destinationCity || 'Destination';
-      const flightStart = new Date(travelDate);
-      flightStart.setHours(8, 0, 0, 0);
-      const flightEnd = new Date(travelDate);
-      flightEnd.setHours(12, 0, 0, 0);
-      items.push({
-        id: uuidv4(), orderId, type: 'flight',
-        name: `${origin} → ${dest} Flight`,
-        startDate: flightStart, endDate: flightEnd,
-        location: `${origin} → ${dest}`,
-        status: 'pending', createdAt: now,
-      });
+      // Bug 1 修复：从 plan.flightRoute 读取多段联程信息
+      const flightRoute = (plan as any).flightRoute;
+      const segments: any[] = flightRoute?.segments || [];
+
+      if (segments.length > 0) {
+        // 多段联程：存 flightSegments 到 metadata
+        const firstSeg = segments[0];
+        const lastSeg = segments[segments.length - 1];
+        const flightStart = new Date(travelDate);
+        flightStart.setHours(8, 0, 0, 0);
+        const flightEnd = new Date(travelDate);
+        flightEnd.setHours(12, 0, 0, 0);
+        items.push({
+          id: uuidv4(), orderId, type: 'flight',
+          name: `${origin} → ${dest} Flight`,
+          startDate: flightStart, endDate: flightEnd,
+          location: `${firstSeg.origin} → ${lastSeg.destination}`,
+          metadata: JSON.stringify({ flightDetails: { segments, isDirect: false, connectionCity: flightRoute.description || '' } }),
+          status: 'pending', createdAt: now,
+        });
+      } else {
+        // 单段航班（同城或无需转机）
+        const flightStart = new Date(travelDate);
+        flightStart.setHours(8, 0, 0, 0);
+        const flightEnd = new Date(travelDate);
+        flightEnd.setHours(12, 0, 0, 0);
+        items.push({
+          id: uuidv4(), orderId, type: 'flight',
+          name: `${origin} → ${dest} Flight`,
+          startDate: flightStart, endDate: flightEnd,
+          location: `${origin} → ${dest}`,
+          status: 'pending', createdAt: now,
+        });
+      }
     }
 
     // 2. 酒店（travelDate ~ returnDate）
