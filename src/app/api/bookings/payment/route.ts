@@ -88,19 +88,45 @@ export async function POST(request: NextRequest) {
       const segments: any[] = flightRoute?.segments || [];
 
       if (segments.length > 0) {
-        // 多段联程：存 flightSegments 到 metadata
+        // 多段联程：构造前端确认页所需的完整 segment 格式
         const firstSeg = segments[0];
         const lastSeg = segments[segments.length - 1];
         const flightStart = new Date(travelDate);
         flightStart.setHours(8, 0, 0, 0);
         const flightEnd = new Date(travelDate);
         flightEnd.setHours(12, 0, 0, 0);
+
+        // 构造 flightSegments，字段名对齐确认页 page.tsx 的期望
+        const flightSegments = segments.map((seg: any, idx: number) => {
+          const depTime = new Date(travelDate);
+          depTime.setHours(8 + idx * 4, 0, 0, 0);
+          const arrTime = new Date(depTime.getTime() + 4 * 3600000);
+          return {
+            flightNumber: seg.flightNumber || `${seg.airline || 'CA'}${1000 + idx}`,
+            airline: seg.airline || (idx === 0 ? '国际航空' : '国内航空'),
+            origin: seg.origin || seg.from || '',
+            destination: seg.destination || seg.to || '',
+            departureTime: depTime.toISOString(),
+            arrivalTime: arrTime.toISOString(),
+            durationMinutes: 240,
+            airport: seg.airport || '',
+          };
+        });
+
+        const layoverMinutes = 120; // 默认中转2小时
         items.push({
           id: uuidv4(), orderId, type: 'flight',
           name: `${origin} → ${dest} Flight`,
           startDate: flightStart, endDate: flightEnd,
-          location: `${firstSeg.origin} → ${lastSeg.destination}`,
-          metadata: JSON.stringify({ flightDetails: { segments, isDirect: false, connectionCity: flightRoute.description || '' } }),
+          location: `${firstSeg.origin || firstSeg.from} → ${lastSeg.destination || lastSeg.to}`,
+          metadata: {
+            flightDetails: {
+              segments: flightSegments,
+              isDirect: false,
+              connectionCity: flightRoute.description || '',
+              layoverMinutes,
+            }
+          },
           status: 'pending', createdAt: now,
         });
       } else {

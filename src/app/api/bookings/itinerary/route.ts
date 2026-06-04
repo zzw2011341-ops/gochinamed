@@ -403,21 +403,37 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
     // 添加详细信息
     if (item.type === 'flight') {
       // 优先从 metadata 读取详细的航班信息
-      if (item.metadata && item.metadata.flightDetails) {
-        const flightDetails = item.metadata.flightDetails;
+      // 兼容 metadata 为字符串或对象两种情况
+      let metaObj = item.metadata;
+      if (typeof metaObj === 'string') {
+        try { metaObj = JSON.parse(metaObj); } catch { /* ignore */ }
+      }
+      if (metaObj && metaObj.flightDetails) {
+        const flightDetails = metaObj.flightDetails;
 
-        details.flightSegments = flightDetails.segments;
+        // 兼容 segments 字段名：from/to (旧格式) 或 origin/destination (新格式)
+        const rawSegments = flightDetails.segments || [];
+        details.flightSegments = rawSegments.map((seg: any) => ({
+          ...seg,
+          origin: seg.origin ?? seg.from ?? '',
+          destination: seg.destination ?? seg.to ?? '',
+          flightNumber: seg.flightNumber ?? '',
+          airline: seg.airline ?? '',
+          departureTime: seg.departureTime ?? null,
+          arrivalTime: seg.arrivalTime ?? null,
+          durationMinutes: seg.durationMinutes ?? 0,
+        }));
         details.isDirect = flightDetails.isDirect;
         details.flightType = flightDetails.isDirect ? '直飞' : '中转';
 
         if (flightDetails.isDirect) {
-          const segment = flightDetails.segments[0];
+          const segment = details.flightSegments[0];
           details.flightNumber = segment.flightNumber;
           details.subtitle = `Flight ${segment.flightNumber}`;
           details.route = `${segment.origin} - ${segment.destination}`;
         } else {
-          const first = flightDetails.segments[0];
-          const second = flightDetails.segments[1];
+          const first = details.flightSegments[0];
+          const second = details.flightSegments[1];
           details.flightNumber = `${first.flightNumber}+${second.flightNumber}`;
           details.subtitle = `${first.flightNumber} + ${second.flightNumber}`;
           details.route = `${first.origin} - ${second.destination}`;
@@ -425,8 +441,8 @@ function generateTimeline(itineraryItems: any[], appointmentDate: Date | null) {
           details.layoverMinutes = flightDetails.layoverMinutes;
 
           // 格式化中转时间
-          const layoverHours = Math.floor(flightDetails.layoverMinutes! / 60);
-          const layoverMins = flightDetails.layoverMinutes! % 60;
+          const layoverHours = Math.floor((flightDetails.layoverMinutes || 0) / 60);
+          const layoverMins = (flightDetails.layoverMinutes || 0) % 60;
           details.layoverFormatted = layoverHours > 0 ? `${layoverHours}小时${layoverMins}分钟` : `${layoverMins}分钟`;
         }
 
