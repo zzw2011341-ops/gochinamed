@@ -185,31 +185,76 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 4. 景点（Bug 3: 只用用户传的 attractions，不用 bd?.selectedAttractions）
+    // 4. 景点（Bug 3: 从 plan.bookingData.selectedAttractions 读取用户选择）
     // Bug 2: 按天分时，景点安排在 travelDate+1 14:00 起
-    const attrList: Attraction[] = attractions || [];  // Bug 3: 只使用用户明确选择的景点
+    let attrList: Attraction[] = (plan?.bookingData?.selectedAttractions) || [];
+
+    // 如果没选景点，自动补充目的城市默认景点
+    if (attrList.length === 0 && bd?.destinationCity) {
+      const cityDefaultAttractions: Record<string, Attraction[]> = {
+        'Beijing': [
+          { id: 'bj-1', nameEn: 'Forbidden City', nameZh: '故宫', location: 'Beijing', price: 60, visitDate: '', category: 'cultural' },
+          { id: 'bj-2', nameEn: 'Great Wall', nameZh: '长城', location: 'Beijing', price: 45, visitDate: '', category: 'cultural' },
+          { id: 'bj-3', nameEn: 'Temple of Heaven', nameZh: '天坛', location: 'Beijing', price: 35, visitDate: '', category: 'cultural' },
+          { id: 'bj-4', nameEn: 'Summer Palace', nameZh: '颐和园', location: 'Beijing', price: 30, visitDate: '', category: 'natural' },
+        ],
+        'Hefei': [
+          { id: 'hf-1', nameEn: 'Hefei Swan Lake', nameZh: '天鹅湖', location: 'Hefei', price: 0, visitDate: '', category: 'natural' },
+          { id: 'hf-2', nameEn: 'Hefei Science Island', nameZh: '科学岛', location: 'Hefei', price: 20, visitDate: '', category: 'modern' },
+          { id: 'hf-3', nameEn: 'Sanhe Ancient Town', nameZh: '三河古镇', location: 'Hefei', price: 40, visitDate: '', category: 'cultural' },
+        ],
+        'default': [
+          { id: 'def-1', nameEn: 'City Central Park', nameZh: '市中心公园', location: bd?.destinationCity, price: 0, visitDate: '', category: 'natural' },
+          { id: 'def-2', nameEn: 'Local Museum', nameZh: '当地博物馆', location: bd?.destinationCity, price: 30, visitDate: '', category: 'cultural' },
+        ]
+      };
+      attrList = cityDefaultAttractions[bd.destinationCity] || cityDefaultAttractions['default'];
+    }
+
     let attrDayOffset = 1; // 从 travelDate+1 开始
     for (const attr of attrList) {
       const attrName = attr.name || attr.nameEn || attr.nameZh || 'Attraction';
-      // 使用用户指定的 visitDate，或者按天分配
       let attrDate: Date;
       if (attr.visitDate) {
         attrDate = new Date(attr.visitDate);
       } else {
         attrDate = new Date(+travelDate + attrDayOffset * 86400000);
-        attrDate.setHours(14, 0, 0, 0); // Bug 2: 14:00-17:00
+        attrDate.setHours(14, 0, 0, 0);
         attrDayOffset++;
       }
-      const attrEnd = new Date(attrDate.getTime() + 3 * 3600000); // +3 hours
+      const attrEnd = new Date(attrDate.getTime() + 3 * 3600000);
       items.push({
         id: uuidv4(), orderId, type: 'ticket',
         name: attrName,
         startDate: attrDate, endDate: attrEnd,
         location: attr.location || bd?.destinationCity || '',
         price: String(attr.price || 0),
+        metadata: JSON.stringify({ attractionType: 'tourism' }),
         status: 'pending', createdAt: now,
       });
     }
+
+    // 5. 美食推荐（自动生成）
+    const cityFoodRecommendations: Record<string, any[]> = {
+      'Beijing': [
+        { id: 'food-bj-1', name: '北京烤鸭', description: '酥脆鸭皮配薄饼，北京经典菜肴', category: '主食' },
+        { id: 'food-bj-2', name: '炸酱面', description: '浓郁酱香手工面条', category: '面食' },
+        { id: 'food-bj-3', name: '驴打滚', description: '传统甜点，糯米卷豆沙', category: '甜点' },
+      ],
+      'Hefei': [
+        { id: 'food-hf-1', name: '徽州毛豆腐', description: '发酵豆腐外酥里嫩，徽菜代表', category: '特色' },
+        { id: 'food-hf-2', name: '庐州烤鸭', description: '合肥地方风味烤鸭', category: '主食' },
+        { id: 'food-hf-3', name: '三河米饺', description: '米粉皮包裹馅料，口感独特', category: '小吃' },
+      ],
+      'default': [
+        { id: 'food-def-1', name: '当地特色主食', description: '体验本地风味主食', category: '主食' },
+        { id: 'food-def-2', name: '地方小吃', description: '感受街头美食文化', category: '小吃' },
+      ]
+    };
+    const foodRecs = cityFoodRecommendations[bd?.destinationCity] || cityFoodRecommendations['default'];
+    const orderMetadata = {
+      foodRecommendations: foodRecs,
+    };
 
     if (items.length > 0) {
       console.log('[Payment] Inserting', items.length, 'itinerary items');
@@ -217,6 +262,9 @@ export async function POST(request: NextRequest) {
         await db.insert(itineraries).values(item);
       }
     }
+
+    // 将美食推荐写入订单 metadata
+    await db.update(orders).set({ metadata: JSON.stringify(orderMetadata) }).where(eq(orders.id, orderId));
 
     console.log('[Payment] Done:', orderId);
     return NextResponse.json({
